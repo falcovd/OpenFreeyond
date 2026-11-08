@@ -1,3 +1,11 @@
+import {
+  HAIR_COLOURS,
+  CLOTHING_COLOURS,
+  VOICES,
+  ENVIRONMENTS,
+  FIELD_LABELS,
+} from '../logic/fields.js';
+
 export function h(tag, attrs = {}, ...children) {
   const el = document.createElement(tag);
   for (const [key, value] of Object.entries(attrs)) {
@@ -50,4 +58,131 @@ export function renderWorldOverlay(
   }
   root.append(overlay);
   return overlay;
+}
+
+const CHOICE_LABELS = {
+  continue: 'Continue with my character',
+  'make-new': 'Make a new character',
+  'try-out': 'Try-out',
+};
+
+export function renderStart(root, { options, notice, onChoose }) {
+  root.replaceChildren(
+    h(
+      'main',
+      { class: 'screen' },
+      h('h1', {}, 'OpenFreeyond'),
+      notice && h('p', { class: 'notice', role: 'status' }, notice),
+      options.map((choice) =>
+        h(
+          'button',
+          { 'data-choice': choice, onClick: () => onChoose(choice) },
+          CHOICE_LABELS[choice],
+        ),
+      ),
+    ),
+  );
+}
+
+export function renderConfirm(root, { onYes, onNo }) {
+  root.replaceChildren(
+    h(
+      'main',
+      { class: 'screen' },
+      h(
+        'p',
+        {},
+        'Making a new character replaces the one kept in this browser when you finish. Continue?',
+      ),
+      h(
+        'button',
+        { 'data-action': 'yes', onClick: onYes },
+        'Yes, make a new one',
+      ),
+      h('button', { 'data-action': 'no', onClick: onNo }, 'No, go back'),
+    ),
+  );
+}
+
+export function renderMessage(root, message) {
+  root.replaceChildren(
+    h('main', { class: 'screen' }, h('p', { role: 'alert' }, message)),
+  );
+}
+
+const select = (name, items, value) =>
+  h(
+    'select',
+    { id: name, name },
+    h('option', { value: '' }, 'Choose...'),
+    items.map((i) =>
+      h('option', { value: i.id, selected: i.id === value }, i.label),
+    ),
+  );
+
+export function renderIntake(root, { values, errors, onSubmit, onCancel }) {
+  const error = (key) =>
+    errors[key] && h('p', { class: 'error', role: 'alert' }, errors[key]);
+  const text = (name, label, tag = 'input') =>
+    h(
+      'div',
+      {},
+      h('label', { for: name }, label),
+      tag === 'input'
+        ? h('input', {
+            id: name,
+            name,
+            value: values[name] ?? '',
+            type: 'text',
+          })
+        : h('textarea', { id: name, name, rows: 3 }, values[name] ?? ''),
+      error(name),
+    );
+
+  const form = h(
+    'form',
+    { novalidate: 'novalidate' },
+    text('name', FIELD_LABELS.name),
+    text('age', FIELD_LABELS.age),
+    h(
+      'div',
+      {},
+      h('label', { for: 'hair' }, 'Hair colour'),
+      select('hair', HAIR_COLOURS, values.hair),
+      h('label', { for: 'clothing' }, 'Clothing colour'),
+      select('clothing', CLOTHING_COLOURS, values.clothing),
+      error('appearance'),
+    ),
+    text('character', FIELD_LABELS.character, 'textarea'),
+    text('hobbies', FIELD_LABELS.hobbies, 'textarea'),
+    text('background', FIELD_LABELS.background, 'textarea'),
+    h(
+      'div',
+      {},
+      h('label', { for: 'voice' }, FIELD_LABELS.voice),
+      select('voice', VOICES, values.voice),
+      error('voice'),
+    ),
+    h(
+      'div',
+      {},
+      h('label', { for: 'environment' }, FIELD_LABELS.environment),
+      select('environment', ENVIRONMENTS, values.environment),
+      error('environment'),
+    ),
+    h('button', { type: 'submit' }, 'Enter the place'),
+    h(
+      'button',
+      { type: 'button', 'data-action': 'cancel', onClick: onCancel },
+      'Cancel',
+    ),
+  );
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const data = Object.fromEntries(new FormData(form).entries());
+    onSubmit(data);
+  });
+  root.replaceChildren(
+    h('main', { class: 'screen' }, h('h1', {}, 'Make your character'), form),
+  );
 }
