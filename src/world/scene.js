@@ -1,8 +1,14 @@
 import 'aframe';
 import './components.js';
 import { SOLIDS, SPAWN, CHARACTER_SPOT } from './layout.js';
+import { HAIR_COLOURS, CLOTHING_COLOURS } from '../logic/fields.js';
 
 const CHARACTER_URL = `${import.meta.env.BASE_URL}assets/character.glb`;
+
+// Only known colour ids may reach the markup; anything else gets the first entry.
+function safeId(set, id) {
+  return set.some((c) => c.id === id) ? id : set[0].id;
+}
 
 function drawSolid(s) {
   if (s.kind === 'character') return '';
@@ -37,12 +43,20 @@ export function mountWorld(container, character, { stats = false } = {}) {
         gltf-model="#character-model"
         position="${CHARACTER_SPOT.x} 0 ${CHARACTER_SPOT.z}"
         rotation="0 -30 0"
-        character-colours="hair: ${character.hair}; clothing: ${character.clothing}"
+        character-colours="hair: ${safeId(HAIR_COLOURS, character.hair)}; clothing: ${safeId(CLOTHING_COLOURS, character.clothing)}"
         idle-animation></a-entity>
-      <a-entity id="rig" position="${SPAWN.x} 0 ${SPAWN.z}" wasd-controls="acceleration: 25" walk-limiter>
-        <a-entity camera look-controls position="0 1.6 0"></a-entity>
-      </a-entity>
+      <a-entity camera look-controls wasd-controls="acceleration: 25" walk-limiter position="${SPAWN.x} 1.6 ${SPAWN.z}"></a-entity>
     </a-scene>`;
   container.appendChild(scene);
-  return { destroy: () => scene.remove() };
+  return {
+    destroy: () => {
+      // Removing the node only disposes the renderer; the render loop must be stopped too.
+      const sceneEl = scene.querySelector('a-scene');
+      if (sceneEl) {
+        sceneEl.pause?.();
+        sceneEl.renderer?.setAnimationLoop(null);
+      }
+      scene.remove();
+    },
+  };
 }
