@@ -53,6 +53,9 @@ export function mountWorld(container, character, { stats = false } = {}) {
       // Removing the node only disposes the renderer; the render loop must be stopped too.
       const sceneEl = scene.querySelector('a-scene');
       if (sceneEl) {
+        // A-Frame's pending 'loaded' listener (a-scene.js play(), line 683) returns early
+        // when renderStarted is set (line 689), so a late load cannot restart the loop.
+        sceneEl.renderStarted = true;
         sceneEl.pause?.();
         sceneEl.renderer?.setAnimationLoop(null);
       }

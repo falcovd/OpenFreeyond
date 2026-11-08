@@ -29,6 +29,8 @@ const app = document.getElementById('app');
 const storage = getStorage();
 let world = null;
 let brokenShown = false;
+// Bumped whenever a screen is shown, so a slow world load can tell it is stale.
+let screenToken = 0;
 
 const BROKEN_NOTICE =
   'Your kept character could not be read, so the example character is shown. Making a new character replaces it.';
@@ -41,8 +43,10 @@ function leaveWorld() {
 }
 
 async function enterWorld(character, { notice = null } = {}) {
+  const token = ++screenToken;
   try {
     const { mountWorld } = await import('./world/scene.js');
+    if (token !== screenToken) return;
     leaveWorld();
     app.replaceChildren();
     const stats = new URLSearchParams(window.location.search).has('stats');
@@ -53,7 +57,9 @@ async function enterWorld(character, { notice = null } = {}) {
       onDismissHint: () => markHintSeen(storage),
       onBack: showStart,
     });
-  } catch {
+  } catch (error) {
+    console.error(error);
+    if (token !== screenToken) return;
     leaveWorld();
     renderMessage(
       app,
@@ -63,6 +69,7 @@ async function enterWorld(character, { notice = null } = {}) {
 }
 
 function showStart() {
+  screenToken++;
   leaveWorld();
   const kept = loadCharacter(storage);
   if (kept.status === 'broken' && !brokenShown) {
@@ -70,10 +77,11 @@ function showStart() {
     enterWorld(EXAMPLE_CHARACTER, { notice: BROKEN_NOTICE });
     return;
   }
-  renderStart(app, { options: startOptions(kept), onChoose: onChoose });
+  renderStart(app, { options: startOptions(kept), onChoose });
 }
 
 function openIntake(values = {}, errors = {}) {
+  screenToken++;
   renderIntake(app, {
     values,
     errors,
@@ -91,9 +99,10 @@ function openIntake(values = {}, errors = {}) {
 function onChoose(choice) {
   const result = resolveChoice(choice, loadCharacter(storage));
   if (result.action === 'enter') enterWorld(result.character);
-  else if (result.action === 'confirm-replace')
+  else if (result.action === 'confirm-replace') {
+    screenToken++;
     renderConfirm(app, { onYes: () => openIntake(), onNo: showStart });
-  else if (result.action === 'intake') openIntake();
+  } else if (result.action === 'intake') openIntake();
 }
 
 const supported = isSupportedBrowser({
