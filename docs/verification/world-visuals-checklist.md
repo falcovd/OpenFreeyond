@@ -22,14 +22,16 @@ Setup: production build (`npm run build`), served with `npx vite preview --port 
 | AC-8.2 / 30 s limit under Slow 4G | Cover gone at 17.4 s with the place on screen. The margin to 30 s is about 12.6 s (it was 0.1 s). |
 | Slower than Slow 4G (100,000 B/s and 50,000 B/s) | Asset downloads stop at 24 s after the click (`ASSET_BUDGET_MS`), the place is built with plain colours and blocks for what is missing, and the cover goes when the place is ready. 100,000 B/s: cover gone and `.world` plus canvas present at 24.8 s, message "Some parts of the place took too long to load." shown. 50,000 B/s: same at 24.4 s. 0 samples with an empty page. Before the fix: cover gone at 30.1 s and an empty page until 34.7 s (100,000 B/s). The 30 s cover timer in `src/main.js` stays as a backstop. |
 | AC-12.1 fps | Not measured. SwiftShader fps says nothing about the 30 fps goal. Measure it on the builder's laptop. |
+| Photographic sky look (agent, 2026-11-08, software rendering) | Looked at in 5 directions (front, toward the sun, behind, up, left): photographic sky with soft clouds and a sun; the photo is upright, not mirrored; the sun sits where `src/data/sky.json` says; no seam, dark band or gap between ground and sky at the horizon. Not checked from every edge of the place. `sky.jpg` is 232 KB. Frame rate and first-visit transfer with the sky were not measured. A person still judges AC-1.1, AC-1.2, AC-1.3, AC-7.2, AC-12.1 and AC-12.2. |
 | Console errors | None during the runs. |
 
 Findings against the spec:
 - AC-9.4: strictly, one key (`debug`, from A-Frame) is added. The phase 1 build adds the same key, so nothing is added beyond phase 1. It holds no user data.
 
 ## Per browser
-- [ ] AC-1.1 Look in a full circle and upward: is the sky a blue gradient, lighter at the horizon and deeper overhead? (Auto: `tests/builders-sky-ground.test.js` checks the sky is built; a person judges the look.)
-- [ ] AC-1.2 At least one cloud is visible. (Auto: `tests/builders-sky-ground.test.js`.)
+- [ ] AC-1.1 Look in a full circle and upward: is the sky a photographic sky? (Auto: `tests/builders-sky-ground.test.js` checks the sky is built; a person judges the look.)
+- [ ] AC-1.2 At least one cloud is visible (the photo has soft clouds). (Auto: `tests/builders-sky-ground.test.js`.)
+- [ ] Sun and light: does the sun in the photo sit where the shading on the house points from?
 - [ ] AC-1.3 At each edge of the place, looking toward the horizon: is any void or empty gap visible between the ground and the sky? (answer must be no)
 - [ ] AC-2.1 Does the ground show a grass texture that varies in colour or pattern across the place, not one uniform colour?
 - [ ] AC-2.2 From the street, a path to the house door is visible and you can walk on it. (Auto: `tests/layout.test.js` "has a walkable path from the street to the door".)

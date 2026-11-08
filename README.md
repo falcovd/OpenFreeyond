@@ -7,7 +7,8 @@ Built with [A-Frame](https://aframe.io) 1.6 (three.js), Vite and plain JavaScrip
 ## What it does
 
 - A start screen with a try-out option and a character intake (7 fields).
-- A walkable place: a house, a garden, trees, a fence and furniture. Solid objects block you.
+- A walkable place with a photographic sky, grass, trees, a house, a fence and furniture. Solid objects block you.
+- A loading indicator while the place loads. If a model fails to load, a plain stand-in is used.
 - A character with an idle animation. Its hair and clothing colours follow your intake.
 - Your character is kept in your browser, so it is still there on your next visit.
 
@@ -28,15 +29,17 @@ Requires Node 22 or newer (see `.nvmrc`).
 
 ## Project layout
 
-| Path                                      | Contents                                                                                                          |
-| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `src/logic/`                              | Pure logic: validation, storage, colours, collision, start screen options, browser checks. Covered by unit tests. |
-| `src/world/`                              | The A-Frame scene, the world layout and the custom components.                                                    |
-| `src/ui/`                                 | The start, confirm and intake screens, and their styles.                                                          |
-| `public/assets/`                          | Files that ship with the site, such as `character.glb`.                                                           |
-| `scripts/`                                | `convert-character.mjs` turns an FBX character into the small GLB the site uses.                                  |
-| `tests/`                                  | Vitest tests.                                                                                                     |
-| `specs/`, `discovery/`, `plans/`, `docs/` | Specs, discovery notes, plans, the verification checklist and process notes.                                      |
+| Path                                      | Contents                                                                                                                |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `src/logic/`                              | Pure logic: validation, storage, colours, collision, start screen options, browser checks. Covered by unit tests.       |
+| `src/world/`                              | The A-Frame scene, the world layout, asset loading and the custom components.                                           |
+| `src/ui/`                                 | The start, confirm and intake screens, and their styles.                                                                |
+| `public/assets/`                          | Models and textures that ship with the site, such as `character.glb`.                                                   |
+| `public/brand/`                           | Brand images (logo, favicons), made by `scripts/make-brand-assets.mjs`.                                                 |
+| `src/data/`                               | Asset licence data shown under "Credits".                                                                               |
+| `scripts/`                                | Asset tooling: `convert-character.mjs` (FBX to GLB), `prepare-texture.mjs`, `prepare-sky.mjs`, `make-brand-assets.mjs`. |
+| `tests/`                                  | Vitest tests.                                                                                                           |
+| `specs/`, `discovery/`, `plans/`, `docs/` | Specs, discovery notes, plans, the verification checklist and process notes.                                            |
 
 To add or move something in the world, edit `src/world/layout.js`. Drawing and collision both read from it.
 
@@ -63,7 +66,7 @@ CI (`.github/workflows/ci.yml`) runs lint, format check, tests and build on ever
 - World visuals checklist: `docs/verification/world-visuals-checklist.md`
 - Brand rules (colours, logo, wording): `BRAND.md`
 - Asset licences: `src/data/licences.js` (shown on the start screen under the "Credits" link in the footer)
-- Next up: `specs/world-visuals/` (a better look for the place)
+- Brand refresh plan: `docs/plans/2026-11-08-brand-refresh.md`
 
 ## Credits
 

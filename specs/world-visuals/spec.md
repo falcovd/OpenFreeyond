@@ -41,8 +41,9 @@ The place looks like a cozy home, stays smooth and loads in an acceptable way.
 - US-12: As the builder, I want to measure the frame rate and the download size, so that I know the place stays smooth and light.
 
 ## Functional Requirements
-- FR-1: The sky is a blue gradient, lighter at the horizon and deeper overhead. Story: US-1.
-- FR-2: The sky shows visible clouds. Story: US-1.
+- FR-1: The sky is a photograph with a visible sun that fades into the fog colour at the horizon. Story: US-1.
+- FR-2: The sky shows visible soft clouds. Story: US-1.
+- Changed on 2026-11-08: the sky is now a photograph (see `docs/plans/2026-11-08-realistic-sky-design.md`). FR-1 and FR-2 were reworded; the AC numbering is kept. AC-1.1 still says "blue gradient" and is not yet reworded.
 - FR-3: No empty edge is visible between the ground and the sky, in any direction. Story: US-1.
 - FR-4: The ground shows a grass texture with visible variation, not one uniform colour. Story: US-2.
 - FR-5: A path leads from the street to the house door. Story: US-2.
