@@ -42,43 +42,4 @@ export function buildHedge(THREE, assets, solid) {
   return g;
 }
 
-const FLOWER_COLOURS = ['#e8738f', '#f2c14e', '#ffffff', '#b58be0', '#f08a4b'];
-
-// Soil with small flowers on it. A flower bed is never a solid (AC-4.7).
-export function buildFlowerBed(THREE, bed) {
-  const g = new THREE.Group();
-  g.position.set(bed.x, 0, bed.z);
-  g.userData.kind = 'flower-bed';
-  g.add(
-    box(
-      THREE,
-      bed.w,
-      0.12,
-      bed.d,
-      new THREE.MeshStandardMaterial({ color: '#5a3d28', roughness: 1 }),
-      0,
-      0.06,
-      0,
-    ),
-  );
-  const stem = new THREE.MeshStandardMaterial({ color: '#4f7a3a' });
-  const cols = Math.floor(bed.w / 0.3);
-  const rows = Math.floor(bed.d / 0.3);
-  for (let i = 0; i < cols; i++) {
-    for (let j = 0; j < rows; j++) {
-      const x = -bed.w / 2 + 0.2 + i * 0.3 + (j % 2) * 0.1;
-      const z = -bed.d / 2 + 0.2 + j * 0.3;
-      const h = 0.22 + ((i * 3 + j * 5) % 4) * 0.04;
-      g.add(box(THREE, 0.02, h, 0.02, stem, x, 0.12 + h / 2, z));
-      const head = new THREE.Mesh(
-        new THREE.SphereGeometry(0.07, 8, 6),
-        new THREE.MeshStandardMaterial({
-          color: FLOWER_COLOURS[(i + j * 2) % FLOWER_COLOURS.length],
-        }),
-      );
-      head.position.set(x, 0.12 + h, z);
-      g.add(head);
-    }
-  }
-  return g;
-}
+export { buildFlowerBed } from './flowers.js';

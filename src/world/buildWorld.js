@@ -38,7 +38,7 @@ export function buildWorld(
     const build = BUILDERS[solid.kind];
     if (build) group.add(build(THREE, assets, solid));
   }
-  for (const bed of FLOWER_BEDS) group.add(buildFlowerBed(THREE, bed));
+  for (const bed of FLOWER_BEDS) group.add(buildFlowerBed(THREE, assets, bed));
   // The character model is an entity (see scene.js). Without it, a plain figure stands in.
   if (withCharacter && !assets.model('character'))
     group.add(buildFigure(THREE, colours));
