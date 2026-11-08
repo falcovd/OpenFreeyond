@@ -8,6 +8,7 @@ import { box } from './common.js';
 // No import of aframe: THREE is passed in.
 
 const SOIL_TOP = 0.12;
+const BORDER = { thickness: 0.07, height: 0.19, colour: '#74492a' }; // wooden boards, like the fence
 const SPACING = 0.2; // spacing of the jittered grid the flowers grow on
 const MARGIN = 0.16; // flowers stay this far from the edge of the bed, so leaning stems stay inside it
 const JITTER = 0.07;
@@ -82,6 +83,34 @@ export function buildFlowerBed(THREE, bed) {
       0,
     ),
   );
+
+  // A low wooden frame around the soil, so the bed does not look like soil lying on the grass.
+  // The boards sit just outside the bed, and the soil is a little lower than their top edge.
+  const boardMaterial = new THREE.MeshStandardMaterial({
+    color: BORDER.colour,
+    roughness: 1,
+  });
+  const t = BORDER.thickness;
+  const boards = [
+    [bed.w + 2 * t, t, 0, (bed.d + t) / 2], // front
+    [bed.w + 2 * t, t, 0, -(bed.d + t) / 2], // back
+    [t, bed.d, (bed.w + t) / 2, 0], // right
+    [t, bed.d, -(bed.w + t) / 2, 0], // left
+  ];
+  for (const [w, d, x, z] of boards) {
+    const board = box(
+      THREE,
+      w,
+      BORDER.height,
+      d,
+      boardMaterial,
+      x,
+      BORDER.height / 2,
+      z,
+    );
+    board.userData.part = 'border';
+    g.add(board);
+  }
 
   const material = (side = THREE.FrontSide) =>
     new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 1, side });

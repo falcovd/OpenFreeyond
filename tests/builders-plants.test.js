@@ -167,6 +167,22 @@ describe('flower beds look like a mix of real flowers (FR-7)', () => {
     expect(colours(p.tulips).size).toBeGreaterThanOrEqual(2);
     expect(colours(p['daisy-petals']).size).toBeGreaterThanOrEqual(2);
   });
+  it('has a wooden border on all four sides that rises above the soil', () => {
+    for (const b of FLOWER_BEDS) {
+      const g = buildFlowerBed(THREE, b);
+      const border = g.children.filter((c) => c.userData.part === 'border');
+      expect(border).toHaveLength(4);
+      const frame = new THREE.Box3();
+      for (const board of border) frame.expandByObject(board);
+      // The frame surrounds the soil: it is wider and deeper than the bed, and higher than the soil.
+      expect(frame.max.x - frame.min.x).toBeGreaterThan(b.w);
+      expect(frame.max.z - frame.min.z).toBeGreaterThan(b.d);
+      expect(frame.max.y).toBeGreaterThan(0.12);
+      // The frame is centred on the bed.
+      expect(Math.abs(frame.min.x + frame.max.x)).toBeLessThan(1e-6);
+      expect(Math.abs(frame.min.z + frame.max.z)).toBeLessThan(1e-6);
+    }
+  });
   it('builds the same bed every time, and beds differ from each other', () => {
     const key = (b) =>
       stems(buildFlowerBed(THREE, b))
