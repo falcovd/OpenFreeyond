@@ -55,3 +55,27 @@ textarea {
   border-radius: 0.5rem;
   margin: 0.5rem 0 0;
 }
+
+.loading {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #f6d9a8;
+}
+.spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 0.3rem solid rgba(0, 0, 0, 0.15);
+  border-top-color: #8b5a2b;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

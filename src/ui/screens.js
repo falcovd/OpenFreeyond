@@ -60,6 +60,18 @@ export function renderWorldOverlay(
   return overlay;
 }
 
+// Full-screen "loading" cover. Returns the element; the caller removes it (FR-15).
+export function renderLoading(root) {
+  const el = h(
+    'div',
+    { class: 'loading', role: 'status', 'aria-live': 'polite' },
+    h('div', { class: 'spinner', 'aria-hidden': 'true' }),
+    h('p', {}, 'Loading the place…'),
+  );
+  root.append(el);
+  return el;
+}
+
 const CHOICE_LABELS = {
   continue: 'Continue with my character',
   'make-new': 'Make a new character',
