@@ -55,6 +55,16 @@ export const ASSET_RECORDS = [
     checked: '2026-11-08',
   },
   {
+    files: ['textures/sky.jpg'],
+    author: 'Poly Haven (Greg Zaal, Jarod Guest)',
+    source: 'https://polyhaven.com/a/kloofendal_38d_partly_cloudy_puresky',
+    licence: 'CC0-1.0',
+    licenceText:
+      'CC0 1.0 Universal (CC0 1.0) Public Domain Dedication, https://creativecommons.org/publicdomain/zero/1.0/. Poly Haven: "All assets on Poly Haven are CC0", free to use for any purpose with no attribution required (https://polyhaven.com/license). Kloofendal 38d Partly Cloudy (Pure Sky): Greg Zaal (original), Jarod Guest (sky edits). Resized to 4096x2048 JPEG by scripts/prepare-sky.mjs.',
+    credit: null,
+    checked: '2026-11-08',
+  },
+  {
     files: ['models/tree-round.glb', 'models/tree-pine.glb', 'models/bush.glb'],
     author: 'Quaternius (Stylized Nature MegaKit, free standard version)',
     source: 'https://quaternius.com/packs/stylizednaturemegakit.html',

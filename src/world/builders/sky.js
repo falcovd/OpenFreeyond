@@ -1,8 +1,73 @@
+import skyMeta from '../../data/sky.json';
+
 export const SKY = { radius: 400, horizon: '#cfe6f5', zenith: '#3f86d0' };
 
-// A big inside-out sphere. Colour runs from the horizon colour up to the deeper blue overhead.
-// Everything at or below the horizon uses the horizon colour, which is also the fog colour (FR-1, FR-3).
-export function buildSky(THREE) {
+// The sky turns this many radians per second: a full turn takes about 105 minutes. Calm, not distracting.
+// The sun light turns with it, so shading stays in step with the sun in the photo.
+export const SKY_DRIFT = 0.001;
+
+// The photo fades into the fog colour from this far below to this far above the horizon.
+export const BLEND = { belowDeg: 4, aboveDeg: 6 };
+
+// The light direction when there is no photo. Same direction as the light of phase 1.
+const FALLBACK_SUN = (() => {
+  const v = [-6, 5, 8];
+  const len = Math.hypot(...v);
+  return v.map((c) => c / len);
+})();
+
+const HEX = /^#[0-9a-f]{6}$/i;
+
+// True when the sky data can be trusted: a hex colour and a unit vector that points above the horizon.
+export function validSkyMeta(meta) {
+  if (!meta || typeof meta.horizon !== 'string' || !HEX.test(meta.horizon))
+    return false;
+  const sun = meta.sun;
+  if (!Array.isArray(sun) || sun.length !== 3) return false;
+  if (!sun.every(Number.isFinite)) return false;
+  return Math.abs(Math.hypot(...sun) - 1) < 0.01 && sun[1] > 0;
+}
+
+// What the sky and the fog use. The photo data counts only when the photo itself loaded (FR-16).
+// `horizon` is checked against a hex pattern, so it is safe to place in markup.
+export function skyParams(assets, meta = skyMeta) {
+  if (assets.texture('sky') && validSkyMeta(meta))
+    return { photo: true, horizon: meta.horizon, sun: meta.sun };
+  return { photo: false, horizon: SKY.horizon, sun: FALLBACK_SUN };
+}
+
+const smoothstep = (t) => {
+  const c = Math.min(1, Math.max(0, t));
+  return c * c * (3 - 2 * c);
+};
+
+// The photo on the inside of a sphere. Vertex alpha fades it out toward and below the horizon,
+// so the fog-coloured background and the ground meet it without a seam (FR-3).
+function photoSphere(THREE, texture) {
+  const geometry = new THREE.SphereGeometry(SKY.radius, 64, 96);
+  const pos = geometry.attributes.position;
+  const rgba = [];
+  const span = BLEND.belowDeg + BLEND.aboveDeg;
+  for (let i = 0; i < pos.count; i++) {
+    const elevation = Math.asin(pos.getY(i) / SKY.radius) * (180 / Math.PI);
+    rgba.push(1, 1, 1, smoothstep((elevation + BLEND.belowDeg) / span));
+  }
+  geometry.setAttribute('color', new THREE.Float32BufferAttribute(rgba, 4));
+  const material = new THREE.MeshBasicMaterial({
+    map: texture,
+    vertexColors: true,
+    transparent: true,
+    side: THREE.BackSide,
+    fog: false,
+    depthWrite: false,
+  });
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.scale.x = -1; // seen from inside, the photo would otherwise be mirrored
+  return mesh;
+}
+
+// The phase 1 sky: a gradient from the horizon colour up to deeper blue. Used when the photo is missing.
+function gradientSphere(THREE) {
   const geometry = new THREE.SphereGeometry(SKY.radius, 32, 24);
   const horizon = new THREE.Color(SKY.horizon);
   const zenith = new THREE.Color(SKY.zenith);
@@ -21,45 +86,22 @@ export function buildSky(THREE) {
     fog: false,
     depthWrite: false,
   });
-  const mesh = new THREE.Mesh(geometry, material);
-  mesh.renderOrder = -1;
-  const group = new THREE.Group();
-  group.add(mesh);
-  return group;
+  return new THREE.Mesh(geometry, material);
 }
 
-// A few puffy clouds made of white spheres. The whole group turns slowly around the place (FR-2, FR-14).
-export function buildClouds(THREE, { count = 8 } = {}) {
+// The sky sphere and the sun light. The group turns slowly (FR-14); the sphere is child 0.
+export function buildSky(THREE, assets, params = skyParams(assets)) {
   const group = new THREE.Group();
-  const material = new THREE.MeshBasicMaterial({
-    color: '#ffffff',
-    transparent: true,
-    opacity: 0.92,
-    fog: false,
-  });
-  for (let i = 0; i < count; i++) {
-    const cloud = new THREE.Group();
-    const puffs = 4 + (i % 3);
-    for (let p = 0; p < puffs; p++) {
-      const s = 10 + ((i * 7 + p * 5) % 9);
-      const puff = new THREE.Mesh(new THREE.SphereGeometry(s, 10, 8), material);
-      puff.position.set(p * 11 - puffs * 5, (p % 2) * 3, (p % 3) * 4);
-      puff.scale.y = 0.55;
-      cloud.add(puff);
-    }
-    const angle = (i / count) * Math.PI * 2;
-    const radius = 150 + (i % 3) * 40;
-    cloud.position.set(
-      Math.cos(angle) * radius,
-      55 + (i % 4) * 12,
-      Math.sin(angle) * radius,
-    );
-    cloud.rotation.y = -angle;
-    group.add(cloud);
-  }
-  // 0.004 radians per second: a full turn takes about 26 minutes. Calm, not distracting.
+  const mesh = params.photo
+    ? photoSphere(THREE, assets.texture('sky'))
+    : gradientSphere(THREE);
+  mesh.renderOrder = -1;
+  group.add(mesh);
+  const sun = new THREE.DirectionalLight('#ffd9a0', 1.0);
+  sun.position.set(...params.sun).multiplyScalar(100);
+  group.add(sun);
   group.userData.update = (seconds) => {
-    group.rotation.y = seconds * 0.004;
+    group.rotation.y = seconds * SKY_DRIFT;
   };
   return group;
 }

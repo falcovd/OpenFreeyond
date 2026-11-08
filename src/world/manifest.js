@@ -8,6 +8,7 @@ export const MANIFEST = [
   { id: 'wood', type: 'texture', url: url('textures/wood.jpg') },
   { id: 'brick', type: 'texture', url: url('textures/brick.jpg') },
   { id: 'roof', type: 'texture', url: url('textures/roof.jpg') },
+  { id: 'sky', type: 'texture', url: url('textures/sky.jpg') },
   { id: 'tree-round', type: 'model', url: url('models/tree-round.glb') },
   { id: 'tree-pine', type: 'model', url: url('models/tree-pine.glb') },
   { id: 'bush', type: 'model', url: url('models/bush.glb') },

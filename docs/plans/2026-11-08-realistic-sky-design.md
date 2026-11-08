@@ -22,7 +22,7 @@ Weather and day-night changes are out of scope for this round. See "Later" below
 
 - One equirectangular sky photo, 4096×2048 JPEG, about 1.5 to 2.5 MB.
 - Source: a CC0 sky from Poly Haven or ambientCG with a few soft clouds and a visible sun. The exact photo is chosen at implementation time and the builder can veto it.
-- `scripts/prepare-sky.mjs` resizes the source and writes `public/assets/textures/sky.jpg`. It also writes `public/assets/textures/sky.json` with:
+- `scripts/prepare-sky.mjs` resizes the source and writes `public/assets/textures/sky.jpg`. It also writes `src/data/sky.json` with:
   - `horizon`: the average colour of a thin band just above the photo's horizon (hex).
   - `sun`: the direction of the brightest spot, as a unit vector.
 - The texture budget test allows `sky.jpg` up to 3 MB. Every other texture stays at 1 MB.
@@ -30,7 +30,7 @@ Weather and day-night changes are out of scope for this round. See "Later" below
 
 ### In the world
 
-- `manifest.js` lists the sky texture and `sky.json`, so the loading indicator covers them.
+- `manifest.js` lists the sky texture, so the loading indicator covers it. `sky.json` is not in the manifest: it lives in `src/data/` and code imports it. The data is bundled by Vite. World code may not call `fetch`, and this avoids a new loader type.
 - `buildSky` puts the texture on the existing inside-out sphere. The material is unlit and ignores fog.
 - The sphere turns very slowly, so the clouds drift (FR-14). `buildClouds` and the sphere clouds are removed.
 - The sphere stays centred on the player.
@@ -56,7 +56,7 @@ Weather and day-night changes are out of scope for this round. See "Later" below
 
 - `sky.json` holds a valid hex colour and a unit sun vector.
 - `buildSky` uses the texture when it is loaded and the gradient when it is not.
-- The manifest lists the sky. The licence test finds its record.
+- The manifest lists the sky texture. The licence test finds its record.
 - The budget test allows the sky file up to 3 MB.
 - `buildClouds` is gone. The sky tests are updated.
 

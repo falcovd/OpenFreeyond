@@ -46,6 +46,30 @@ describe('buildWorld', () => {
     }
     expect(count(group, 'flower-bed')).toBe(FLOWER_BEDS.length);
   });
+  it('has exactly one directional light, the sun of the sky (FR-2, FR-14)', () => {
+    const world = buildWorld(THREE, makeAssets(new Map()), colours, {
+      withCharacter: false,
+    });
+    let lights = 0;
+    world.group.traverse((o) => {
+      if (o.isDirectionalLight) lights++;
+    });
+    expect(lights).toBe(1);
+  });
+  it('uses the sky photo when it loaded', () => {
+    const tex = new THREE.Texture();
+    const world = buildWorld(
+      THREE,
+      makeAssets(new Map([['sky', tex]])),
+      colours,
+      { withCharacter: false },
+    );
+    let mapped = false;
+    world.group.traverse((o) => {
+      if (o.material?.map === tex) mapped = true;
+    });
+    expect(mapped).toBe(true);
+  });
   it('collects the motion functions of trees and clouds (FR-14)', () => {
     const assets = makeAssets(
       new Map([
@@ -56,7 +80,7 @@ describe('buildWorld', () => {
     const { updaters } = buildWorld(THREE, assets, colours, {
       withCharacter: false,
     });
-    expect(updaters.length).toBeGreaterThanOrEqual(7); // 6 trees + clouds
+    expect(updaters.length).toBeGreaterThanOrEqual(7); // 6 trees + sky
   });
   it('puts the plain figure in the character spot when the character model is missing (AC-8.4)', () => {
     const world = buildWorld(THREE, makeAssets(new Map()), colours);
