@@ -1,5 +1,17 @@
 export const SKY = { radius: 400, horizon: '#cfe6f5', zenith: '#3f86d0' };
 
+const HEX = /^#[0-9a-f]{6}$/i;
+
+// True when the sky data can be trusted: a hex colour and a unit vector that points above the horizon.
+export function validSkyMeta(meta) {
+  if (!meta || typeof meta.horizon !== 'string' || !HEX.test(meta.horizon))
+    return false;
+  const sun = meta.sun;
+  if (!Array.isArray(sun) || sun.length !== 3) return false;
+  if (!sun.every(Number.isFinite)) return false;
+  return Math.abs(Math.hypot(...sun) - 1) < 0.01 && sun[1] > 0;
+}
+
 // A big inside-out sphere. Colour runs from the horizon colour up to the deeper blue overhead.
 // Everything at or below the horizon uses the horizon colour, which is also the fog colour (FR-1, FR-3).
 export function buildSky(THREE) {
