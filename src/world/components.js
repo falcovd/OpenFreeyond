@@ -1,6 +1,7 @@
 import { resolveMove } from '../logic/collision.js';
 import { applyColours } from '../logic/colours.js';
 import { SOLIDS, BOUNDS } from './layout.js';
+import { attachMouth } from './builders/mouth.js';
 
 const MAX_STEP = 0.15; // metres
 
@@ -43,6 +44,18 @@ AFRAME.registerComponent('character-colours', {
   paint() {
     const mesh = this.el.getObject3D('mesh');
     if (mesh) applyColours(mesh, this.data);
+  },
+});
+
+// The model has no mouth, so one is drawn on its head bone when the model is loaded.
+AFRAME.registerComponent('character-mouth', {
+  init() {
+    this.el.addEventListener('model-loaded', () => this.attach());
+    this.attach();
+  },
+  attach() {
+    const mesh = this.el.getObject3D('mesh');
+    if (mesh) attachMouth(AFRAME.THREE, mesh);
   },
 });
 
