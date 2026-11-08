@@ -32,9 +32,10 @@ Findings against the spec:
 
 - 60 s of sampling with the player parked in the far corner: he alternated walk and idle, travelled 42.2 m through 43 distinct spots, and was never inside a solid or outside the garden (checked against the real layout, body radius 0.5). His collision solid always matched his position.
 - With the player 1.8 m away he switched to greet and faced the player (heading error 0 rad). After the player left he went back to wandering.
-- Screenshots (mid-walk and a close-up greet) look right: upright, stride visible, mouth still on his face, dark shorts as before. The walk and the feet were judged from screenshots in software rendering only.
+- Screenshots (mid-walk and a close-up greet): upright, mouth still on his face, dark shorts as before. Stills cannot show whether the legs move.
+- Animation, measured on the right leg bone over 160 samples (software rendering): he was never moving without the `Walk` clip playing (0 of 116 moving samples). During one continuous walk the leg bone swung (spread 0.40 in quaternion distance); during one continuous rest it barely moved (0.04, breathing). An earlier build named a component method `play`, which A-Frame replaces with a wrapper that drops its arguments, so no clip played at all (he slid, and the idle pose froze). `tests/components.test.js` now guards against that name.
 - `character.glb` now has exactly the clips `Idle` and `Walk` (1.4 MB).
-- Not checked: whether the feet slide on the ground, the frame rate on the builder's laptop, and Firefox and Safari.
+- Not checked: whether the feet slide on the ground at the chosen walking speed, the frame rate on the builder's laptop, and Firefox and Safari.
 
 ## Per browser
 - [ ] AC-1.1 Look in a full circle and upward: is the sky a photographic sky? (Auto: `tests/builders-sky-ground.test.js` checks the sky is built; a person judges the look.)

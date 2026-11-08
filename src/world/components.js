@@ -80,7 +80,7 @@ AFRAME.registerComponent('character-animation', {
     this.onModel = () => this.setup();
     this.onState = (event) => {
       this.wanted = event.detail.moving ? 'Walk' : 'Idle';
-      this.play(this.wanted);
+      this.playClip(this.wanted);
     };
     this.el.addEventListener('model-loaded', this.onModel);
     this.el.addEventListener('character-state', this.onState);
@@ -93,9 +93,10 @@ AFRAME.registerComponent('character-animation', {
       const clip = mesh.animations.find((c) => c.name === name);
       if (clip) this.actions[name] = this.mixer.clipAction(clip);
     }
-    this.play(this.wanted, 0);
+    this.playClip(this.wanted, 0);
   },
-  play(name, fade = FADE_SECONDS) {
+  // Not called `play`: A-Frame replaces a component's `play` with a wrapper that drops its arguments.
+  playClip(name, fade = FADE_SECONDS) {
     const next = this.actions[name];
     if (!next || next === this.current) return;
     next.reset().setEffectiveWeight(1).play();
