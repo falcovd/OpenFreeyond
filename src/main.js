@@ -47,6 +47,7 @@ const LOADING_LIMIT_MS = 30000;
 
 async function enterWorld(character, { notice = null } = {}) {
   const token = ++screenToken;
+  const startedAt = Date.now();
   // The cover shows at once and goes when the place is ready or after 30 seconds (FR-15).
   const loading = renderLoading(document.body);
   const limit = setTimeout(() => loading.remove(), LOADING_LIMIT_MS);
@@ -56,7 +57,7 @@ async function enterWorld(character, { notice = null } = {}) {
     leaveWorld();
     app.replaceChildren();
     const stats = new URLSearchParams(window.location.search).has('stats');
-    const mounted = await mountWorld(app, character, { stats });
+    const mounted = await mountWorld(app, character, { stats, startedAt });
     if (token !== screenToken) {
       mounted.destroy();
       return;

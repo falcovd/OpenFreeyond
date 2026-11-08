@@ -3,6 +3,8 @@ import {
   loadAssets,
   failureMessage,
   LOAD_TIMEOUT_MS,
+  ASSET_BUDGET_MS,
+  assetBudgetMs,
 } from '../src/world/assetLoader.js';
 
 const manifest = [
@@ -105,5 +107,23 @@ describe('failureMessage', () => {
     expect(failureMessage({ failed: ['tree'], stalled: true })).toMatch(
       /too long/i,
     );
+  });
+});
+
+describe('assetBudgetMs (FR-15, AC-8.6)', () => {
+  it('is the whole budget at the moment the person chooses', () => {
+    expect(assetBudgetMs(1000, 1000)).toBe(ASSET_BUDGET_MS);
+  });
+  it('shrinks as time passes', () => {
+    expect(assetBudgetMs(0, 5000, 24000)).toBe(19000);
+    expect(assetBudgetMs(0, 10000, 24000)).toBeLessThan(
+      assetBudgetMs(0, 5000, 24000),
+    );
+  });
+  it('is never negative', () => {
+    expect(assetBudgetMs(0, 99000, 24000)).toBe(0);
+  });
+  it('leaves room for building before the 30 second cover goes', () => {
+    expect(ASSET_BUDGET_MS).toBeLessThan(LOAD_TIMEOUT_MS);
   });
 });

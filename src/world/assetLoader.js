@@ -3,6 +3,18 @@
 // This file must not import aframe, so it runs in unit tests.
 export const LOAD_TIMEOUT_MS = 30000;
 
+// Time for downloads, counted from the moment the person chooses. The rest of the 30 seconds
+// is for building the place and its first frame, so the place is on screen when the cover goes.
+export const ASSET_BUDGET_MS = 24000;
+
+export function assetBudgetMs(
+  startedAt,
+  now = Date.now(),
+  budget = ASSET_BUDGET_MS,
+) {
+  return Math.max(0, startedAt + budget - now);
+}
+
 export function loadAssets(
   manifest,
   loaders,

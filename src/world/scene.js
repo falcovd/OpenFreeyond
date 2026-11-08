@@ -4,7 +4,12 @@ import { SPAWN, CHARACTER_SPOT } from './layout.js';
 import { releasePage } from './teardown.js';
 import { HAIR_COLOURS, CLOTHING_COLOURS } from '../logic/fields.js';
 import { MANIFEST } from './manifest.js';
-import { loadAssets, failureMessage, LOAD_TIMEOUT_MS } from './assetLoader.js';
+import {
+  loadAssets,
+  failureMessage,
+  assetBudgetMs,
+  LOAD_TIMEOUT_MS,
+} from './assetLoader.js';
 import { makeAssets } from './builders/common.js';
 import { buildWorld } from './buildWorld.js';
 import { SKY } from './builders/sky.js';
@@ -49,10 +54,17 @@ function sceneReady(sceneEl, ms) {
   ]);
 }
 
-export async function mountWorld(container, character, { stats = false } = {}) {
-  const deadline = Date.now() + LOAD_TIMEOUT_MS;
+// `startedAt` is when the person chose, so the limits count from then, not from this call.
+export async function mountWorld(
+  container,
+  character,
+  { stats = false, startedAt = Date.now() } = {},
+) {
+  const deadline = startedAt + LOAD_TIMEOUT_MS;
   const THREE = AFRAME.THREE;
-  const loaded = await loadAssets(MANIFEST, makeLoaders(THREE));
+  const loaded = await loadAssets(MANIFEST, makeLoaders(THREE), {
+    timeoutMs: assetBudgetMs(startedAt),
+  });
   const assets = makeAssets(loaded.values);
   const hair = safeId(HAIR_COLOURS, character.hair);
   const clothing = safeId(CLOTHING_COLOURS, character.clothing);

@@ -59,6 +59,22 @@ describe('loading indicator (FR-15)', () => {
     }
   });
 
+  it('tells the world when the person chose, so its limits count from then (AC-8.6)', async () => {
+    let options;
+    await boot(async (container, _character, opts) => {
+      options = opts;
+      const el = document.createElement('div');
+      el.className = 'world';
+      container.appendChild(el);
+      return { destroy: () => el.remove() };
+    });
+    const before = Date.now();
+    document.querySelector('[data-choice="try-out"]').click();
+    await tick();
+    expect(options.startedAt).toBeGreaterThanOrEqual(before);
+    expect(options.startedAt).toBeLessThanOrEqual(Date.now());
+  });
+
   it('shows the short message when assets failed (AC-8.3)', async () => {
     await boot(async (container) => {
       const el = document.createElement('div');
