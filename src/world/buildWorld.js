@@ -1,5 +1,5 @@
 import { SOLIDS, FLOWER_BEDS } from './layout.js';
-import { buildSky, buildClouds } from './builders/sky.js';
+import { buildSky } from './builders/sky.js';
 import { buildGround, buildPath } from './builders/ground.js';
 import {
   buildTree,
@@ -20,7 +20,7 @@ const BUILDERS = {
 };
 
 // Builds the whole place from what loaded. Never throws for a missing asset (FR-16).
-// Returns the group and the functions that move things (trees, clouds).
+// Returns the group and the functions that move things (trees, sky).
 export function buildWorld(
   THREE,
   assets,
@@ -29,12 +29,11 @@ export function buildWorld(
 ) {
   const group = new THREE.Group();
   group.add(
-    buildSky(THREE),
+    buildSky(THREE, assets),
     buildGround(THREE, assets),
     buildPath(THREE, assets),
     buildHouse(THREE, assets),
   );
-  group.add(buildClouds(THREE));
   for (const solid of SOLIDS) {
     const build = BUILDERS[solid.kind];
     if (build) group.add(build(THREE, assets, solid));

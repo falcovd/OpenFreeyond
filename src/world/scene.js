@@ -13,7 +13,7 @@ import {
 import { makeAssets } from './builders/common.js';
 import { buildWorld } from './buildWorld.js';
 import { disposeObject, disposeAssets } from './dispose.js';
-import { SKY } from './builders/sky.js';
+import { skyParams } from './builders/sky.js';
 
 // Only known colour ids may reach the markup; anything else gets the first entry.
 function safeId(set, id) {
@@ -89,16 +89,16 @@ export async function mountWorld(
     timeoutMs: assetBudgetMs(startedAt),
   });
   const assets = makeAssets(loaded.values);
+  const sky = skyParams(assets);
   const hair = safeId(HAIR_COLOURS, character.hair);
   const clothing = safeId(CLOTHING_COLOURS, character.clothing);
 
   const scene = document.createElement('div');
   scene.className = 'world';
   scene.innerHTML = `
-    <a-scene ${stats ? 'stats' : ''} vr-mode-ui="enabled: false" background="color: ${SKY.horizon}"
-      fog="type: linear; color: ${SKY.horizon}; near: 40; far: 220">
+    <a-scene ${stats ? 'stats' : ''} vr-mode-ui="enabled: false" background="color: ${sky.horizon}"
+      fog="type: linear; color: ${sky.horizon}; near: 40; far: 220">
       <a-light type="ambient" color="#ffd9b0" intensity="0.85"></a-light>
-      <a-light type="directional" color="#ffd9a0" intensity="1.0" position="-6 5 8"></a-light>
       <a-light type="point" color="#ffcf8a" intensity="0.8" distance="12" position="0 2.5 -3"></a-light>
       <a-entity id="world-root" world-motion></a-entity>
       <a-entity id="character-model-entity"
