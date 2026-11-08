@@ -1,4 +1,4 @@
-import { box } from './common.js';
+import { box, surface } from './common.js';
 
 // A flower bed: soil with a random-looking mix of daisies, tulips and lavender-like spikes,
 // each on its own leaning stem, with leaves and small tufts of foliage between them.
@@ -7,7 +7,10 @@ import { box } from './common.js';
 // Every part is one InstancedMesh, so a bed costs about eight draw calls however many flowers it has.
 // No import of aframe: THREE is passed in.
 
+const WOOD_TILE = 1; // metres of board that one copy of the wood texture covers
 const SOIL_TOP = 0.12;
+const SOIL_COLOUR = '#5a3d28'; // when the soil texture is missing
+const SOIL_TILE = 0.6; // metres of soil that one copy of the texture covers
 const BORDER = { thickness: 0.07, height: 0.19, colour: '#74492a' }; // wooden boards, like the fence
 const SPACING = 0.2; // spacing of the jittered grid the flowers grow on
 const MARGIN = 0.16; // flowers stay this far from the edge of the bed, so leaning stems stay inside it
@@ -63,7 +66,8 @@ class Part {
   }
 }
 
-export function buildFlowerBed(THREE, bed) {
+// Soil and border use the 'soil' and 'wood' textures, and plain colours when they did not load (FR-16).
+export function buildFlowerBed(THREE, assets, bed) {
   const random = seededRandom(bed.id);
   const between = (lo, hi) => lo + random() * (hi - lo);
   const pick = (list) => list[Math.floor(random() * list.length)];
@@ -71,25 +75,23 @@ export function buildFlowerBed(THREE, bed) {
   const g = new THREE.Group();
   g.position.set(bed.x, 0, bed.z);
   g.userData.kind = 'flower-bed';
-  g.add(
-    box(
-      THREE,
-      bed.w,
-      SOIL_TOP,
-      bed.d,
-      new THREE.MeshStandardMaterial({ color: '#5a3d28', roughness: 1 }),
-      0,
-      SOIL_TOP / 2,
-      0,
-    ),
+  const soil = box(
+    THREE,
+    bed.w,
+    SOIL_TOP,
+    bed.d,
+    surface(THREE, assets, 'soil', SOIL_COLOUR, {
+      repeat: [bed.w / SOIL_TILE, bed.d / SOIL_TILE],
+    }),
+    0,
+    SOIL_TOP / 2,
+    0,
   );
+  soil.userData.part = 'soil';
+  g.add(soil);
 
   // A low wooden frame around the soil, so the bed does not look like soil lying on the grass.
   // The boards sit just outside the bed, and the soil is a little lower than their top edge.
-  const boardMaterial = new THREE.MeshStandardMaterial({
-    color: BORDER.colour,
-    roughness: 1,
-  });
   const t = BORDER.thickness;
   const boards = [
     [bed.w + 2 * t, t, 0, (bed.d + t) / 2], // front
@@ -103,7 +105,9 @@ export function buildFlowerBed(THREE, bed) {
       w,
       BORDER.height,
       d,
-      boardMaterial,
+      surface(THREE, assets, 'wood', BORDER.colour, {
+        repeat: [Math.max(w, d) / WOOD_TILE, BORDER.height / WOOD_TILE],
+      }),
       x,
       BORDER.height / 2,
       z,

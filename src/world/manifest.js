@@ -6,6 +6,7 @@ export const MANIFEST = [
   { id: 'grass', type: 'texture', url: url('textures/grass.jpg') },
   { id: 'path', type: 'texture', url: url('textures/path.jpg') },
   { id: 'wood', type: 'texture', url: url('textures/wood.jpg') },
+  { id: 'soil', type: 'texture', url: url('textures/soil.jpg') },
   { id: 'brick', type: 'texture', url: url('textures/brick.jpg') },
   { id: 'roof', type: 'texture', url: url('textures/roof.jpg') },
   { id: 'sky', type: 'texture', url: url('textures/sky.jpg') },

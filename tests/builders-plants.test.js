@@ -96,7 +96,7 @@ describe('bushes, hedge, flower beds (FR-7)', () => {
   });
   it('draws flowers on every flower bed, and the bed has no collision data', () => {
     for (const bed of FLOWER_BEDS) {
-      const g = buildFlowerBed(THREE, bed);
+      const g = buildFlowerBed(THREE, makeAssets(new Map()), bed);
       expect(g.children.length).toBeGreaterThan(5);
       expect(g.userData.kind).toBe('flower-bed');
     }
@@ -105,6 +105,7 @@ describe('bushes, hedge, flower beds (FR-7)', () => {
 
 describe('flower beds look like a mix of real flowers (FR-7)', () => {
   const bed = FLOWER_BEDS[0];
+  const none = makeAssets(new Map());
   const parts = (g) =>
     Object.fromEntries(
       g.children
@@ -137,7 +138,7 @@ describe('flower beds look like a mix of real flowers (FR-7)', () => {
   };
 
   it('has daisies, tulips and spikes, with stems, leaves and foliage', () => {
-    const p = parts(buildFlowerBed(THREE, bed));
+    const p = parts(buildFlowerBed(THREE, none, bed));
     for (const part of [
       'stems',
       'leaves',
@@ -152,24 +153,24 @@ describe('flower beds look like a mix of real flowers (FR-7)', () => {
     }
   });
   it('keeps every stem inside the bed', () => {
-    for (const { p } of stems(buildFlowerBed(THREE, bed))) {
+    for (const { p } of stems(buildFlowerBed(THREE, none, bed))) {
       expect(Math.abs(p.x)).toBeLessThanOrEqual(bed.w / 2);
       expect(Math.abs(p.z)).toBeLessThanOrEqual(bed.d / 2);
       expect(p.y).toBeGreaterThan(0.12); // above the soil
     }
   });
   it('varies the height of the flowers', () => {
-    const heights = stems(buildFlowerBed(THREE, bed)).map((s) => s.s.y);
+    const heights = stems(buildFlowerBed(THREE, none, bed)).map((s) => s.s.y);
     expect(Math.max(...heights) - Math.min(...heights)).toBeGreaterThan(0.12);
   });
   it('uses several colours for tulips and for daisies', () => {
-    const p = parts(buildFlowerBed(THREE, bed));
+    const p = parts(buildFlowerBed(THREE, none, bed));
     expect(colours(p.tulips).size).toBeGreaterThanOrEqual(2);
     expect(colours(p['daisy-petals']).size).toBeGreaterThanOrEqual(2);
   });
   it('has a wooden border on all four sides that rises above the soil', () => {
     for (const b of FLOWER_BEDS) {
-      const g = buildFlowerBed(THREE, b);
+      const g = buildFlowerBed(THREE, none, b);
       const border = g.children.filter((c) => c.userData.part === 'border');
       expect(border).toHaveLength(4);
       const frame = new THREE.Box3();
@@ -183,9 +184,31 @@ describe('flower beds look like a mix of real flowers (FR-7)', () => {
       expect(Math.abs(frame.min.z + frame.max.z)).toBeLessThan(1e-6);
     }
   });
+  it('textures the soil and the border when the textures are there (FR-4)', () => {
+    const assets = makeAssets(
+      new Map([
+        ['soil', new THREE.Texture()],
+        ['wood', new THREE.Texture()],
+      ]),
+    );
+    const g = buildFlowerBed(THREE, assets, bed);
+    const soil = g.children.find((c) => c.userData.part === 'soil');
+    expect(soil.material.map).not.toBeNull();
+    expect(soil.material.map.repeat.x).toBeGreaterThan(1);
+    const boards = g.children.filter((c) => c.userData.part === 'border');
+    expect(boards).toHaveLength(4);
+    for (const board of boards) expect(board.material.map).not.toBeNull();
+  });
+  it('uses plain colours for the soil and the border when the textures are missing (FR-16)', () => {
+    const g = buildFlowerBed(THREE, none, bed);
+    const soil = g.children.find((c) => c.userData.part === 'soil');
+    expect(soil.material.map).toBeNull();
+    for (const board of g.children.filter((c) => c.userData.part === 'border'))
+      expect(board.material.map).toBeNull();
+  });
   it('builds the same bed every time, and beds differ from each other', () => {
     const key = (b) =>
-      stems(buildFlowerBed(THREE, b))
+      stems(buildFlowerBed(THREE, none, b))
         .map((s) => s.p.toArray().map((n) => n.toFixed(4)))
         .join('|');
     expect(key(FLOWER_BEDS[0])).toBe(key(FLOWER_BEDS[0]));

@@ -35,6 +35,16 @@ export const ASSET_RECORDS = [
     checked: '2026-11-08',
   },
   {
+    files: ['textures/soil.jpg'],
+    author: 'ambientCG (Ground 048)',
+    source: 'https://ambientcg.com/a/Ground048',
+    licence: 'CC0-1.0',
+    licenceText:
+      'CC0 1.0 Universal (CC0 1.0) Public Domain Dedication, https://creativecommons.org/publicdomain/zero/1.0/. ambientCG: "All assets are released under the Creative Commons CC0 license, making them free to use without attribution - even in commercial circumstances." (https://docs.ambientcg.com/license/). Colour map resized to 512x512 JPEG by scripts/prepare-texture.mjs.',
+    credit: null,
+    checked: '2026-11-08',
+  },
+  {
     files: ['textures/wood.jpg'],
     author: 'ambientCG (Wood Floor 043)',
     source: 'https://ambientcg.com/a/WoodFloor043',
