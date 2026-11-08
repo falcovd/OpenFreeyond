@@ -1,9 +1,8 @@
 // @vitest-environment node
 import { readFileSync } from 'node:fs';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
-import { makeAssets, fitToHeight } from '../src/world/builders/common.js';
+import { makeAssets } from '../src/world/builders/common.js';
 import {
   buildTree,
   buildBush,
@@ -104,31 +103,29 @@ describe('bushes, hedge, flower beds (FR-7)', () => {
   });
 });
 
-// Skipped: GLTFLoader decodes the embedded textures with browser image APIs
-// (self, createImageBitmap), which node and jsdom do not have.
-describe.skip('real model files', () => {
-  const cases = [
-    ['tree-round', 6],
-    ['tree-pine', 7],
-    ['bush', 1.2],
-  ];
-  it.each(cases)(
-    'fits %s to the requested height on y = 0',
-    async (name, height) => {
-      const file = readFileSync(
-        new URL(`../public/assets/models/${name}.glb`, import.meta.url),
-      );
-      const data = file.buffer.slice(
-        file.byteOffset,
-        file.byteOffset + file.byteLength,
-      );
-      const gltf = await new Promise((resolve, reject) =>
-        new GLTFLoader().parse(data, '', resolve, reject),
-      );
-      const wrapper = fitToHeight(THREE, gltf.scene, height);
-      const box = new THREE.Box3().setFromObject(wrapper);
-      expect(box.max.y - box.min.y).toBeCloseTo(height, 3);
-      expect(box.min.y).toBeCloseTo(0, 3);
+// GLTFLoader cannot decode textures in node, so the real files get a header check instead.
+// A-Frame 1.6.0's bundled GLTFLoader supports these two required extensions, and we use only them.
+const ALLOWED_REQUIRED = ['EXT_texture_webp', 'KHR_mesh_quantization'];
+
+function glbJson(name) {
+  const buf = readFileSync(
+    new URL(`../public/assets/models/${name}.glb`, import.meta.url),
+  );
+  expect(buf.toString('ascii', 0, 4)).toBe('glTF');
+  const length = buf.readUInt32LE(12);
+  expect(buf.toString('ascii', 16, 20)).toBe('JSON');
+  return JSON.parse(buf.toString('utf8', 20, 20 + length));
+}
+
+describe('real model files', () => {
+  it.each(['tree-round', 'tree-pine', 'bush'])(
+    '%s has a mesh and only extensions the loader supports',
+    (name) => {
+      const gltf = glbJson(name);
+      expect(gltf.meshes?.length).toBeGreaterThan(0);
+      for (const ext of gltf.extensionsRequired ?? []) {
+        expect(ALLOWED_REQUIRED).toContain(ext);
+      }
     },
   );
 });
