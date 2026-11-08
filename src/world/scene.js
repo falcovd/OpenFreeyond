@@ -12,6 +12,7 @@ import {
 } from './assetLoader.js';
 import { makeAssets } from './builders/common.js';
 import { buildWorld } from './buildWorld.js';
+import { disposeObject, disposeAssets } from './dispose.js';
 import { SKY } from './builders/sky.js';
 
 // Only known colour ids may reach the markup; anything else gets the first entry.
@@ -40,18 +41,40 @@ function makeLoaders(THREE) {
   };
 }
 
-const whenLoaded = (el) =>
-  el.hasLoaded
-    ? Promise.resolve()
-    : new Promise((r) => el.addEventListener('loaded', r, { once: true }));
+// Resolves when the element has loaded, or rejects when `ms` have passed, so a stalled
+// init cannot hang mountWorld. The timer is cleared on success.
+function whenLoaded(el, ms) {
+  if (el.hasLoaded) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error('The scene did not start in time.')),
+      Math.max(0, ms),
+    );
+    el.addEventListener(
+      'loaded',
+      () => {
+        clearTimeout(timer);
+        resolve();
+      },
+      { once: true },
+    );
+  });
+}
 
 // Resolves when the scene has started, or when the time is up, whichever comes first.
 function sceneReady(sceneEl, ms) {
   if (sceneEl.hasLoaded) return Promise.resolve();
-  return Promise.race([
-    new Promise((r) => sceneEl.addEventListener('loaded', r, { once: true })),
-    new Promise((r) => setTimeout(r, Math.max(0, ms))),
-  ]);
+  return new Promise((resolve) => {
+    const timer = setTimeout(resolve, Math.max(0, ms));
+    sceneEl.addEventListener(
+      'loaded',
+      () => {
+        clearTimeout(timer);
+        resolve();
+      },
+      { once: true },
+    );
+  });
 }
 
 // `startedAt` is when the person chose, so the limits count from then, not from this call.
@@ -87,39 +110,58 @@ export async function mountWorld(
     </a-scene>`;
   container.appendChild(scene);
   const sceneEl = scene.querySelector('a-scene');
+  let root = null;
+  let torn = false;
 
-  const world = buildWorld(THREE, assets, { hair, clothing });
-  const root = scene.querySelector('#world-root');
-  await whenLoaded(root);
-  root.setObject3D('world', world.group);
-  root.worldUpdaters = world.updaters;
+  // One teardown for destroy() and for a failed mount. Safe to call more than once.
+  const teardown = () => {
+    if (torn) return;
+    torn = true;
+    // Removing the node only disposes the renderer; the render loop must be stopped too.
+    if (sceneEl) {
+      // A-Frame's pending 'loaded' listener (a-scene.js play(), line 683) returns early
+      // when renderStarted is set (line 689), so a late load cannot restart the loop.
+      sceneEl.renderStarted = true;
+      sceneEl.pause?.();
+      sceneEl.renderer?.setAnimationLoop(null);
+    }
+    if (root) root.worldUpdaters = [];
+    disposeObject(root?.getObject3D?.('world'));
+    disposeObject(
+      scene.querySelector('#character-model-entity')?.getObject3D?.('mesh'),
+    );
+    disposeAssets(loaded.values);
+    try {
+      sceneEl?.renderer?.forceContextLoss?.();
+    } catch {
+      // The context may already be gone.
+    }
+    scene.remove();
+    // A-Frame leaves its fullscreen class on <html>; without this the page cannot scroll.
+    releasePage(document.documentElement);
+  };
 
-  // The loaded character model goes on its entity. The existing components paint and animate it.
-  const characterGltf = assets.gltf('character');
-  if (characterGltf) {
-    const el = scene.querySelector('#character-model-entity');
-    await whenLoaded(el);
-    characterGltf.scene.animations = characterGltf.animations;
-    el.setObject3D('mesh', characterGltf.scene);
-    el.emit('model-loaded');
+  try {
+    const world = buildWorld(THREE, assets, { hair, clothing });
+    root = scene.querySelector('#world-root');
+    await whenLoaded(root, deadline - Date.now());
+    root.setObject3D('world', world.group);
+    root.worldUpdaters = world.updaters;
+
+    // The loaded character model goes on its entity. The existing components paint and animate it.
+    const characterGltf = assets.gltf('character');
+    if (characterGltf) {
+      const el = scene.querySelector('#character-model-entity');
+      await whenLoaded(el, deadline - Date.now());
+      characterGltf.scene.animations = characterGltf.animations;
+      el.setObject3D('mesh', characterGltf.scene);
+      el.emit('model-loaded');
+    }
+    await sceneReady(sceneEl, deadline - Date.now());
+  } catch (error) {
+    teardown();
+    throw error;
   }
 
-  await sceneReady(sceneEl, deadline - Date.now());
-
-  return {
-    warning: failureMessage(loaded),
-    destroy: () => {
-      // Removing the node only disposes the renderer; the render loop must be stopped too.
-      if (sceneEl) {
-        // A-Frame's pending 'loaded' listener (a-scene.js play(), line 683) returns early
-        // when renderStarted is set (line 689), so a late load cannot restart the loop.
-        sceneEl.renderStarted = true;
-        sceneEl.pause?.();
-        sceneEl.renderer?.setAnimationLoop(null);
-      }
-      scene.remove();
-      // A-Frame leaves its fullscreen class on <html>; without this the page cannot scroll.
-      releasePage(document.documentElement);
-    },
-  };
+  return { warning: failureMessage(loaded), destroy: teardown };
 }

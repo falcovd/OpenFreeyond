@@ -1,4 +1,5 @@
 import './ui/styles.css';
+import { LOAD_TIMEOUT_MS } from './world/assetLoader.js';
 import {
   getStorage,
   loadCharacter,
@@ -43,7 +44,7 @@ function leaveWorld() {
   world = null;
 }
 
-const LOADING_LIMIT_MS = 30000;
+const LOADING_LIMIT_MS = LOAD_TIMEOUT_MS;
 
 async function enterWorld(character, { notice = null } = {}) {
   const token = ++screenToken;
