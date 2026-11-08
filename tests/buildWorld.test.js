@@ -1,0 +1,73 @@
+import { describe, it, expect } from 'vitest';
+import * as THREE from 'three';
+import { makeAssets } from '../src/world/builders/common.js';
+import { buildWorld } from '../src/world/buildWorld.js';
+import { SOLIDS, FLOWER_BEDS } from '../src/world/layout.js';
+
+const colours = { hair: 'brown', clothing: 'mustard' };
+const count = (root, kind) => {
+  let n = 0;
+  root.traverse((o) => {
+    if (o.userData.kind === kind) n++;
+  });
+  return n;
+};
+const gltf = () => {
+  const scene = new THREE.Group();
+  scene.add(new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1)));
+  return { scene };
+};
+
+describe('buildWorld', () => {
+  it('survives every asset failing (AC-8.4)', () => {
+    const world = buildWorld(THREE, makeAssets(new Map()), colours, {
+      withCharacter: false,
+    });
+    expect(count(world.group, 'tree')).toBe(
+      SOLIDS.filter((s) => s.kind === 'tree').length,
+    );
+    expect(count(world.group, 'house')).toBe(1);
+  });
+  it('draws every solid kind and every flower bed', () => {
+    const assets = makeAssets(
+      new Map([
+        ['tree-round', gltf()],
+        ['tree-pine', gltf()],
+        ['bush', gltf()],
+      ]),
+    );
+    const { group } = buildWorld(THREE, assets, colours, {
+      withCharacter: false,
+    });
+    for (const kind of ['tree', 'bush', 'hedge', 'fence', 'furniture']) {
+      expect(count(group, kind), kind).toBe(
+        SOLIDS.filter((s) => s.kind === kind).length,
+      );
+    }
+    expect(count(group, 'flower-bed')).toBe(FLOWER_BEDS.length);
+  });
+  it('collects the motion functions of trees and clouds (FR-14)', () => {
+    const assets = makeAssets(
+      new Map([
+        ['tree-round', gltf()],
+        ['tree-pine', gltf()],
+      ]),
+    );
+    const { updaters } = buildWorld(THREE, assets, colours, {
+      withCharacter: false,
+    });
+    expect(updaters.length).toBeGreaterThanOrEqual(7); // 6 trees + clouds
+  });
+  it('puts the plain figure in the character spot when the character model is missing (AC-8.4)', () => {
+    const world = buildWorld(THREE, makeAssets(new Map()), colours);
+    expect(count(world.group, 'character')).toBe(1);
+  });
+  it('leaves the character to the model entity when the model loaded', () => {
+    const world = buildWorld(
+      THREE,
+      makeAssets(new Map([['character', gltf()]])),
+      colours,
+    );
+    expect(count(world.group, 'character')).toBe(0);
+  });
+});

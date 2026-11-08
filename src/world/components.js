@@ -68,3 +68,12 @@ AFRAME.registerComponent('idle-animation', {
     if (this.mixer) this.mixer.stopAllAction();
   },
 });
+
+// Calls the update functions of trees and clouds every frame (FR-14).
+// scene.js sets `worldUpdaters` on the element.
+AFRAME.registerComponent('world-motion', {
+  tick(time) {
+    const seconds = time / 1000;
+    for (const update of this.el.worldUpdaters ?? []) update(seconds);
+  },
+});
