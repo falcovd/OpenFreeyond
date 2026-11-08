@@ -34,9 +34,10 @@ Findings against the spec:
 - [ ] AC-2.1 Does the ground show a grass texture that varies in colour or pattern across the place, not one uniform colour?
 - [ ] AC-2.2 From the street, a path to the house door is visible and you can walk on it. (Auto: `tests/layout.test.js` "has a walkable path from the street to the door".)
 - [ ] AC-3.1 Count the trees: at least 6, in at least two different shapes. (Auto: `tests/layout.test.js`.)
-- [ ] AC-3.2 Does each tree have a trunk and separate foliage, not a plain cylinder and sphere? (Auto: `tests/builders-plants.test.js`.)
+- [ ] AC-3.2 Does each tree have a trunk and separate foliage, not a plain cylinder and sphere? (Person check: no test uses the real tree structure; `tests/builders-plants.test.js` only checks the builders with a fake model and the real files' headers.)
+- [ ] Do the pine and round trees show leaves and bark, with no 'could not be loaded' message? (Tree textures are WebP, OQ-4 update. Confirm in Firefox and Safari too.)
 - [ ] AC-3.3 Count: at least 3 bushes, 2 flower beds (not the planter), 1 hedge. (Auto: `tests/layout.test.js`.)
-- [ ] AC-3.4 Does a fence look like a fence, with posts and rails or boards? Walk into it: you do not pass. (Auto: `tests/builders-plants.test.js` and `tests/layout.test.js`.)
+- [ ] AC-3.4 Does a fence look like a fence, with posts and rails or boards? Walk into it: you do not pass. (Auto: `tests/builders-furniture.test.js` and `tests/layout.test.js`.)
 - [ ] AC-4.1 Facing the door: textured walls, one door, at least 4 windows, a sloped roof with a visible texture. (Auto: `tests/builders-house.test.js`.)
 - [ ] AC-4.2 Walk into the house: you do not pass and cannot enter. (Auto: `tests/layout.test.js`.)
 - [ ] AC-4.4 Walk to the character: reachable, outside the house, same spot each time. (Auto: `tests/layout.test.js`.)
@@ -52,8 +53,8 @@ Findings against the spec:
 ## Once, in Chrome
 - [x] AC-4.3 `npx vitest run tests/layout.test.js` passes (walkable area at least phase 1's, boundary the same). Ticked 2026-11-08: the test passes in `npm test`.
 - [x] AC-4.6 `HOUSE` in `src/world/layout.js`: footprint at most 10 by 8 m, one or two floors. Ticked 2026-11-08: `tests/layout.test.js` "has a footprint of at most 10 by 8 m and one or two floors" passes.
-- [ ] AC-8.1 Chrome "Slow 4G" throttling, start screen, choose try-out: a loading indicator shows and no empty screen. (Auto: `tests/loading.test.js`. Measured above: the cover shows from the first sample and the page is never empty, also at 100,000 and 50,000 B/s. A person confirms in a real browser.)
-- [x] AC-8.2 After loading, the indicator is gone. Ticked 2026-11-08: measured above (cover gone 1.9 s after the click on a normal connection, 17.4 s at Slow 4G); `tests/loading.test.js`.
+- [ ] AC-8.1 Chrome "Slow 4G" throttling, start screen, choose try-out: a loading indicator shows and no empty screen. (Auto: `tests/loading.test.js` mocks `mountWorld`, so it proves the cover logic only. The real timing was measured by hand in headless Chrome, above: the cover shows from the first sample and the page is never empty, also at 100,000 and 50,000 B/s. A person confirms in a real browser.)
+- [x] AC-8.2 After loading, the indicator is gone. Ticked 2026-11-08: measured by hand in headless Chrome, above (cover gone 1.9 s after the click on a normal connection, 17.4 s at Slow 4G). `tests/loading.test.js` mocks `mountWorld`, so it does not prove the real timing.
 - [ ] AC-8.3 Block `grass.jpg` (DevTools, Block request URL): plain colour there and a short message. (Auto: `tests/assetLoader.test.js`, `tests/loading.test.js`.)
 - [ ] AC-8.4 Block all `.jpg` and `.glb`: plain colours, plain figure in the character's spot that blocks walking and takes the chosen colours, message shown, indicator gone, no blank screen or crash. (Auto: `tests/assetLoader.test.js`, `tests/buildWorld.test.js`, `tests/builders-figure.test.js`.)
 - [ ] AC-8.5 Block `tree-pine.glb`: plain blocks for those trees, you stop at them, message shown. (Auto: `tests/buildWorld.test.js`, `tests/builders-plants.test.js`.)

@@ -115,3 +115,8 @@ Approved by the PO after round 2 of the spec critique, without a round 3. featur
 ## Open licence check (2026-11-08)
 
 The character licence is recorded as CC0 by assumption (builder decision). The Hoodie Character zip has no licence file, and its pack page was not found. It must be confirmed on the exact pack page before going online (FR-20, AC-11.4).
+
+## Build decisions (2026-11-08)
+- Asset budget is 24 s (`ASSET_BUDGET_MS`), measured from the moment the person chooses, so the place is on screen before the 30 s cover limit (FR-15, FR-16, AC-8.6). This deviates from the "30 s" in FR-16 on purpose: anything not loaded at 24 s counts as failed and is drawn with plain colours or blocks.
+- OQ-4 updated: `tree-round.glb` and `tree-pine.glb` use WebP textures and the extensions `EXT_texture_webp` and `KHR_mesh_quantization` (both required) to cut their size from about 1.3 MB and 1.1 MB to about 0.35 MB and 0.20 MB. The latest Chrome, Firefox and Safari are expected to support both. So far this is verified only in headless Chrome; Firefox and Safari are confirmed with the checklist row on tree textures. `bush.glb` and the character use PNG and no extensions.
+- The bush texture is a recoloured (green) derivative of the pack's texture. CC0 allows this.
