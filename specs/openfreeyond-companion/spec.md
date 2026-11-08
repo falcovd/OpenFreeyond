@@ -33,7 +33,7 @@ The feature gives a person a cozy place to walk around in, with a character who 
 - FR-3: The place is reachable through a web address and works without installing anything. Story: US-1.
 - FR-4: The place shows warm light and colours and domestic objects (furniture and a garden), and shows no threats or timers. Story: US-1.
 - FR-5: The first time a person enters the place, a short controls hint shows how to move and look, for keyboard and mouse and for trackpad; the person can dismiss it. Story: US-1.
-- FR-6: The character stands in a fixed spot in the place and shows an idle animation. Story: US-2.
+- FR-6: The character starts in a fixed spot in the place, wanders through the place with a walking animation, shows an idle animation when he stands, and stops and faces a person who comes close. Story: US-2.
 - FR-7: In the intake a person chooses one hair colour from a fixed set of 8 and one clothing colour from a fixed set of 8, and the character in the place shows the chosen colours. Story: US-3.
 - FR-8: A person can fill in the seven intake fields. All seven are required. Name, character, hobbies and background story are text of up to 500 characters. Age is a whole number from 18 to 120. Voice is one of 3 choices. Living environment is the one choice offered, a house with a garden on a cozy street. A person who leaves a field empty or out of range is told which field and does not enter the place. Story: US-4.
 - FR-9: The intake answers, including the colours, are kept between visits in the person's own browser. In phase 1 only the appearance field changes what is shown in the place. Story: US-4.
@@ -61,8 +61,8 @@ The feature gives a person a cozy place to walk around in, with a character who 
 - AC-1.6: Given the builder's own laptop and a supported browser, when the builder walks through the place for 2 minutes with the frame-rate display on, then the average is 30 frames per second or better.
 - AC-1.7: Given each of the supported browsers, when the builder performs AC-1.1 to AC-1.5, then each passes in that browser.
 - AC-1.8: Given a person enters the place for the first time, when the place loads, then a controls hint is shown that can be dismissed, and it is not shown again after it was dismissed in the same browser.
-- AC-2.1: Given the place has loaded, when a person looks at the character's spot, then the character is visible, standing, and a repeating small body movement plays.
-- AC-2.2: Given the place has loaded, when a person walks away and returns, then the character is in the same spot.
+- AC-2.1: Given the place has loaded, when a person looks at the character's spot, then the character is visible and upright, and a repeating body movement plays (idle when he stands, walking when he moves).
+- AC-2.2: Given the place has loaded, when a person walks away and returns, then the character starts in the same spot on every visit.
 - AC-3.1: Given the colour choice in the intake, when a person picks a hair colour and a clothing colour from the sets, then the character in the place shows those colours.
 - AC-3.2: Given a person has chosen colours, when the person closes the browser and opens the place again in the same browser and continues, then the character shows the same colours.
 - AC-3.3: Given a person opens the place in another browser or on another device, when it loads, then the colours chosen elsewhere are not applied.

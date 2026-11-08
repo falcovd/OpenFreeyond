@@ -1,6 +1,6 @@
 # OpenFreeyond
 
-A cozy 3D place in the desktop browser, with a character who lives there. You walk around with keyboard and mouse, and the character stands in the garden. Phase 1 of the plan in `plans/project-plan.md`. Talking to the character by voice is planned for phase 2.
+A cozy 3D place in the desktop browser, with a character who lives there. You walk around with keyboard and mouse, and the character wanders through the garden. Phase 1 of the plan in `plans/project-plan.md`. Talking to the character by voice is planned for phase 2.
 
 Built with [A-Frame](https://aframe.io) 1.6 (three.js), Vite and plain JavaScript modules. No framework.
 
@@ -9,7 +9,7 @@ Built with [A-Frame](https://aframe.io) 1.6 (three.js), Vite and plain JavaScrip
 - A start screen with a try-out option and a character intake (7 fields).
 - A walkable place with a photographic sky, grass, trees, a house, a fence and furniture. Solid objects block you.
 - A loading indicator while the place loads. If a model fails to load, a plain stand-in is used.
-- A character with an idle animation. Its hair and clothing colours follow your intake.
+- A character who wanders through the garden, and stops and faces you when you come close. Its hair and clothing colours follow your intake.
 - Your character is kept in your browser, so it is still there on your next visit.
 
 ## Run

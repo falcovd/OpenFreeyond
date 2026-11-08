@@ -63,3 +63,8 @@ If you stand in his way, he waits. He never steps into your space.
 - FR-6 ("stands in a fixed spot") and AC-4.4 ("same spot each time") of the phase 1 spec change to: he starts at a fixed spot and wanders.
 - `CLAUDE.md` notes that the model has two clips and the character solid moves.
 - The checklist gets items for walking, facing the player, and not walking through objects.
+
+## Notes
+
+- Dead code: in `stepWander` the branch that makes him wait for a player who is in his way cannot trigger. He greets (stops) from 3 m, and the personal-space gap is 0.9 m. The branch stays as a harmless safety net. The block-and-give-up logic is tested against a solid instead.
+- The converter command is `node scripts/convert-character.mjs assets/models/Casual_Hoodie.fbx public/assets/character.glb Idle,Walk` with no colour overrides. An override turns the shorts light blue.

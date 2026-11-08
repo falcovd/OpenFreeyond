@@ -44,6 +44,7 @@ The place looks like a cozy home, stays smooth and loads in an acceptable way.
 - FR-1: The sky is a photograph with a visible sun that fades into the fog colour at the horizon. Story: US-1.
 - FR-2: The sky shows visible soft clouds. Story: US-1.
 - Changed on 2026-11-08: the sky is now a photograph (see `docs/plans/2026-11-08-realistic-sky-design.md`). FR-1 and FR-2 were reworded; the AC numbering is kept. AC-1.1 still says "blue gradient" and is not yet reworded.
+- Changed on 2026-11-08: the character wanders (see `docs/plans/2026-11-08-character-wandering-design.md`). FR-11 and AC-4.4 were reworded to "starts in a fixed spot" and "starts in the same spot each time".
 - FR-3: No empty edge is visible between the ground and the sky, in any direction. Story: US-1.
 - FR-4: The ground shows a grass texture with visible variation, not one uniform colour. Story: US-2.
 - FR-5: A path leads from the street to the house door. Story: US-2.
@@ -52,7 +53,7 @@ The place looks like a cozy home, stays smooth and loads in an acceptable way.
 - FR-8: The fences look like fences and still stop the person from walking through them. Story: US-3.
 - FR-9: The house has textured walls, one door on the garden side and at least 4 windows visible from the garden side, and a sloped roof with a visible roof texture. Story: US-4.
 - FR-10: The house has one or two floors and a footprint of at most 10 by 8 m, blocks walking and cannot be entered. Story: US-4.
-- FR-11: The place is laid out around the house so that the walkable area is at least as large as today's, the boundary is unchanged, the character stays in a fixed spot outside the house that a person can reach, and every solid object and the boundary stop the person. Story: US-4.
+- FR-11: The place is laid out around the house so that the walkable area is at least as large as today's, the boundary is unchanged, the character starts in a fixed spot outside the house that a person can reach, and every solid object and the boundary stop the person. Story: US-4.
 - FR-12: The new surfaces and shapes are consistent with the character. Story: US-5.
 - FR-13: The place looks warm with the new textures. The builder may adjust the light for this. Story: US-6.
 - FR-14: The trees move gently and the clouds drift slowly. Story: US-7.
@@ -83,7 +84,7 @@ The place looks like a cozy home, stays smooth and loads in an acceptable way.
 - AC-4.1: Given the builder stands in the garden facing the house door, when they look at the house, then textured walls, one door, at least 4 windows and a sloped roof with a visible roof texture are visible.
 - AC-4.2: Given a person walks into the house, when they keep moving, then they do not pass through it and cannot enter.
 - AC-4.3: Given the new layout, when the builder compares it with the layout data of the phase 1 build, then the walkable area is at least as large as the phase 1 walkable area and the boundary is the same.
-- AC-4.4: Given the new layout, when a person walks to the character, then the character is reachable, stands outside the house and is in the same spot each time.
+- AC-4.4: Given the new layout, when a person walks to the character, then the character is reachable, starts outside the house and starts in the same spot each time.
 - AC-4.5: Given a person walks into each solid object (house, trees, hedges, fences, bushes, furniture, planters, character) and into each part of the boundary, when they keep moving, then they stop at each of them.
 - AC-4.6: Given the layout data of the new house, when the builder reads it, then the footprint is at most 10 by 8 m and there are one or two floors.
 - AC-4.7: Given a person walks into a flower bed, when they keep moving, then they walk over it.

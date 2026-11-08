@@ -28,6 +28,14 @@ Setup: production build (`npm run build`), served with `npx vite preview --port 
 Findings against the spec:
 - AC-9.4: strictly, one key (`debug`, from A-Frame) is added. The phase 1 build adds the same key, so nothing is added beyond phase 1. It holds no user data.
 
+### Wandering character (agent, 2026-11-08, headless Chrome, software rendering)
+
+- 60 s of sampling with the player parked in the far corner: he alternated walk and idle, travelled 42.2 m through 43 distinct spots, and was never inside a solid or outside the garden (checked against the real layout, body radius 0.5). His collision solid always matched his position.
+- With the player 1.8 m away he switched to greet and faced the player (heading error 0 rad). After the player left he went back to wandering.
+- Screenshots (mid-walk and a close-up greet) look right: upright, stride visible, mouth still on his face, dark shorts as before. The walk and the feet were judged from screenshots in software rendering only.
+- `character.glb` now has exactly the clips `Idle` and `Walk` (1.4 MB).
+- Not checked: whether the feet slide on the ground, the frame rate on the builder's laptop, and Firefox and Safari.
+
 ## Per browser
 - [ ] AC-1.1 Look in a full circle and upward: is the sky a photographic sky? (Auto: `tests/builders-sky-ground.test.js` checks the sky is built; a person judges the look.)
 - [ ] AC-1.2 At least one cloud is visible (the photo has soft clouds). (Auto: `tests/builders-sky-ground.test.js`.)
@@ -42,9 +50,10 @@ Findings against the spec:
 - [ ] AC-3.4 Does a fence look like a fence, with posts and rails or boards? Walk into it: you do not pass. (Auto: `tests/builders-furniture.test.js` and `tests/layout.test.js`.)
 - [ ] AC-4.1 Facing the door: textured walls, one door, at least 4 windows, a sloped roof with a visible texture. (Auto: `tests/builders-house.test.js`.)
 - [ ] AC-4.2 Walk into the house: you do not pass and cannot enter. (Auto: `tests/layout.test.js`.)
-- [ ] AC-4.4 Walk to the character: reachable, outside the house, same spot each time. (Auto: `tests/layout.test.js`.)
+- [ ] AC-4.4 Walk to the character: reachable, starts outside the house, starts in the same spot each time. (Auto: `tests/layout.test.js`.)
 - [ ] AC-4.5 Walk into each solid (house, trees, hedge, fences, bushes, bench, table, planter, character) and into each part of the boundary: you stop at each. (Auto: `tests/layout.test.js` and `tests/collision.test.js`.)
 - [ ] AC-4.7 Walk into a flower bed: you walk over it. (Auto: `tests/layout.test.js`.)
+- [ ] The walk looks right: his feet do not slide on the ground. (Auto/agent note: not checked. Sliding feet cannot be judged from still frames. A person watches him walk.)
 - [ ] AC-5.1 View the character from the start and from 2 m away: does the character look at home in this world?
 - [ ] AC-6.1 Does the place look warm rather than cold or dull?
 - [ ] AC-7.1 Watch the trees for 10 seconds: do they move, and is the movement calm and not distracting? (Auto: `tests/buildWorld.test.js` checks the motion functions exist.)
