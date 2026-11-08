@@ -1,6 +1,6 @@
 import 'aframe';
 import './components.js';
-import { SPAWN, CHARACTER_SPOT } from './layout.js';
+import { SPAWN, CHARACTER_SPOT, resetCharacterSolid } from './layout.js';
 import { releasePage } from './teardown.js';
 import { HAIR_COLOURS, CLOTHING_COLOURS } from '../logic/fields.js';
 import { MANIFEST } from './manifest.js';
@@ -106,7 +106,8 @@ export async function mountWorld(
         rotation="0 -30 0"
         character-colours="hair: ${hair}; clothing: ${clothing}"
         character-mouth
-        idle-animation></a-entity>
+        character-animation
+        character-wander></a-entity>
       <a-entity camera="far: 1000" look-controls wasd-controls="acceleration: 25" walk-limiter position="${SPAWN.x} 1.6 ${SPAWN.z}"></a-entity>
     </a-scene>`;
   container.appendChild(scene);
@@ -138,6 +139,7 @@ export async function mountWorld(
       // The context may already be gone.
     }
     scene.remove();
+    resetCharacterSolid();
     // A-Frame leaves its fullscreen class on <html>; without this the page cannot scroll.
     releasePage(document.documentElement);
   };
@@ -149,7 +151,7 @@ export async function mountWorld(
     root.setObject3D('world', world.group);
     root.worldUpdaters = world.updaters;
 
-    // The loaded character model goes on its entity. The existing components paint and animate it.
+    // The loaded character model goes on its entity. The components paint, animate and move it.
     const characterGltf = assets.gltf('character');
     if (characterGltf) {
       const el = scene.querySelector('#character-model-entity');
