@@ -40,6 +40,26 @@ describe('validateIntake', () => {
       expect(Object.keys(result.errors)).toEqual([key]);
     }
   });
+  it('does not throw on non-object input and names every field', () => {
+    for (const input of [null, undefined, 42, 'text', []]) {
+      let result;
+      expect(() => {
+        result = validateIntake(input);
+      }).not.toThrow();
+      expect(result.ok).toBe(false);
+      for (const key of [
+        'name',
+        'age',
+        'appearance',
+        'character',
+        'hobbies',
+        'background',
+        'voice',
+        'environment',
+      ])
+        expect(result.errors).toHaveProperty(key);
+    }
+  });
   it('names appearance, voice and environment when missing', () => {
     expect(validateIntake({ ...valid(), hair: '' }).errors).toHaveProperty(
       'appearance',
