@@ -7,6 +7,7 @@ import fs from 'fs';
 import * as THREE from 'three';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
+import { shortenFeet, softenFootTracks } from './lib/foot-tweaks.mjs';
 
 const [input, output, clipList = 'Idle', ...overrides] = process.argv.slice(2);
 if (!input || !output) {
@@ -87,6 +88,11 @@ for (const override of overrides) {
   }
   seen.get(name).color.set(hex);
 }
+
+// The shoes are long and the foot pivots hard at the ankle, so a swinging foot looks like a flipper.
+// Shorten the shoe and soften the ankle (amounts in scripts/lib/foot-tweaks.mjs).
+shortenFeet(model);
+softenFootTracks(clips, model);
 
 // FBX units are centimetres; glTF uses metres.
 model.scale.setScalar(0.01);
