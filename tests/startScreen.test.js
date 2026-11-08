@@ -16,6 +16,15 @@ describe('example character', () => {
   it('passes the intake rules', () => {
     expect(validateIntake(EXAMPLE_CHARACTER).ok).toBe(true);
   });
+  it('cannot be changed (FR-12)', () => {
+    'use strict';
+    expect(Object.isFrozen(EXAMPLE_CHARACTER)).toBe(true);
+    const before = EXAMPLE_CHARACTER.name;
+    expect(() => {
+      EXAMPLE_CHARACTER.name = 'Someone Else';
+    }).toThrow(TypeError);
+    expect(EXAMPLE_CHARACTER.name).toBe(before);
+  });
 });
 
 describe('startOptions', () => {

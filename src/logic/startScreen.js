@@ -1,4 +1,4 @@
-export const EXAMPLE_CHARACTER = {
+export const EXAMPLE_CHARACTER = Object.freeze({
   name: 'Noor de Wit',
   age: 34,
   hair: 'dark-blond',
@@ -10,7 +10,7 @@ export const EXAMPLE_CHARACTER = {
     'Works as a baker, has lived for two years in a small house with a garden by the water and goes on a city trip with friends as often as possible.',
   voice: 'soft-friendly',
   environment: 'house-garden-street',
-};
+});
 
 export function startOptions(loadResult) {
   return loadResult.status === 'ok'
