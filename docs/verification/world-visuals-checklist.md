@@ -35,7 +35,8 @@ Findings against the spec:
 - Screenshots (mid-walk and a close-up greet): upright, mouth still on his face, dark shorts as before. Stills cannot show whether the legs move.
 - Animation, measured on the right leg bone over 160 samples (software rendering): he was never moving without the `Walk` clip playing (0 of 116 moving samples). During one continuous walk the leg bone swung (spread 0.40 in quaternion distance); during one continuous rest it barely moved (0.04, breathing). An earlier build named a component method `play`, which A-Frame replaces with a wrapper that drops its arguments, so no clip played at all (he slid, and the idle pose froze). `tests/components.test.js` now guards against that name.
 - `character.glb` now has exactly the clips `Idle` and `Walk` (1.4 MB).
-- Not checked: whether the feet slide on the ground at the chosen walking speed, the frame rate on the builder's laptop, and Firefox and Safari.
+- Walking speed: the Walk clip's feet move backwards on the ground at 1.33 m/s (measured from the model, median over the stance phase of both feet). The speed was first set to 1.05 m/s by estimate, which made the feet skate; it is now 1.33 m/s, and `tests/walk-speed.test.js` keeps it within 5% of the clip. The converted `Walk` was compared pose for pose with the `Walk` of `Casual_Hoodie.fbx` at four moments of the cycle and is identical.
+- Not checked: how the walk looks to a person at full frame rate (a report of "spaghetti legs" could not be reproduced in Chrome with software rendering or on an Apple M1 Pro GPU), the frame rate on the builder's laptop, and Firefox and Safari.
 
 ## Per browser
 - [ ] AC-1.1 Look in a full circle and upward: is the sky a photographic sky? (Auto: `tests/builders-sky-ground.test.js` checks the sky is built; a person judges the look.)
@@ -54,7 +55,7 @@ Findings against the spec:
 - [ ] AC-4.4 Walk to the character: reachable, starts outside the house, starts in the same spot each time. (Auto: `tests/layout.test.js`.)
 - [ ] AC-4.5 Walk into each solid (house, trees, hedge, fences, bushes, bench, table, planter, character) and into each part of the boundary: you stop at each. (Auto: `tests/layout.test.js` and `tests/collision.test.js`.)
 - [ ] AC-4.7 Walk into a flower bed: you walk over it. (Auto: `tests/layout.test.js`.)
-- [ ] The walk looks right: his feet do not slide on the ground. (Auto/agent note: not checked. Sliding feet cannot be judged from still frames. A person watches him walk.)
+- [ ] The walk looks right: his feet do not slide on the ground. (Auto/agent note: the speed now equals the clip's measured ground speed, so the feet should not skate; this is not judged by eye. A person watches him walk.)
 - [ ] AC-5.1 View the character from the start and from 2 m away: does the character look at home in this world?
 - [ ] AC-6.1 Does the place look warm rather than cold or dull?
 - [ ] AC-7.1 Watch the trees for 10 seconds: do they move, and is the movement calm and not distracting? (Auto: `tests/buildWorld.test.js` checks the motion functions exist.)

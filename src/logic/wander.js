@@ -6,7 +6,7 @@ import { hitsSolid } from './collision.js';
 export const WANDER = {
   radius: 0.5, // body radius for routes and steps: he keeps this far from every solid and the boundary
   cell: 0.25, // grid size for path-finding
-  speed: 1.05, // metres per second; matches one cycle (1.33 s, about 1.4 m) of the Walk clip
+  speed: 1.33, // metres per second: the ground speed of the Walk clip, measured by tests/walk-speed.test.js
   turnRate: 4, // radians per second
   idleMin: 2, // seconds he stands still between walks
   idleMax: 6,
