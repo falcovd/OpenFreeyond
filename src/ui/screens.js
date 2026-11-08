@@ -5,6 +5,7 @@ import {
   ENVIRONMENTS,
   FIELD_LABELS,
 } from '../logic/fields.js';
+import { ASSET_RECORDS } from '../data/licences.js';
 
 export function h(tag, attrs = {}, ...children) {
   const el = document.createElement(tag);
@@ -22,6 +23,17 @@ export function h(tag, attrs = {}, ...children) {
   return el;
 }
 
+const isWebUrl = (url) => /^https?:\/\//i.test(url ?? '');
+
+function creditLine(record) {
+  const main = record.credit ?? record.author;
+  const author =
+    record.credit && !record.credit.includes(record.author)
+      ? ` by ${record.author}`
+      : '';
+  return `${main}${author} (${record.licence}) `;
+}
+
 export function renderWorldOverlay(
   root,
   { notice, showHint, onDismissHint, onBack },
@@ -32,6 +44,47 @@ export function renderWorldOverlay(
       'button',
       { class: 'back', 'data-action': 'back', onClick: onBack },
       'Back to start',
+    ),
+  );
+  let credits = null;
+  overlay.append(
+    h(
+      'button',
+      {
+        class: 'credits-toggle',
+        'data-action': 'toggle-credits',
+        onClick: () => {
+          if (credits) {
+            credits.remove();
+            credits = null;
+            return;
+          }
+          credits = h(
+            'div',
+            { class: 'credits', role: 'region', 'aria-label': 'Credits' },
+            h('h2', {}, 'Credits'),
+            ASSET_RECORDS.map((r) =>
+              h(
+                'p',
+                {},
+                creditLine(r),
+                isWebUrl(r.source) &&
+                  h(
+                    'a',
+                    {
+                      href: r.source,
+                      target: '_blank',
+                      rel: 'noopener noreferrer',
+                    },
+                    'source',
+                  ),
+              ),
+            ),
+          );
+          overlay.append(credits);
+        },
+      },
+      'Credits',
     ),
   );
   if (notice)
