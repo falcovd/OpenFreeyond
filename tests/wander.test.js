@@ -293,3 +293,99 @@ describe('stepWander', () => {
     expect(s1.heading).toBeCloseTo(-3.0 - WANDER.turnRate * 0.05, 6);
   });
 });
+
+describe('waving at a person who comes close', () => {
+  const ctx = (player) => ({
+    solids: others,
+    bounds: BOUNDS,
+    player,
+    rng: seeded(5),
+  });
+  // Steps for `seconds` and counts the steps in which he starts to wave.
+  const watch = (state, seconds, context, dt = 0.05) => {
+    let s = state;
+    let waves = 0;
+    for (let t = 0; t < seconds; t += dt) {
+      s = stepWander(s, dt, context);
+      if (s.waveNow) waves++;
+    }
+    return { s, waves };
+  };
+  const start = (heading = 0) =>
+    initialState(CHARACTER_SPOT.x, CHARACTER_SPOT.z, heading);
+  const near = (s, d = 2) => ({ x: s.x, z: s.z + d }); // d metres in front of him (+z is where heading 0 points)
+
+  it('starts without having waved', () => {
+    const s = start();
+    expect(s.waved).toBe(false);
+    expect(s.waveNow).toBe(false);
+  });
+  it('waves once when a person comes close and he faces them', () => {
+    const s = start(0);
+    const { waves, s: after } = watch(s, 10, ctx(near(s)));
+    expect(after.mode).toBe('greet');
+    expect(waves).toBe(1);
+  });
+  it('does not wave when the person is far away', () => {
+    const { waves } = watch(start(), 30, ctx({ x: 100, z: 100 }));
+    expect(waves).toBe(0);
+  });
+  it('turns to face the person first, and waves only once he faces them', () => {
+    const s = start(Math.PI); // his back to the person
+    const context = ctx(near(s));
+    let t = s;
+    let first = null;
+    for (let i = 0; i < 200 && first === null; i++) {
+      t = stepWander(t, 0.05, context);
+      if (t.waveNow) first = t;
+    }
+    expect(first).not.toBeNull();
+    const want = Math.atan2(
+      context.player.x - first.x,
+      context.player.z - first.z,
+    );
+    expect(
+      Math.abs(
+        Math.atan2(
+          Math.sin(want - first.heading),
+          Math.cos(want - first.heading),
+        ),
+      ),
+    ).toBeLessThan(WANDER.waveFacing + 1e-9);
+    // He had to turn: the first wave is not in the very first steps.
+    let steps = 0;
+    let u = s;
+    while (!u.waveNow && steps < 400) {
+      u = stepWander(u, 0.05, context);
+      steps++;
+    }
+    expect(steps).toBeGreaterThan(5);
+  });
+  it('does not wave again while the person stays near, even moving about', () => {
+    let s = start(0);
+    let waves = 0;
+    for (let t = 0; t < 30; t += 0.05) {
+      // The person shuffles between 1.5 m and 3.8 m away: always inside the greet distance.
+      const d = 2.6 + 1.2 * Math.sin(t);
+      s = stepWander(s, 0.05, ctx({ x: s.x, z: s.z + d }));
+      if (s.waveNow) waves++;
+    }
+    expect(waves).toBe(1);
+  });
+  it('waves again on the next approach, after the person went beyond the greet distance', () => {
+    let s = start(0);
+    let waves = 0;
+    const count = (player, seconds) => {
+      for (let t = 0; t < seconds; t += 0.05) {
+        s = stepWander(s, 0.05, ctx(player(s)));
+        if (s.waveNow) waves++;
+      }
+    };
+    count((c) => near(c, 2), 5); // first approach
+    count((c) => ({ x: c.x, z: c.z + WANDER.greetFar + 1 }), 0.2); // the person leaves
+    expect(s.mode).not.toBe('greet');
+    expect(s.waved).toBe(false);
+    count((c) => near(c, 2), 5); // comes back
+    expect(waves).toBe(2);
+  });
+});

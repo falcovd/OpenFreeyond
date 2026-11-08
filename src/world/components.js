@@ -69,8 +69,9 @@ const FADE_SECONDS = 0.25; // cross-fade between Idle and Walk
 const MAX_STEP_SECONDS = 0.1; // a slow frame or a hidden tab must not make him jump
 const START_HEADING = (-30 * Math.PI) / 180; // as in the markup of scene.js
 
-// Plays the clip for what the character is doing: "Idle" standing, "Walk" walking (FR-6).
-// character-wander says which, with a 'character-state' event. The model holds only those two clips.
+// Plays the clip for what the character is doing: "Idle" standing, "Walk" walking (FR-6), and
+// "Wave" once when a person comes close. character-wander says which, with 'character-state'
+// and 'character-wave' events. The model holds only those three clips.
 AFRAME.registerComponent('character-animation', {
   init() {
     this.mixer = null;
@@ -80,18 +81,34 @@ AFRAME.registerComponent('character-animation', {
     this.onModel = () => this.setup();
     this.onState = (event) => {
       this.wanted = event.detail.moving ? 'Walk' : 'Idle';
+      // Standing is what he does while he waves: let the wave finish (it then goes to `wanted`).
+      // Walking again cuts it short.
+      const waving = this.current && this.current === this.actions.Wave;
+      if (waving && this.wanted === 'Idle') return;
       this.playClip(this.wanted);
     };
+    this.onWave = () => this.playClip('Wave');
     this.el.addEventListener('model-loaded', this.onModel);
     this.el.addEventListener('character-state', this.onState);
+    this.el.addEventListener('character-wave', this.onWave);
   },
   setup() {
     const mesh = this.el.getObject3D('mesh');
     if (!mesh || !mesh.animations) return;
     this.mixer = new AFRAME.THREE.AnimationMixer(mesh);
-    for (const name of ['Idle', 'Walk']) {
+    for (const name of ['Idle', 'Walk', 'Wave']) {
       const clip = mesh.animations.find((c) => c.name === name);
       if (clip) this.actions[name] = this.mixer.clipAction(clip);
+    }
+    // The wave plays once and holds its last pose until the clip below takes over.
+    const wave = this.actions.Wave;
+    if (wave) {
+      wave.setLoop(AFRAME.THREE.LoopOnce, 1);
+      wave.clampWhenFinished = true;
+      // When the wave ends he goes back to what he is doing (standing, or walking).
+      this.mixer.addEventListener('finished', (event) => {
+        if (event.action === wave) this.playClip(this.wanted);
+      });
     }
     this.playClip(this.wanted, 0);
   },
@@ -109,6 +126,7 @@ AFRAME.registerComponent('character-animation', {
   remove() {
     this.el.removeEventListener('model-loaded', this.onModel);
     this.el.removeEventListener('character-state', this.onState);
+    this.el.removeEventListener('character-wave', this.onWave);
     if (this.mixer) this.mixer.stopAllAction();
   },
 });
@@ -151,6 +169,7 @@ AFRAME.registerComponent('character-wander', {
       this.body.x = this.state.x;
       this.body.z = this.state.z;
     }
+    if (this.state.waveNow) this.el.emit('character-wave');
     if (this.state.moving !== this.moving) {
       this.moving = this.state.moving;
       this.el.emit('character-state', { moving: this.moving });
