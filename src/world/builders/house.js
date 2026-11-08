@@ -2,13 +2,16 @@ import { box, surface } from './common.js';
 import { HOUSE, DOOR } from '../layout.js';
 
 // A gable roof. The ridge runs along x. Front slope faces the garden (+z).
+// The slope runs from the wall top (y 0 at z = +-hd) to the ridge, and carries
+// on over the overhang, so the eaves sit slightly lower and meet the walls.
 function roofGeometry(THREE, hw, hd, rh, o) {
-  const a = [-hw - o, 0, hd + o];
-  const b = [hw + o, 0, hd + o];
+  const ey = (-rh * o) / hd;
+  const a = [-hw - o, ey, hd + o];
+  const b = [hw + o, ey, hd + o];
   const c = [hw + o, rh, 0];
   const d = [-hw - o, rh, 0];
-  const e = [hw + o, 0, -hd - o];
-  const f = [-hw - o, 0, -hd - o];
+  const e = [hw + o, ey, -hd - o];
+  const f = [-hw - o, ey, -hd - o];
   const pos = [
     ...a,
     ...b,
