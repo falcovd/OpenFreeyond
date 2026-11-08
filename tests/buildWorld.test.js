@@ -46,7 +46,7 @@ describe('buildWorld', () => {
     }
     expect(count(group, 'flower-bed')).toBe(FLOWER_BEDS.length);
   });
-  it('has a sky that turns and a sun light, and no sphere clouds (FR-2, FR-14)', () => {
+  it('has exactly one directional light, the sun of the sky (FR-2, FR-14)', () => {
     const world = buildWorld(THREE, makeAssets(new Map()), colours, {
       withCharacter: false,
     });

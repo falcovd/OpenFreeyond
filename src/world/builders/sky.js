@@ -44,7 +44,7 @@ const smoothstep = (t) => {
 // The photo on the inside of a sphere. Vertex alpha fades it out toward and below the horizon,
 // so the fog-coloured background and the ground meet it without a seam (FR-3).
 function photoSphere(THREE, texture) {
-  const geometry = new THREE.SphereGeometry(SKY.radius, 64, 48);
+  const geometry = new THREE.SphereGeometry(SKY.radius, 64, 96);
   const pos = geometry.attributes.position;
   const rgba = [];
   const span = BLEND.belowDeg + BLEND.aboveDeg;
