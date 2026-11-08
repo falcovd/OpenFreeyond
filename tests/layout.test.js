@@ -10,6 +10,7 @@ import {
   DOOR,
   PATH,
   FLOWER_BEDS,
+  resetCharacterSolid,
 } from '../src/world/layout.js';
 import { PHASE1_BOUNDS, PHASE1_SOLIDS } from './fixtures/phase1-layout.js';
 
@@ -92,7 +93,7 @@ describe('path and reachability (AC-2.2, AC-4.4)', () => {
       expect(hitsSolid(PATH.x, z, SOLIDS, 0.3), `z=${z}`).toBe(false);
     }
   });
-  it('lets a person reach the character, who stands outside the house in a fixed spot (AC-4.4)', () => {
+  it('lets a person reach the character, who starts outside the house in a fixed spot (AC-4.4)', () => {
     const c = SOLIDS.find((s) => s.kind === 'character');
     expect([c.x, c.z]).toEqual([CHARACTER_SPOT.x, CHARACTER_SPOT.z]);
     expect(CHARACTER_SPOT.z).toBeGreaterThan(HOUSE.z + HOUSE.d / 2);
@@ -131,5 +132,15 @@ describe('blocking (AC-4.5, AC-4.7)', () => {
       expect(SOLIDS.some((s) => s.id === b.id)).toBe(false);
       expect(hitsSolid(b.x, b.z, SOLIDS, 0.3), b.id).toBe(false);
     }
+  });
+});
+
+describe('the character solid moves and can be put back', () => {
+  it('goes back to the start spot', () => {
+    const c = SOLIDS.find((s) => s.kind === 'character');
+    c.x = 9;
+    c.z = 9;
+    resetCharacterSolid();
+    expect([c.x, c.z]).toEqual([CHARACTER_SPOT.x, CHARACTER_SPOT.z]);
   });
 });

@@ -1,6 +1,12 @@
 import { resolveMove } from '../logic/collision.js';
 import { applyColours } from '../logic/colours.js';
-import { SOLIDS, BOUNDS } from './layout.js';
+import {
+  SOLIDS,
+  BOUNDS,
+  CHARACTER_SPOT,
+  resetCharacterSolid,
+} from './layout.js';
+import { initialState, stepWander } from '../logic/wander.js';
 import { attachMouth } from './builders/mouth.js';
 
 const MAX_STEP = 0.15; // metres
@@ -59,26 +65,100 @@ AFRAME.registerComponent('character-mouth', {
   },
 });
 
-// Plays the animation clip named "Idle" in a loop (FR-6). The model holds only that clip.
-AFRAME.registerComponent('idle-animation', {
+const FADE_SECONDS = 0.25; // cross-fade between Idle and Walk
+const MAX_STEP_SECONDS = 0.1; // a slow frame or a hidden tab must not make him jump
+const START_HEADING = (-30 * Math.PI) / 180; // as in the markup of scene.js
+
+// Plays the clip for what the character is doing: "Idle" standing, "Walk" walking (FR-6).
+// character-wander says which, with a 'character-state' event. The model holds only those two clips.
+AFRAME.registerComponent('character-animation', {
   init() {
     this.mixer = null;
-    this.el.addEventListener('model-loaded', () => {
-      const mesh = this.el.getObject3D('mesh');
-      const clip =
-        mesh &&
-        mesh.animations &&
-        mesh.animations.find((c) => c.name === 'Idle');
-      if (!clip) return;
-      this.mixer = new AFRAME.THREE.AnimationMixer(mesh);
-      this.mixer.clipAction(clip).play();
-    });
+    this.actions = {};
+    this.current = null;
+    this.wanted = 'Idle';
+    this.onModel = () => this.setup();
+    this.onState = (event) => {
+      this.wanted = event.detail.moving ? 'Walk' : 'Idle';
+      this.playClip(this.wanted);
+    };
+    this.el.addEventListener('model-loaded', this.onModel);
+    this.el.addEventListener('character-state', this.onState);
+  },
+  setup() {
+    const mesh = this.el.getObject3D('mesh');
+    if (!mesh || !mesh.animations) return;
+    this.mixer = new AFRAME.THREE.AnimationMixer(mesh);
+    for (const name of ['Idle', 'Walk']) {
+      const clip = mesh.animations.find((c) => c.name === name);
+      if (clip) this.actions[name] = this.mixer.clipAction(clip);
+    }
+    this.playClip(this.wanted, 0);
+  },
+  // Not called `play`: A-Frame replaces a component's `play` with a wrapper that drops its arguments.
+  playClip(name, fade = FADE_SECONDS) {
+    const next = this.actions[name];
+    if (!next || next === this.current) return;
+    next.reset().setEffectiveWeight(1).play();
+    if (this.current) this.current.crossFadeTo(next, fade, false);
+    this.current = next;
   },
   tick(time, delta) {
     if (this.mixer) this.mixer.update(delta / 1000);
   },
   remove() {
+    this.el.removeEventListener('model-loaded', this.onModel);
+    this.el.removeEventListener('character-state', this.onState);
     if (this.mixer) this.mixer.stopAllAction();
+  },
+});
+
+// Lets the character wander through the garden (see src/logic/wander.js). It starts when the
+// model has loaded: with the plain figure there is nothing to move, and the figure stays put.
+// His solid in SOLIDS moves with him, so the walk-limiter stops the player at his current spot.
+AFRAME.registerComponent('character-wander', {
+  init() {
+    this.active = false;
+    this.moving = false;
+    this.player = null;
+    this.solids = SOLIDS.filter((s) => s.id !== 'character');
+    this.body = SOLIDS.find((s) => s.id === 'character');
+    this.state = initialState(
+      CHARACTER_SPOT.x,
+      CHARACTER_SPOT.z,
+      START_HEADING,
+    );
+    this.onModel = () => {
+      this.active = true;
+    };
+    this.el.addEventListener('model-loaded', this.onModel);
+  },
+  tick(time, delta) {
+    if (!this.active) return;
+    this.player ??= this.el.sceneEl.querySelector('[camera]');
+    if (!this.player) return;
+    const seconds = Math.min(delta / 1000, MAX_STEP_SECONDS);
+    const p = this.player.object3D.position;
+    this.state = stepWander(this.state, seconds, {
+      solids: this.solids,
+      bounds: BOUNDS,
+      player: { x: p.x, z: p.z },
+      rng: Math.random,
+    });
+    this.el.object3D.position.set(this.state.x, 0, this.state.z);
+    this.el.object3D.rotation.y = this.state.heading;
+    if (this.body) {
+      this.body.x = this.state.x;
+      this.body.z = this.state.z;
+    }
+    if (this.state.moving !== this.moving) {
+      this.moving = this.state.moving;
+      this.el.emit('character-state', { moving: this.moving });
+    }
+  },
+  remove() {
+    this.el.removeEventListener('model-loaded', this.onModel);
+    resetCharacterSolid();
   },
 });
 

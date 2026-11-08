@@ -11,7 +11,10 @@ Do the browser rows in each of: Chrome ___ Firefox ___ Safari ___ (latest versio
 - [ ] FR-4 / AC-1.5 The light is warm and the place is readable (not dim). Domestic objects are visible. There are no timers and nothing threatening.
 - [ ] AC-1.8 On first entry a controls hint shows once. Dismiss it, reload and enter again: it stays gone.
 - [ ] FR-6 / AC-2.1 The character is visible, upright, a sensible size and faces the spawn point. The idle movement is visible. It is not clipped or culled when you turn around.
-- [ ] AC-2.2 Walk away from the character and come back: it stands in the same spot.
+- [ ] AC-2.2 Walk away from the character and come back: it starts in the same spot on every visit (reload and enter again).
+- [ ] The character walks to different places, going around the house, trees and fences, and stands still for a few seconds between walks. (Auto/agent note: in a 60 s run in headless Chrome with software rendering and the player parked in a far corner, he alternated walk and idle, travelled 42.2 m through 43 distinct spots, and was never inside a solid or outside the garden, checked against the real layout with his body radius 0.5. A person still judges how it looks.)
+- [ ] Walk up to the character: he stops, turns to face you and stands (idle). Walk away: he wanders again. (Auto/agent note: with the player 1.8 m away he switched to greet and faced the player, heading error 0 rad; after the player left he went back to wandering. Checked in headless Chrome. Not checked in Firefox or Safari.)
+- [ ] You cannot walk through the character while he walks, and he does not walk into you. (Auto/agent note: his collision solid always matched his position during the 60 s run. Not tried with a person walking into him.)
 - [ ] FR-7 / AC-3.1 All 8 hair and all 8 clothing colours look visibly distinct on the model. Check again after Continue in a new session.
 - [ ] AC-1.6 / NFR-2 Open the address with `?stats`. Walk for 2 minutes through the whole place. The average frames per second is 30 or better. Result: ____ fps.
 

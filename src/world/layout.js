@@ -197,3 +197,13 @@ export const SOLIDS = [
   },
   { id: 'character', kind: 'character', ...CHARACTER_SPOT, w: 0.8, d: 0.8 },
 ];
+
+// The character wanders, so his solid moves (see character-wander in components.js).
+// This puts it back at the start spot, for a new visit to the world.
+export function resetCharacterSolid() {
+  const c = SOLIDS.find((s) => s.id === 'character');
+  if (c) {
+    c.x = CHARACTER_SPOT.x;
+    c.z = CHARACTER_SPOT.z;
+  }
+}
