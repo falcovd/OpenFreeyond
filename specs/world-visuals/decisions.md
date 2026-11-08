@@ -111,3 +111,7 @@ Approved by the PO after round 2 of the spec critique, without a round 3. featur
 - OQ-3: the builder reports the phase 1 spec is changed for NFR-2, AC-1.6, AC-1.7. On 2026-11-08 the file specs/openfreeyond-companion/spec.md on disk still carried the old text; this is flagged to the builder.
 - OQ-4: JPEG and PNG textures, at most 1024 px; no WebP, AVIF or KTX2.
 - Baseline screenshots: specs/world-visuals/baseline/ (taken before any change).
+
+## Open licence check (2026-11-08)
+
+The character licence is recorded as CC0 by assumption (builder decision). The Hoodie Character zip has no licence file, and its pack page was not found. It must be confirmed on the exact pack page before going online (FR-20, AC-11.4).
