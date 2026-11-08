@@ -105,6 +105,7 @@ export async function mountWorld(
         position="${CHARACTER_SPOT.x} 0 ${CHARACTER_SPOT.z}"
         rotation="0 -30 0"
         character-colours="hair: ${hair}; clothing: ${clothing}"
+        character-mouth
         idle-animation></a-entity>
       <a-entity camera="far: 1000" look-controls wasd-controls="acceleration: 25" walk-limiter position="${SPAWN.x} 1.6 ${SPAWN.z}"></a-entity>
     </a-scene>`;

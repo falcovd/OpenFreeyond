@@ -30,6 +30,7 @@ World details that span files:
 - `scene.js` builds the scene as an HTML string (`mountWorld`). Anything user-supplied (character colours) must pass through `safeId` before reaching markup.
 - Teardown is fragile: `destroy()` must stop A-Frame's render loop manually, and `teardown.js` removes the `a-fullscreen` class that A-Frame leaves on `<html>`, otherwise the start and intake screens cannot scroll. `teardown.js` must not import `aframe` so it stays unit-testable.
 - The character is `public/assets/character.glb`, produced from an FBX by `scripts/convert-character.mjs` (metres, one animation clip, optional `Material=#hex` overrides). `tests/character-glb.test.js` guards that the GLB keeps the material names that `logic/colours.js` recolours, so keep those names when reconverting.
+- The GLB has eyes and eyebrows but no mouth. `src/world/builders/mouth.js` draws one as a thin ribbon and the `character-mouth` component hangs it on the `Head` bone, so it follows the idle animation. Its numbers are in head-bone space; re-measure them if the model is reconverted.
 - The character is stored in the user's own browser (`localStorage`, versioned keys such as `openfreeyond.character.v1`). Storage can be unavailable or corrupt, so `store.js` returns status objects instead of throwing, and `main.js` shows notices for those cases.
 
 ## Repo notes
