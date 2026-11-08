@@ -14,4 +14,54 @@ export const ASSET_RECORDS = [
     verified: false,
     note: 'ASSUMPTION: the Hoodie Character zip has no licence file and its pack page was not found on quaternius.com. CC0 is taken from sibling Quaternius packs. Confirm the exact pack page and licence before going online (FR-20, AC-11.4).',
   },
+  {
+    files: ['textures/grass.jpg'],
+    author: 'ambientCG (Grass 001)',
+    source: 'https://ambientcg.com/a/Grass001',
+    licence: 'CC0-1.0',
+    licenceText:
+      'CC0 1.0 Universal (CC0 1.0) Public Domain Dedication, https://creativecommons.org/publicdomain/zero/1.0/. ambientCG: "All assets are released under the Creative Commons CC0 license, making them free to use without attribution - even in commercial circumstances." (https://docs.ambientcg.com/license/).',
+    credit: null,
+    checked: '2026-11-08',
+  },
+  {
+    files: ['textures/path.jpg'],
+    author: 'ambientCG (Gravel 023)',
+    source: 'https://ambientcg.com/a/Gravel023',
+    licence: 'CC0-1.0',
+    licenceText:
+      'CC0 1.0 Universal (CC0 1.0) Public Domain Dedication, https://creativecommons.org/publicdomain/zero/1.0/. ambientCG: "All assets are released under the Creative Commons CC0 license, making them free to use without attribution - even in commercial circumstances." (https://docs.ambientcg.com/license/).',
+    credit: null,
+    checked: '2026-11-08',
+  },
+  {
+    files: ['textures/wood.jpg'],
+    author: 'ambientCG (Wood Floor 043)',
+    source: 'https://ambientcg.com/a/WoodFloor043',
+    licence: 'CC0-1.0',
+    licenceText:
+      'CC0 1.0 Universal (CC0 1.0) Public Domain Dedication, https://creativecommons.org/publicdomain/zero/1.0/. ambientCG: "All assets are released under the Creative Commons CC0 license, making them free to use without attribution - even in commercial circumstances." (https://docs.ambientcg.com/license/).',
+    credit: null,
+    checked: '2026-11-08',
+  },
+  {
+    files: ['textures/brick.jpg', 'textures/roof.jpg'],
+    author: 'Quaternius (Downtown City MegaKit, free standard version)',
+    source: 'https://quaternius.com/packs/downtowncitymegakit.html',
+    licence: 'CC0-1.0',
+    licenceText:
+      'CC0 1.0 Universal (CC0 1.0) Public Domain Dedication, https://creativecommons.org/publicdomain/zero/1.0/. Quoted from License_Standard.txt in the pack: "License: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication".',
+    credit: null,
+    checked: '2026-11-08',
+  },
+  {
+    files: ['models/tree-round.glb', 'models/tree-pine.glb', 'models/bush.glb'],
+    author: 'Quaternius (Stylized Nature MegaKit, free standard version)',
+    source: 'https://quaternius.com/packs/stylizednaturemegakit.html',
+    licence: 'CC0-1.0',
+    licenceText:
+      'CC0 1.0 Universal (CC0 1.0) Public Domain Dedication, https://creativecommons.org/publicdomain/zero/1.0/. Quoted from License_Standard.txt in the pack: "License: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication". The pack page states "Free to use in personal, educational and commercial projects. (CC0 License)"; the itch.io page lists "Creative Commons Zero v1.0 Universal". Models: CommonTree_1, Pine_1, Bush_Common.',
+    credit: null,
+    checked: '2026-11-08',
+  },
 ];
