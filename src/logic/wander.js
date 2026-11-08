@@ -192,3 +192,126 @@ export function findPath(
   }
   return route;
 }
+
+// A target the character can walk to: a random free spot at least minTrip away that a route leads to.
+// Returns { target, path } or null after a number of failed tries.
+export function pickTarget(rng, from, solids, bounds, tries = 40) {
+  const r = WANDER.radius;
+  for (let n = 0; n < tries; n++) {
+    const target = {
+      x: bounds.minX + r + rng() * (bounds.maxX - bounds.minX - 2 * r),
+      z: bounds.minZ + r + rng() * (bounds.maxZ - bounds.minZ - 2 * r),
+    };
+    if (!isFree(target.x, target.z, solids, bounds)) continue;
+    if (Math.hypot(target.x - from.x, target.z - from.z) < WANDER.minTrip)
+      continue;
+    const path = findPath(from, target, solids, bounds);
+    if (path) return { target, path };
+  }
+  return null;
+}
+
+const idleTime = (rng) =>
+  WANDER.idleMin + rng() * (WANDER.idleMax - WANDER.idleMin);
+
+// The shortest signed angle from b to a, in -pi..pi.
+const angleDiff = (a, b) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
+
+function turnToward(heading, target, dt) {
+  const step = WANDER.turnRate * dt;
+  const d = angleDiff(target, heading);
+  return heading + Math.max(-step, Math.min(step, d));
+}
+
+export function initialState(x, z, heading) {
+  return {
+    mode: 'idle', // idle | walk | greet
+    x,
+    z,
+    heading,
+    timer: 2, // seconds left of the first rest
+    path: [], // waypoints still to walk
+    blocked: 0, // seconds he has waited for the player to move
+    moving: false, // true in the step he actually moved: drives the Walk animation
+  };
+}
+
+// One step of the character's life. `ctx` is { solids, bounds, player: {x, z}, rng }, where
+// `solids` must not include the character himself. Returns a new state; the old one is not changed.
+export function stepWander(state, dt, ctx) {
+  const { solids, bounds, player, rng } = ctx;
+  const s = { ...state, moving: false };
+  const toPlayer = Math.hypot(player.x - s.x, player.z - s.z);
+
+  if (s.mode !== 'greet' && toPlayer < WANDER.greetNear) {
+    s.mode = 'greet';
+    s.path = [];
+  } else if (s.mode === 'greet' && toPlayer > WANDER.greetFar) {
+    s.mode = 'idle';
+    s.timer = idleTime(rng);
+  }
+
+  if (s.mode === 'greet') {
+    s.heading = turnToward(
+      s.heading,
+      Math.atan2(player.x - s.x, player.z - s.z),
+      dt,
+    );
+    return s;
+  }
+
+  if (s.mode === 'idle') {
+    s.timer -= dt;
+    if (s.timer <= 0) {
+      const trip = pickTarget(rng, s, solids, bounds);
+      if (trip) {
+        s.mode = 'walk';
+        s.path = trip.path;
+        s.blocked = 0;
+      } else {
+        s.timer = idleTime(rng);
+      }
+    }
+    return s;
+  }
+
+  // walk
+  const next = s.path[0];
+  if (!next) {
+    s.mode = 'idle';
+    s.timer = idleTime(rng);
+    return s;
+  }
+  const dx = next.x - s.x;
+  const dz = next.z - s.z;
+  const dist = Math.hypot(dx, dz);
+  if (dist < WANDER.arrive) {
+    s.path = s.path.slice(1);
+    return s;
+  }
+  const want = Math.atan2(dx, dz);
+  s.heading = turnToward(s.heading, want, dt);
+  if (Math.abs(angleDiff(want, s.heading)) > 0.8) return s; // turn on the spot first
+
+  const step = Math.min(WANDER.speed * dt, dist);
+  const x = s.x + (dx / dist) * step;
+  const z = s.z + (dz / dist) * step;
+  const closer =
+    Math.hypot(player.x - x, player.z - z) <
+    Math.hypot(player.x - s.x, player.z - s.z);
+  const tooNear = Math.hypot(player.x - x, player.z - z) < WANDER.personGap;
+  if (!isFree(x, z, solids, bounds) || (tooNear && closer)) {
+    s.blocked += dt;
+    if (s.blocked > WANDER.blockedLimit) {
+      s.mode = 'idle';
+      s.timer = idleTime(rng);
+      s.path = [];
+    }
+    return s;
+  }
+  s.x = x;
+  s.z = z;
+  s.blocked = 0;
+  s.moving = true;
+  return s;
+}
