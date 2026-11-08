@@ -78,15 +78,15 @@ const clips = clipList.split(',').map((clipName) => {
 
 **Step 4: Regenerate the GLB**
 
-The original command was `node scripts/convert-character.mjs assets/models/Casual_Hoodie.fbx public/assets/character.glb Idle LightBlue=#7ea6c9`. Keep a copy of the old file first, so you can compare and roll back:
+The shipped model was made without any colour override (the `LightBlue=#7ea6c9` in the old phase 1 plan was never part of the shipped build: it turns the shorts light blue). The command is `node scripts/convert-character.mjs assets/models/Casual_Hoodie.fbx public/assets/character.glb Idle`; with the second clip it is `... Idle,Walk` and still no override. Keep a copy of the old file first, so you can compare and roll back:
 
 ```bash
 cp public/assets/character.glb /tmp/character-before.glb
-node scripts/convert-character.mjs assets/models/Casual_Hoodie.fbx public/assets/character.glb Idle,Walk LightBlue=#7ea6c9
+node scripts/convert-character.mjs assets/models/Casual_Hoodie.fbx public/assets/character.glb Idle,Walk
 ls -l public/assets/character.glb /tmp/character-before.glb
 ```
 
-Expected: the new file is larger than 813 KB, because of the second clip and because an earlier optimisation (duplicates removed, geometry welded) may not be reproduced by the converter.
+Expected: every material colour is the same as in the old file (compare `baseColorFactor` of each material in the two GLB JSON chunks), and the new file is larger than 813 KB, because of the second clip and because an earlier optimisation (duplicates removed, geometry welded) may not be reproduced by the converter.
 
 **Stop condition.** If the new GLB is 2 MB or larger, or `npx vitest run tests/character-glb.test.js` reports a missing `Hair` or `Purple` material, stop and report the numbers. Do not weaken the 2 MB test. Restore the old file with `cp /tmp/character-before.glb public/assets/character.glb` and tell the controller.
 
