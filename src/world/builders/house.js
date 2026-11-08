@@ -67,6 +67,8 @@ export function buildHouse(THREE, assets) {
 
   const roofMaterial = surface(THREE, assets, 'roof', '#b5543a', {
     repeat: [w / 1.5, d / 1.5],
+    tint: '#d9a98c',
+    gain: 2.8,
   });
   roofMaterial.side = THREE.DoubleSide;
   const roof = new THREE.Mesh(

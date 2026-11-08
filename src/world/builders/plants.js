@@ -28,14 +28,15 @@ export function buildBush(THREE, assets, solid) {
   return fromModel(THREE, assets, 'bush', solid);
 }
 
-// A dense dark-green block with the grass texture, longer than it is tall.
+// A dense green block with the grass texture, longer than it is tall.
 export function buildHedge(THREE, assets, solid) {
   const g = new THREE.Group();
   g.position.set(solid.x, 0, solid.z);
   g.userData.kind = 'hedge';
   const material = surface(THREE, assets, 'grass', solid.color, {
     repeat: [solid.w, 1],
-    tint: '#4f7a3a',
+    tint: '#7fae5a',
+    gain: 1.9,
   });
   g.add(box(THREE, solid.w, solid.h, solid.d, material, 0, solid.h / 2, 0));
   return g;

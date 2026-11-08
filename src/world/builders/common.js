@@ -10,12 +10,13 @@ export function makeAssets(values) {
 }
 
 // A material that uses the texture when it loaded and a plain colour when it did not (FR-16).
+// A tint can only darken a texture. `gain` brightens a dark texture so the tint reads as its colour.
 export function surface(
   THREE,
   assets,
   textureId,
   fallback,
-  { repeat, tint } = {},
+  { repeat, tint, gain = 1 } = {},
 ) {
   const tex = assets.texture(textureId);
   if (!tex)
@@ -26,7 +27,7 @@ export function surface(
   map.needsUpdate = true;
   return new THREE.MeshStandardMaterial({
     map,
-    color: tint ?? 0xffffff,
+    color: new THREE.Color(tint ?? 0xffffff).multiplyScalar(gain),
     roughness: 1,
   });
 }

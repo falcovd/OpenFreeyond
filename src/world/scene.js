@@ -62,8 +62,8 @@ export async function mountWorld(container, character, { stats = false } = {}) {
   scene.innerHTML = `
     <a-scene ${stats ? 'stats' : ''} vr-mode-ui="enabled: false" background="color: ${SKY.horizon}"
       fog="type: linear; color: ${SKY.horizon}; near: 40; far: 220">
-      <a-light type="ambient" color="#ffe2b8" intensity="0.7"></a-light>
-      <a-light type="directional" color="#ffd9a0" intensity="0.8" position="-3 6 4"></a-light>
+      <a-light type="ambient" color="#ffd9b0" intensity="0.85"></a-light>
+      <a-light type="directional" color="#ffd9a0" intensity="1.0" position="-6 5 8"></a-light>
       <a-light type="point" color="#ffcf8a" intensity="0.8" distance="12" position="0 2.5 -3"></a-light>
       <a-entity id="world-root" world-motion></a-entity>
       <a-entity id="character-model-entity"

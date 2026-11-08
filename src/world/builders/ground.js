@@ -18,7 +18,7 @@ export function buildPath(THREE, assets) {
   const length = PATH.z1 - PATH.z0;
   const mesh = new THREE.Mesh(
     new THREE.PlaneGeometry(PATH.w, length),
-    surface(THREE, assets, 'path', '#c9b79c', {
+    surface(THREE, assets, 'path', '#bba88c', {
       repeat: [PATH.w / 1.5, length / 1.5],
     }),
   );
