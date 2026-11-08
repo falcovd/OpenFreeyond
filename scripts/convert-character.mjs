@@ -1,16 +1,17 @@
 /* global process, console, Buffer */
-// Converts an FBX character to a small GLB: metres, one named animation clip only.
-// Usage: node scripts/convert-character.mjs <input.fbx> <output.glb> [clipName] [Material=#hex ...]
+// Converts an FBX character to a small GLB: metres, named animation clips only.
+// Usage: node scripts/convert-character.mjs <input.fbx> <output.glb> [clipNames=Idle] [Material=#hex ...]
+// clipNames is a comma-separated list, for example Idle,Walk.
 // Extra Material=#hex arguments set the base colour of a material (for example LightBlue=#7ea6c9).
 import fs from 'fs';
 import * as THREE from 'three';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 
-const [input, output, clipName = 'Idle', ...overrides] = process.argv.slice(2);
+const [input, output, clipList = 'Idle', ...overrides] = process.argv.slice(2);
 if (!input || !output) {
   console.error(
-    'Usage: node scripts/convert-character.mjs <input.fbx> <output.glb> [clipName] [Material=#hex ...]',
+    'Usage: node scripts/convert-character.mjs <input.fbx> <output.glb> [clipNames=Idle] [Material=#hex ...]\n  clipNames is a comma-separated list, for example Idle,Walk',
   );
   process.exit(1);
 }
@@ -38,14 +39,19 @@ const model = new FBXLoader().parse(
   '',
 );
 
-const clip = model.animations.find((a) => a.name.split('|').pop() === clipName);
-if (!clip) {
-  console.error(
-    `No clip named "${clipName}". Found: ${model.animations.map((a) => a.name).join(', ')}`,
+const clips = clipList.split(',').map((clipName) => {
+  const clip = model.animations.find(
+    (a) => a.name.split('|').pop() === clipName,
   );
-  process.exit(1);
-}
-clip.name = clipName;
+  if (!clip) {
+    console.error(
+      `No clip named "${clipName}". Found: ${model.animations.map((a) => a.name).join(', ')}`,
+    );
+    process.exit(1);
+  }
+  clip.name = clipName;
+  return clip;
+});
 
 // The FBX materials arrive fully transparent and glowing. Replace each with a plain opaque
 // standard material that keeps the name and colour (names matter: the app recolours by name).
@@ -90,11 +96,11 @@ const exporter = new GLTFExporter();
 const glb = await new Promise((resolve, reject) =>
   exporter.parse(model, resolve, reject, {
     binary: true,
-    animations: [clip],
+    animations: clips,
     onlyVisible: false,
   }),
 );
 fs.writeFileSync(output, Buffer.from(glb));
 console.log(
-  `Wrote ${output} (${(glb.byteLength / 1024).toFixed(0)} KB), clip "${clipName}"`,
+  `Wrote ${output} (${(glb.byteLength / 1024).toFixed(0)} KB), clips "${clipList}"`,
 );
