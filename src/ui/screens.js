@@ -23,6 +23,14 @@ export function h(tag, attrs = {}, ...children) {
   return el;
 }
 
+const brandUrl = (file) => `${import.meta.env.BASE_URL}brand/${file}`;
+const wordmark = (small = false) =>
+  h('img', {
+    class: small ? 'brand-wordmark small' : 'brand-wordmark',
+    src: brandUrl('wordmark.webp'),
+    alt: 'OpenFreeyond',
+  });
+
 const isWebUrl = (url) => /^https?:\/\//i.test(url ?? '');
 
 function creditLine(record) {
@@ -32,6 +40,55 @@ function creditLine(record) {
       ? ` by ${record.author}`
       : '';
   return `${main}${author} (${record.licence}) `;
+}
+
+// Small footer link on the start screen. It opens the credits panel above it.
+function renderFooter() {
+  let credits = null;
+  const footer = h('footer', { class: 'site-footer' });
+  footer.append(
+    h(
+      'button',
+      {
+        class: 'link-button',
+        'data-action': 'toggle-credits',
+        'aria-expanded': 'false',
+        onClick: (event) => {
+          if (credits) {
+            credits.remove();
+            credits = null;
+          } else {
+            credits = h(
+              'div',
+              { class: 'credits', role: 'region', 'aria-label': 'Credits' },
+              h('h2', {}, 'Credits'),
+              ASSET_RECORDS.map((r) =>
+                h(
+                  'p',
+                  {},
+                  creditLine(r),
+                  isWebUrl(r.source) &&
+                    h(
+                      'a',
+                      {
+                        href: r.source,
+                        target: '_blank',
+                        rel: 'noopener noreferrer',
+                      },
+                      'source',
+                    ),
+                ),
+              ),
+            );
+            footer.prepend(credits);
+          }
+          event.currentTarget.setAttribute('aria-expanded', String(!!credits));
+        },
+      },
+      'Credits',
+    ),
+  );
+  return footer;
 }
 
 export function renderWorldOverlay(
@@ -44,47 +101,6 @@ export function renderWorldOverlay(
       'button',
       { class: 'back', 'data-action': 'back', onClick: onBack },
       'Back to start',
-    ),
-  );
-  let credits = null;
-  overlay.append(
-    h(
-      'button',
-      {
-        class: 'credits-toggle',
-        'data-action': 'toggle-credits',
-        onClick: () => {
-          if (credits) {
-            credits.remove();
-            credits = null;
-            return;
-          }
-          credits = h(
-            'div',
-            { class: 'credits', role: 'region', 'aria-label': 'Credits' },
-            h('h2', {}, 'Credits'),
-            ASSET_RECORDS.map((r) =>
-              h(
-                'p',
-                {},
-                creditLine(r),
-                isWebUrl(r.source) &&
-                  h(
-                    'a',
-                    {
-                      href: r.source,
-                      target: '_blank',
-                      rel: 'noopener noreferrer',
-                    },
-                    'source',
-                  ),
-              ),
-            ),
-          );
-          overlay.append(credits);
-        },
-      },
-      'Credits',
     ),
   );
   if (notice)
@@ -118,7 +134,12 @@ export function renderLoading(root) {
   const el = h(
     'div',
     { class: 'loading', role: 'status', 'aria-live': 'polite' },
-    h('div', { class: 'spinner', 'aria-hidden': 'true' }),
+    h('img', {
+      class: 'brand-door',
+      src: brandUrl('door.webp'),
+      alt: '',
+      'aria-hidden': 'true',
+    }),
     h('p', {}, 'Loading the place…'),
   );
   root.append(el);
@@ -134,17 +155,40 @@ const CHOICE_LABELS = {
 export function renderStart(root, { options, notice, onChoose }) {
   root.replaceChildren(
     h(
-      'main',
-      { class: 'screen' },
-      h('h1', {}, 'OpenFreeyond'),
-      notice && h('p', { class: 'notice', role: 'status' }, notice),
-      options.map((choice) =>
+      'div',
+      { class: 'page' },
+      h(
+        'main',
+        { class: 'start' },
         h(
-          'button',
-          { 'data-choice': choice, onClick: () => onChoose(choice) },
-          CHOICE_LABELS[choice],
+          'div',
+          { class: 'start-main' },
+          h('h1', {}, wordmark()),
+          notice && h('p', { class: 'notice', role: 'status' }, notice),
+          options.map((choice) =>
+            h(
+              'button',
+              { 'data-choice': choice, onClick: () => onChoose(choice) },
+              CHOICE_LABELS[choice],
+            ),
+          ),
+        ),
+        h(
+          'div',
+          { class: 'start-art', 'aria-hidden': 'true' },
+          h('img', {
+            class: 'brand-door',
+            src: brandUrl('door.webp'),
+            alt: '',
+          }),
+          h('img', {
+            class: 'brand-character',
+            src: brandUrl('character.webp'),
+            alt: '',
+          }),
         ),
       ),
+      renderFooter(),
     ),
   );
 }
@@ -248,6 +292,12 @@ export function renderIntake(root, { values, errors, onSubmit, onCancel }) {
     onSubmit(data);
   });
   root.replaceChildren(
-    h('main', { class: 'screen' }, h('h1', {}, 'Make your character'), form),
+    h(
+      'main',
+      { class: 'screen' },
+      wordmark(true),
+      h('h1', {}, 'Make your character'),
+      form,
+    ),
   );
 }

@@ -16,7 +16,7 @@ describe('renderStart', () => {
       options: ['continue', 'make-new', 'try-out'],
       onChoose: () => {},
     });
-    expect(r.querySelectorAll('button')).toHaveLength(3);
+    expect(r.querySelectorAll('button[data-choice]')).toHaveLength(3);
   });
   it('reports the chosen option (AC-5.1)', () => {
     const r = root();

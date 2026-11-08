@@ -1,20 +1,33 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest';
-import { renderWorldOverlay } from '../src/ui/screens.js';
+import { renderStart, renderWorldOverlay } from '../src/ui/screens.js';
 import { ASSET_RECORDS } from '../src/data/licences.js';
 
 const render = () => {
   const root = document.createElement('div');
-  renderWorldOverlay(root, {
+  renderStart(root, {
+    options: ['make-new', 'try-out'],
     notice: null,
-    showHint: false,
-    onDismissHint() {},
-    onBack() {},
+    onChoose() {},
   });
   return root;
 };
 
 describe('credits section (AC-11.3)', () => {
+  it('is a small link in the footer of the start screen, not in the world', () => {
+    const root = render();
+    const link = root.querySelector('footer [data-action="toggle-credits"]');
+    expect(link).not.toBeNull();
+    expect(link.textContent).toBe('Credits');
+    const world = document.createElement('div');
+    renderWorldOverlay(world, {
+      notice: null,
+      showHint: false,
+      onDismissHint() {},
+      onBack() {},
+    });
+    expect(world.querySelector('[data-action="toggle-credits"]')).toBeNull();
+  });
   it('lists every credit that a licence requires', () => {
     const root = render();
     root.querySelector('[data-action="toggle-credits"]').click();
@@ -22,11 +35,11 @@ describe('credits section (AC-11.3)', () => {
     for (const r of ASSET_RECORDS.filter((x) => x.credit))
       expect(text).toContain(r.credit);
   });
-  it('shows the credits panel only after the button is pressed', () => {
+  it('shows the credits panel only after the link is pressed', () => {
     const root = render();
     expect(root.querySelector('.credits')).toBeNull();
   });
-  it('hides the panel again when the button is pressed twice', () => {
+  it('hides the panel again when the link is pressed twice', () => {
     const root = render();
     const button = root.querySelector('[data-action="toggle-credits"]');
     button.click();
