@@ -1,6 +1,7 @@
 import 'aframe';
 import './components.js';
 import { SOLIDS, SPAWN, CHARACTER_SPOT } from './layout.js';
+import { releasePage } from './teardown.js';
 import { HAIR_COLOURS, CLOTHING_COLOURS } from '../logic/fields.js';
 
 const CHARACTER_URL = `${import.meta.env.BASE_URL}assets/character.glb`;
@@ -60,6 +61,8 @@ export function mountWorld(container, character, { stats = false } = {}) {
         sceneEl.renderer?.setAnimationLoop(null);
       }
       scene.remove();
+      // A-Frame leaves its fullscreen class on <html>; without this the page cannot scroll.
+      releasePage(document.documentElement);
     },
   };
 }
