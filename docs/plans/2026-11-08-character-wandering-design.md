@@ -68,3 +68,11 @@ If you stand in his way, he waits. He never steps into your space.
 
 - Dead code: in `stepWander` the branch that makes him wait for a player who is in his way cannot trigger. He greets (stops) from 3 m, and the personal-space gap is 0.9 m. The branch stays as a harmless safety net. The block-and-give-up logic is tested against a solid instead.
 - The converter command is `node scripts/convert-character.mjs assets/models/Casual_Hoodie.fbx public/assets/character.glb Idle,Walk` with no colour overrides. An override turns the shorts light blue.
+
+## Update: waving (2026-11-08)
+
+When a person comes close, he waves once with the `Wave` clip of `Casual_Hoodie.fbx`.
+
+- One wave for each approach. It starts in the greet state, once he faces the person to within 0.6 radians (`WANDER.waveFacing`). `stepWander` sets `waveNow` for that one step and `waved` until the person goes beyond `greetFar`, so shuffling between 3 m and 4 m does not wave again.
+- The animation component plays `Wave` once (it holds its last pose), and goes back to what he is doing when it ends. Standing does not cut a wave short. Walking again does.
+- The model has a third clip, so the converter takes `Idle,Walk,Wave` (the file grows by about 110 KB, to 1.5 MB).

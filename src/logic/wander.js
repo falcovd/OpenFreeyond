@@ -12,6 +12,7 @@ export const WANDER = {
   idleMax: 6,
   greetNear: 3, // he stops and faces the player closer than this ...
   greetFar: 4, // ... and wanders again when the player is farther than this
+  waveFacing: 0.6, // he waves once he faces the player to within this many radians
   personGap: 0.9, // he never steps closer to the player than this
   arrive: 0.15, // close enough to a waypoint
   minTrip: 2, // a new target is at least this far away
@@ -233,6 +234,8 @@ export function initialState(x, z, heading) {
     path: [], // waypoints still to walk
     blocked: 0, // seconds he has waited for the player to move
     moving: false, // true in the step he actually moved: drives the Walk animation
+    waved: false, // he has waved at the person who is near now; reset when the person leaves
+    waveNow: false, // true in the one step in which he starts to wave: drives the Wave animation
   };
 }
 
@@ -240,23 +243,30 @@ export function initialState(x, z, heading) {
 // `solids` must not include the character himself. Returns a new state; the old one is not changed.
 export function stepWander(state, dt, ctx) {
   const { solids, bounds, player, rng } = ctx;
-  const s = { ...state, moving: false };
+  const s = { ...state, moving: false, waveNow: false };
   const toPlayer = Math.hypot(player.x - s.x, player.z - s.z);
 
   if (s.mode !== 'greet' && toPlayer < WANDER.greetNear) {
     s.mode = 'greet';
     s.path = [];
+    s.waved = false;
   } else if (s.mode === 'greet' && toPlayer > WANDER.greetFar) {
     s.mode = 'idle';
     s.timer = idleTime(rng);
+    s.waved = false; // the next approach gets a new wave
   }
 
   if (s.mode === 'greet') {
-    s.heading = turnToward(
-      s.heading,
-      Math.atan2(player.x - s.x, player.z - s.z),
-      dt,
-    );
+    const toward = Math.atan2(player.x - s.x, player.z - s.z);
+    s.heading = turnToward(s.heading, toward, dt);
+    // One wave per approach, once he faces the person.
+    if (
+      !s.waved &&
+      Math.abs(angleDiff(toward, s.heading)) < WANDER.waveFacing
+    ) {
+      s.waved = true;
+      s.waveNow = true;
+    }
     return s;
   }
 

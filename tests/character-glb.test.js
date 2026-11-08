@@ -23,8 +23,12 @@ describe('character.glb', () => {
     expect(names).toContain(CHARACTER_MATERIALS.clothing);
   });
 
-  it('has exactly two animations, named Idle and Walk', () => {
-    expect(gltf.animations.map((a) => a.name).sort()).toEqual(['Idle', 'Walk']);
+  it('has exactly three animations: Idle, Walk and Wave', () => {
+    expect(gltf.animations.map((a) => a.name).sort()).toEqual([
+      'Idle',
+      'Walk',
+      'Wave',
+    ]);
   });
 
   it('has only opaque materials', () => {
