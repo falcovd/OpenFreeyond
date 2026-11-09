@@ -10,7 +10,13 @@ import {
 } from '../src/world/builders/sky.js';
 import { buildGround, buildPath } from '../src/world/builders/ground.js';
 import { PATH } from '../src/world/layout.js';
-import { SHADOW_MAP_SIZE } from '../src/world/shadowConfig.js';
+import {
+  SHADOW_MAP_SIZE,
+  SHADOW_MAX_HEIGHT,
+  SUN_DISTANCE,
+} from '../src/world/shadowConfig.js';
+import { shadowFrustum } from '../src/logic/shadowFrustum.js';
+import { SHADOW_REGION } from '../src/world/streetLayout.js';
 
 const none = makeAssets(new Map());
 
@@ -141,6 +147,15 @@ describe('ground (FR-3, FR-4, FR-5)', () => {
   });
 });
 
+describe('the path underlay', () => {
+  it('has a polygon offset so it does not fight the ground', () => {
+    const p = buildPath(THREE, none);
+    const under = p.children[0];
+    expect(under.material.polygonOffset).toBe(true);
+    expect(under.material.polygonOffsetFactor).toBeLessThan(0);
+  });
+});
+
 describe('the sun casts shadows (shadows on)', () => {
   const sunOf = (sky) => {
     let s;
@@ -153,7 +168,13 @@ describe('the sun casts shadows (shadows on)', () => {
     const sun = sunOf(buildSky(THREE, none, undefined, { shadows: true }));
     expect(sun.castShadow).toBe(true);
     expect(sun.shadow.mapSize.x).toBe(SHADOW_MAP_SIZE);
-    expect(sun.shadow.camera.right).toBeGreaterThan(15);
+    const f = shadowFrustum({
+      bounds: SHADOW_REGION,
+      maxHeight: SHADOW_MAX_HEIGHT,
+      distance: SUN_DISTANCE,
+    });
+    expect(sun.shadow.camera.right).toBeCloseTo(f.right);
+    expect(f.right).toBeGreaterThan(25);
   });
   it('allocates no shadow map when shadows are off', () => {
     const sun = sunOf(buildSky(THREE, none, undefined, { shadows: false }));

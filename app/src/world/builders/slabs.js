@@ -1,6 +1,9 @@
 import { slabGrid, SLAB } from '../../logic/slabs.js';
 import { surface, hash } from './common.js';
 
+// The underlay sits this far below the slab top (the slabs are 4 cm thick, so it shows in the joints).
+export const SLAB_UNDER = 0.035;
+
 // One InstancedMesh of thin boxes on a darker underlay that shows in the joints. Local x runs across the
 // strip and local z along it, from the start end (z = 0) to the far end. The caller places and turns the group.
 export function buildSlabs(
@@ -13,12 +16,17 @@ export function buildSlabs(
   g.userData.kind = kind;
   const under = new THREE.Mesh(
     new THREE.PlaneGeometry(width, length),
-    new THREE.MeshStandardMaterial({ color: '#6f6a62', roughness: 1 }),
+    new THREE.MeshStandardMaterial({
+      color: '#6f6a62',
+      roughness: 1,
+      polygonOffset: true, // pulls it clear of whatever surface it lies on
+      polygonOffsetFactor: -2,
+      polygonOffsetUnits: -2,
+    }),
   );
-  under.castShadow = false;
   under.userData.flat = true; // applyShadows keeps it from casting
   under.rotation.x = -Math.PI / 2;
-  under.position.set(0, top - 0.035, length / 2);
+  under.position.set(0, top - SLAB_UNDER, length / 2);
   g.add(under);
   const mesh = new THREE.InstancedMesh(
     new THREE.BoxGeometry(1, 0.04, 1), // scaled per instance

@@ -116,4 +116,29 @@ describe('buildWorld with the street', () => {
     expect(group.children.some((c) => c.userData.kind === 'street')).toBe(true);
     expect(pickables.some((c) => c.userData.kind === 'street')).toBe(false);
   });
+  it('road and centre line have polygon offsets, the dashes pulled further', () => {
+    const road = byKind('road');
+    const mats = road.map((o) => o.material);
+    for (const m of mats) {
+      expect(m.polygonOffset).toBe(true);
+      expect(m.polygonOffsetFactor).toBeLessThan(0);
+    }
+    const dash = road.find((o) => o.isInstancedMesh).material;
+    const plane = road.find((o) => !o.isInstancedMesh).material;
+    expect(dash.polygonOffsetFactor).toBeLessThan(plane.polygonOffsetFactor);
+  });
+  it('the platform top meets the slab underlay and the sidewalk top stays 0.15', () => {
+    const strip = g.children.find(
+      (c) => c.userData.kind === 'street-slab' && c.isGroup,
+    );
+    const under = strip.children[0];
+    expect(under.material.polygonOffset).toBe(true);
+    const platform = g.children.find(
+      (c) => c.userData.kind === 'street-slab' && c.isMesh,
+    );
+    const platformTop = new THREE.Box3().setFromObject(platform).max.y;
+    const underY = new THREE.Box3().setFromObject(under).max.y;
+    expect(platformTop).toBeCloseTo(underY);
+    expect(STREET.sidewalk.top).toBe(0.15);
+  });
 });

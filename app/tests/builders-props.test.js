@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
 import { makeAssets } from '../src/world/builders/common.js';
 import { buildCar, buildLamp } from '../src/world/builders/props.js';
-import { CARS, LAMPS } from '../src/world/streetLayout.js';
+import { CARS, LAMPS, STREET } from '../src/world/streetLayout.js';
 
 const stub = () => {
   const scene = new THREE.Group();
@@ -36,6 +36,22 @@ describe('buildCar and buildLamp', () => {
       expect(g.userData.kind).toBe('lamp');
       expect(g.userData.plain).toBeUndefined();
       expect(g.position.x).toBe(lamp.x);
+    }
+  });
+  it('lamps stand on the sidewalk top, cars on the road level; nobody can click them', () => {
+    const assets = makeAssets(
+      new Map([
+        ['car-1', stub()],
+        ['lamp', stub()],
+      ]),
+    );
+    for (const a of [none, assets]) {
+      const lamp = buildLamp(THREE, a, LAMPS[0]);
+      const car = buildCar(THREE, a, CARS[0]);
+      expect(lamp.position.y).toBe(STREET.sidewalk.top);
+      expect(car.position.y).toBe(0);
+      expect(lamp.userData.noPick).toBe(true);
+      expect(car.userData.noPick).toBe(true);
     }
   });
   it('without a model: a plain block of the right size', () => {

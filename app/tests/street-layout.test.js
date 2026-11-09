@@ -13,6 +13,8 @@ import {
 } from '../src/world/streetConfig.js';
 import { GROUND_SIZE, FOG } from '../src/world/builders/ground.js';
 
+// Assumption: A-Frame's linear fog uses view depth, so at a wide angle the street ends (x = +-STREET.length / 2)
+// may be only partly fogged. The tests below check the numbers; the wide-angle look is checked by eye (plan Task 14).
 describe('street dimensions (FR-8, AC-4.2)', () => {
   it('has a 1.8 m sidewalk that starts at the front fence (A-8)', () => {
     expect(STREET.sidewalk.w).toBe(1.8);
