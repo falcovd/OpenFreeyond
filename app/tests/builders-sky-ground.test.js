@@ -10,6 +10,7 @@ import {
 } from '../src/world/builders/sky.js';
 import { buildGround, buildPath } from '../src/world/builders/ground.js';
 import { PATH } from '../src/world/layout.js';
+import { SHADOW_MAP_SIZE } from '../src/world/shadowConfig.js';
 
 const none = makeAssets(new Map());
 
@@ -131,5 +132,25 @@ describe('ground (FR-3, FR-4, FR-5)', () => {
     const p = buildPath(THREE, none);
     expect(p.geometry.parameters.width).toBeCloseTo(PATH.w);
     expect(p.geometry.parameters.height).toBeCloseTo(PATH.z1 - PATH.z0);
+  });
+});
+
+describe('the sun casts shadows (shadows on)', () => {
+  const sunOf = (sky) => {
+    let s;
+    sky.traverse((o) => {
+      if (o.isDirectionalLight) s = o;
+    });
+    return s;
+  };
+  it('has a shadow map and a frustum that holds the place', () => {
+    const sun = sunOf(buildSky(THREE, none, undefined, { shadows: true }));
+    expect(sun.castShadow).toBe(true);
+    expect(sun.shadow.mapSize.x).toBe(SHADOW_MAP_SIZE);
+    expect(sun.shadow.camera.right).toBeGreaterThan(15);
+  });
+  it('allocates no shadow map when shadows are off', () => {
+    const sun = sunOf(buildSky(THREE, none, undefined, { shadows: false }));
+    expect(sun.castShadow).toBe(false);
   });
 });

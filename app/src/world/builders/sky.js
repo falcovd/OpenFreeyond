@@ -1,4 +1,14 @@
 import skyMeta from '../../data/sky.json';
+import { BOUNDS } from '../layout.js';
+import { shadowFrustum } from '../../logic/shadowFrustum.js';
+import {
+  SHADOW_MAP_SIZE,
+  SHADOW_MAX_HEIGHT,
+  SUN_DISTANCE,
+  SHADOW_BIAS,
+  SHADOW_NORMAL_BIAS,
+  SHADOW_BLUR,
+} from '../shadowConfig.js';
 
 export const SKY = { radius: 400, horizon: '#cfe6f5', zenith: '#3f86d0' };
 
@@ -90,7 +100,12 @@ function gradientSphere(THREE) {
 }
 
 // The sky sphere and the sun light. The group turns slowly (FR-14); the sphere is child 0.
-export function buildSky(THREE, assets, params = skyParams(assets)) {
+export function buildSky(
+  THREE,
+  assets,
+  params = skyParams(assets),
+  { shadows = false } = {},
+) {
   const group = new THREE.Group();
   const mesh = params.photo
     ? photoSphere(THREE, assets.texture('sky'))
@@ -100,7 +115,21 @@ export function buildSky(THREE, assets, params = skyParams(assets)) {
   group.userData.noPick = true; // a click goes through the sky
   group.userData.kind = 'sky';
   const sun = new THREE.DirectionalLight('#ffd9a0', 1.0);
-  sun.position.set(...params.sun).multiplyScalar(100);
+  sun.position.set(...params.sun).multiplyScalar(SUN_DISTANCE);
+  if (shadows) {
+    const f = shadowFrustum({
+      bounds: BOUNDS,
+      maxHeight: SHADOW_MAX_HEIGHT,
+      distance: SUN_DISTANCE,
+    });
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE);
+    Object.assign(sun.shadow.camera, f);
+    sun.shadow.camera.updateProjectionMatrix();
+    sun.shadow.bias = SHADOW_BIAS;
+    sun.shadow.normalBias = SHADOW_NORMAL_BIAS;
+    sun.shadow.radius = SHADOW_BLUR;
+  }
   group.add(sun);
   group.userData.update = (seconds) => {
     group.rotation.y = seconds * SKY_DRIFT;
