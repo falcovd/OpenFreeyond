@@ -185,7 +185,7 @@ export const PLOTS = [
       items: [
         tree('pine', 13.5, 16, 4.6),
         tree('round', 33, 5, 4),
-        bush(28, 9),
+        bush(29, 9),
         bush(34, 16),
         hedge(27, 21, 6),
         bench(30, 3.5),
@@ -239,14 +239,16 @@ export function plotFences(plot) {
 
 export function plotHouse(plot) {
   const look = LOOKS[plot.look];
-  const x = plot.gateX - look.doorOffset;
+  const rot = isNear(plot) ? 0 : Math.PI;
+  // The turn by rot flips the house's local x, so the door's world x is x + doorOffset * cos(rot).
+  const x = plot.gateX - look.doorOffset * Math.cos(rot);
   const z = isNear(plot)
     ? plot.bounds.maxZ - plot.houseFrontV - HOUSE_SIZE.d / 2
     : plot.bounds.minZ + plot.houseFrontV + HOUSE_SIZE.d / 2;
   return {
     x,
     z,
-    rot: isNear(plot) ? 0 : Math.PI,
+    rot,
     look: plot.look,
     floors: look.floors,
     footprint: {

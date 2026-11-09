@@ -140,7 +140,9 @@ describe('the gate, path and door (AC-1.5, AC-1.6, AC-2.9)', () => {
   it('puts the front door in line with the gate', () => {
     for (const p of PLOTS) {
       const h = plotHouse(p);
-      expect(h.x + LOOKS[p.look].doorOffset).toBeCloseTo(p.gateX);
+      expect(h.x + LOOKS[p.look].doorOffset * Math.cos(h.rot)).toBeCloseTo(
+        p.gateX,
+      );
     }
   });
   it('runs a straight 1.2 m path of whole slabs from the gate to the door', () => {
