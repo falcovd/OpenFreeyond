@@ -5,6 +5,7 @@ import {
   BOUNDS,
   CHARACTER_SPOT,
   resetCharacterSolid,
+  wanderSolids,
 } from './layout.js';
 import { initialState, stepWander } from '../logic/wander.js';
 import { attachMouth } from './builders/mouth.js';
@@ -139,7 +140,7 @@ AFRAME.registerComponent('character-wander', {
     this.active = false;
     this.moving = false;
     this.player = null;
-    this.solids = SOLIDS.filter((s) => s.id !== 'character');
+    this.solids = wanderSolids();
     this.body = SOLIDS.find((s) => s.id === 'character');
     this.state = initialState(
       CHARACTER_SPOT.x,
