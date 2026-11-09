@@ -181,6 +181,41 @@ describe('loadInterior (FR-20, FR-23)', () => {
     );
     expect(seen).toEqual([]);
   });
+  it('treats a throwing onItem as a failure and still loads the rest', async () => {
+    const failed = [];
+    const seen = [];
+    await loadInterior(
+      [
+        { id: 'a', type: 'model', url: '/a' },
+        { id: 'b', type: 'model', url: '/b' },
+      ],
+      { model: async (url) => url },
+      {
+        onItem: (id) => {
+          if (id === 'a') throw new Error('boom');
+          seen.push(id);
+        },
+        onFail: (id) => failed.push(id),
+      },
+    );
+    expect(failed).toEqual(['a']);
+    expect(seen).toEqual(['b']);
+  });
+  it('hands a late value to onLate instead of onItem', async () => {
+    const late = [];
+    const seen = [];
+    await loadInterior(
+      [{ id: 'a', type: 'model', url: '/a' }],
+      { model: async () => 'A' },
+      {
+        onItem: (id) => seen.push(id),
+        onLate: (id, v) => late.push([id, v]),
+        isCancelled: () => true,
+      },
+    );
+    expect(seen).toEqual([]);
+    expect(late).toEqual([['a', 'A']]);
+  });
   it('has one-sentence load messages for the house and for the interior', () => {
     for (const m of [HOUSE_FAILED_MESSAGE, INTERIOR_FAILED_MESSAGE])
       expect(m.split('.').filter(Boolean).length).toBe(1);

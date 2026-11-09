@@ -193,30 +193,42 @@ export async function mountWorld(
     releasePage(document.documentElement);
   };
 
+  // A video that arrives after teardown is never given to the TV, so release it here.
+  const releaseLate = (value) => {
+    if (typeof value?.pause !== 'function') return;
+    try {
+      value.pause();
+      value.removeAttribute?.('src');
+      value.load?.();
+    } catch {
+      // Already released.
+    }
+  };
+
   // Models replace their blocks as they arrive. The TV hooks feed the TV screen (builders/interior.js).
-  const startInterior = (interior) => {
+  const startInterior = (house) => {
     const onItem = (id, value) => {
-      if (id === 'tv-still') return interior.tv?.setStill?.(value);
-      if (id === 'tv-clip') return interior.tv?.setClip?.(value);
+      if (id === 'tv-still') return house.tv?.setStill?.(value);
+      if (id === 'tv-clip') return house.tv?.setClip?.(value);
       const file = itemsForFile(
         interiorManifest().find((a) => a.id === id)?.url,
       );
-      for (const item of file)
-        interior.replace(item.id, value.scene.clone(true));
+      for (const item of file) house.replace(item.id, value.scene.clone(true));
     };
     const onFail = (id) => {
       if (id === 'tv-still' || id === 'tv-clip') {
-        if (id === 'tv-still') interior.tv?.stillFailed?.();
-        else interior.tv?.clipFailed?.();
+        if (id === 'tv-still') house.tv?.stillFailed?.();
+        else house.tv?.clipFailed?.();
         return onNotice?.(INTERIOR_FAILED_MESSAGE);
       }
       const url = interiorManifest().find((a) => a.id === id)?.url;
-      for (const item of itemsForFile(url)) interior.fail(item.id);
+      for (const item of itemsForFile(url)) house.fail(item.id);
       onNotice?.(INTERIOR_FAILED_MESSAGE);
     };
     loadInterior(interiorManifest(), makeLoaders(THREE), {
       onItem,
       onFail,
+      onLate: (id, value) => releaseLate(value),
       isCancelled: () => torn,
     });
   };
