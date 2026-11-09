@@ -2,12 +2,32 @@
 import { INTERIOR_ITEMS } from './layout.js';
 import { furnitureTextureIds } from '../logic/furniture-textures.js';
 import { TV_MODE } from './interiorConfig.js';
+import { STREET_CARS, STREET_LAMPS } from './streetConfig.js';
 
 // The textures the furniture needs. They load with the interior, after the place is ready.
 export const FURNITURE_TEXTURES = furnitureTextureIds();
 
 const base = import.meta.env.BASE_URL;
 const url = (path) => `${base}assets/${path}`;
+
+// The street models that exist (FR-16). Add an id here when its file is added under models/street/;
+// tests/manifest.test.js fails if a listed file is missing. An item without a file is drawn as a plain block.
+const STREET_MODEL_IDS = ['car-1', 'car-2', 'car-3', 'lamp'];
+
+// Only the models the build switches use: car-1..car-N for N = STREET_CARS, and 'lamp' when STREET_LAMPS >= 1.
+export function streetManifest(
+  cars = STREET_CARS,
+  lamps = STREET_LAMPS,
+  ids = STREET_MODEL_IDS,
+) {
+  return ids
+    .filter((id) => {
+      if (id === 'lamp') return lamps >= 1;
+      const n = /^car-(\d+)$/.exec(id)?.[1];
+      return n !== undefined && Number(n) <= cars;
+    })
+    .map((id) => ({ id, type: 'model', url: url(`models/street/${id}.glb`) }));
+}
 
 export const MANIFEST = [
   { id: 'grass', type: 'texture', url: url('textures/grass.jpg') },
@@ -24,6 +44,7 @@ export const MANIFEST = [
   { id: 'bush', type: 'model', url: url('models/bush.glb') },
   { id: 'house', type: 'model', url: url('models/house.glb') },
   { id: 'character', type: 'model', url: url('character.glb') },
+  ...streetManifest(),
 ];
 
 // The interior loads after the place is ready (OQ-3). One entry per file: the two pendants share one.

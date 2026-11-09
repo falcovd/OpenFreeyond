@@ -167,4 +167,30 @@ export const ASSET_RECORDS = [
     checked: '2026-11-09',
     verified: true,
   },
+  {
+    files: [
+      'models/street/car-1.glb',
+      'models/street/car-2.glb',
+      'models/street/car-3.glb',
+    ],
+    author: 'Kenney (Car Kit 3.1)',
+    source: 'https://kenney.nl/assets/car-kit',
+    licence: 'CC0-1.0',
+    licenceText:
+      'CC0 1.0 Universal (CC0 1.0) Public Domain Dedication, http://creativecommons.org/publicdomain/zero/1.0/. Quoted from License.txt in the pack: "License: (Creative Commons Zero, CC0)" and "You can use this content for personal, educational, and commercial purposes. Support by crediting \'Kenney\' or \'www.kenney.nl\' (this is not a requirement)". The pack page states "CC0 licensed". Models: sedan (car-1), hatchback-sports (car-2), suv (car-3), rotated to face +x, scaled and stood on y=0 by scripts/build-street-props.mjs, colour palette image embedded. The palette is plain colour swatches: no logos, brand marks or number plates.',
+    credit: null,
+    checked: '2026-11-09',
+    verified: true,
+  },
+  {
+    files: ['models/street/lamp.glb'],
+    author: 'Kenney (City Kit Roads 2.2)',
+    source: 'https://kenney.nl/assets/city-kit-roads',
+    licence: 'CC0-1.0',
+    licenceText:
+      'CC0 1.0 Universal (CC0 1.0) Public Domain Dedication, http://creativecommons.org/publicdomain/zero/1.0/. Quoted from License.txt in the pack: "License: (Creative Commons Zero, CC0)" and "You can use this content for personal, educational, and commercial purposes. Support by crediting \'Kenney\' or \'www.kenney.nl\' (this is not a requirement)". The pack page states "CC0 licensed". Model: light-curved (a plain street lamp, no emissive material), turned so the arm points over the road and scaled to 4.5 m by scripts/build-street-props.mjs.',
+    credit: null,
+    checked: '2026-11-09',
+    verified: true,
+  },
 ];

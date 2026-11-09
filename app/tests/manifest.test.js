@@ -4,6 +4,7 @@ import { existsSync } from 'node:fs';
 import {
   MANIFEST,
   interiorManifest,
+  streetManifest,
   itemsForFile,
 } from '../src/world/manifest.js';
 import { ASSET_RECORDS } from '../src/data/licences.js';
@@ -88,5 +89,35 @@ describe('interior manifest (FR-20, FR-22)', () => {
       'pendant-kitchen',
     ]);
     expect(itemsForFile('/nope')).toEqual([]);
+  });
+});
+
+describe('street manifest (FR-16, AC-6.8)', () => {
+  it('lists car-1..car-3 and the lamp by default, all under the app base', () => {
+    const m = streetManifest();
+    expect(m.map((a) => a.id)).toEqual(['car-1', 'car-2', 'car-3', 'lamp']);
+    expect(MANIFEST.filter((a) => a.url.includes('models/street/'))).toEqual(m);
+  });
+  it('lists only the cars and the lamp the build switches use', () => {
+    expect(streetManifest(2, 1).map((a) => a.id)).toEqual([
+      'car-1',
+      'car-2',
+      'lamp',
+    ]);
+    expect(streetManifest(1, 0).map((a) => a.id)).toEqual(['car-1']);
+  });
+  it('skips ids that have no file in the list it is given', () => {
+    expect(streetManifest(3, 1, ['car-2', 'lamp']).map((a) => a.id)).toEqual([
+      'car-2',
+      'lamp',
+    ]);
+  });
+  it('points only to files that exist, with a licence record each', () => {
+    const recorded = new Set(ASSET_RECORDS.flatMap((r) => r.files));
+    for (const a of streetManifest(99, 1)) {
+      expect(a.url, a.id).not.toMatch(/^(https?:)?\/\//);
+      expect(existsSync(publicDir + a.url.replace(/^\//, '')), a.id).toBe(true);
+      expect(recorded.has(a.url.replace(/^\/assets\//, '')), a.id).toBe(true);
+    }
   });
 });
