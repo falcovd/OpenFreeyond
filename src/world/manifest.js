@@ -12,6 +12,7 @@ export const MANIFEST = [
   { id: 'soil', type: 'texture', url: url('textures/soil.jpg') },
   { id: 'brick', type: 'texture', url: url('textures/brick.jpg') },
   { id: 'roof', type: 'texture', url: url('textures/roof.jpg') },
+  { id: 'wallpaper', type: 'texture', url: url('textures/wallpaper.jpg') },
   { id: 'sky', type: 'texture', url: url('textures/sky.jpg') },
   { id: 'tree-round', type: 'model', url: url('models/tree-round.glb') },
   { id: 'tree-pine', type: 'model', url: url('models/tree-pine.glb') },
