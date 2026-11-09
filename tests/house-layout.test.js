@@ -18,6 +18,8 @@ import {
   FLOWER_BEDS,
   outsideSolids,
   resetHouse,
+  doorSolids,
+  useClosedHouse,
 } from '../src/world/layout.js';
 import { GROUND_SIZE, FOG } from '../src/world/builders/ground.js';
 import { PHASE1_BOUNDS, PHASE1_SOLIDS } from './fixtures/phase1-layout.js';
@@ -262,5 +264,23 @@ describe('the larger place (FR-13, AC-6.3 to AC-6.6)', () => {
         b.id,
       ).toBe(false);
     }
+  });
+});
+
+describe('a new visit starts with the house as it was (FR-6, AC-1.9)', () => {
+  it('resetHouse closes the door and puts the swing space back off', () => {
+    const { door, swing } = doorSolids();
+    door.off = true;
+    swing.off = false;
+    resetHouse();
+    expect(door.off).toBe(false);
+    expect(swing.off).toBe(true);
+  });
+  it('resetHouse after useClosedHouse brings the zone solids back', () => {
+    useClosedHouse();
+    expect(SOLIDS.some((s) => s.zone === 'house')).toBe(false);
+    resetHouse();
+    expect(SOLIDS.some((s) => s.zone === 'house')).toBe(true);
+    expect(SOLIDS.some((s) => s.id === 'house-block')).toBe(false);
   });
 });

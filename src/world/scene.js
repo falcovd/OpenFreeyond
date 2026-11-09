@@ -152,6 +152,7 @@ export async function mountWorld(
   container.appendChild(scene);
   const sceneEl = scene.querySelector('a-scene');
   let root = null;
+  let interior = null;
   let torn = false;
   const doorHint = (e) => onDoorHint?.(e.detail.visible);
   const stepAside = (e) => onStepAside?.(e.detail.visible);
@@ -173,6 +174,8 @@ export async function mountWorld(
     sceneEl?.removeEventListener('door-hint', doorHint);
     sceneEl?.removeEventListener('door-step-aside', stepAside);
     if (root) root.worldUpdaters = [];
+    // Stops the clip and frees the video and the textures (FR-18, AC-8.1).
+    interior?.tv?.dispose();
     disposeObject(root?.getObject3D?.('world'));
     disposeObject(
       scene.querySelector('#character-model-entity')?.getObject3D?.('mesh'),
@@ -245,7 +248,8 @@ export async function mountWorld(
       });
     }
     // The interior keeps loading after the place is ready; it is not awaited (FR-20).
-    if (houseLoaded && world.interior) startInterior(world.interior);
+    interior = world.interior;
+    if (houseLoaded && interior) startInterior(interior);
   } catch (error) {
     teardown();
     throw error;

@@ -3,6 +3,7 @@ import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
+const LOGIC = new URL('../src/logic', import.meta.url).pathname;
 const WORLD = new URL('../src/world', import.meta.url).pathname;
 const UI = new URL('../src/ui', import.meta.url).pathname;
 const MAIN = new URL('../src/main.js', import.meta.url).pathname;
@@ -52,5 +53,18 @@ describe('storage stays behind the phase 1 store (AC-9.4)', () => {
     for (const p of [...files(UI), MAIN]) {
       expect(code(p), p).not.toMatch(STORAGE);
     }
+  });
+});
+
+describe('the door and the TV store and send nothing (NFR-3, AC-8.1, AC-8.2)', () => {
+  it('keeps storage and the network out of door.js, click.js and tv.js', () => {
+    for (const f of ['door.js', 'click.js', 'tv.js'])
+      expect(code(join(LOGIC, f)), f).not.toMatch(FORBIDDEN);
+  });
+  it('plays the TV clip without sound and never reaches for the microphone or camera', () => {
+    const src =
+      code(join(WORLD, 'builders/interior.js')) + code(join(WORLD, 'scene.js'));
+    expect(src).toMatch(/muted\s*=\s*true/);
+    expect(src).not.toMatch(/getUserMedia|AudioContext|\.volume\s*=/);
   });
 });
