@@ -10,6 +10,7 @@ import {
 import { buildHouse } from './builders/house.js';
 import { buildFence, buildFurniture } from './builders/furniture.js';
 import { buildFigure } from './builders/figure.js';
+import { buildInterior } from './builders/interior.js';
 
 const BUILDERS = {
   tree: buildTree,
@@ -38,6 +39,9 @@ export function buildWorld(
     const build = BUILDERS[solid.kind];
     if (build) group.add(build(THREE, assets, solid));
   }
+  // The interior stands in the house, so without the house model there is none (FR-21).
+  const interior = assets.gltf('house') ? buildInterior(THREE) : null;
+  if (interior) group.add(interior.group);
   for (const bed of FLOWER_BEDS) group.add(buildFlowerBed(THREE, assets, bed));
   // The character model is an entity (see scene.js). Without it, a plain figure stands in.
   if (withCharacter && !assets.model('character'))
@@ -49,5 +53,5 @@ export function buildWorld(
       updaters.push(o.userData.update);
   });
   const pickables = group.children.filter((c) => !c.userData.noPick);
-  return { group, updaters, pickables };
+  return { group, updaters, pickables, interior };
 }

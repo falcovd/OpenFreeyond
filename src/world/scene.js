@@ -9,12 +9,14 @@ import {
 } from './layout.js';
 import { releasePage } from './teardown.js';
 import { HAIR_COLOURS, CLOTHING_COLOURS } from '../logic/fields.js';
-import { MANIFEST } from './manifest.js';
+import { MANIFEST, interiorManifest, itemsForFile } from './manifest.js';
 import {
   loadAssets,
+  loadInterior,
   failureMessage,
   assetBudgetMs,
   HOUSE_FAILED_MESSAGE,
+  INTERIOR_FAILED_MESSAGE,
   LOAD_TIMEOUT_MS,
 } from './assetLoader.js';
 import { makeAssets } from './builders/common.js';
@@ -45,6 +47,22 @@ function makeLoaders(THREE) {
     model: (url) =>
       new Promise((resolve, reject) => {
         new THREE.GLTFLoader().load(url, resolve, undefined, reject);
+      }),
+    // Silent and looping; the src is set last so the listeners are in place first.
+    video: (url) =>
+      new Promise((resolve, reject) => {
+        const video = document.createElement('video');
+        video.muted = true;
+        video.loop = true;
+        video.playsInline = true;
+        video.preload = 'auto';
+        video.addEventListener('loadeddata', () => resolve(video), {
+          once: true,
+        });
+        video.addEventListener('error', () => reject(new Error(url)), {
+          once: true,
+        });
+        video.src = url;
       }),
   };
 }
@@ -89,7 +107,13 @@ function sceneReady(sceneEl, ms) {
 export async function mountWorld(
   container,
   character,
-  { stats = false, startedAt = Date.now(), onDoorHint, onStepAside } = {},
+  {
+    stats = false,
+    startedAt = Date.now(),
+    onDoorHint,
+    onStepAside,
+    onNotice,
+  } = {},
 ) {
   const deadline = startedAt + LOAD_TIMEOUT_MS;
   const THREE = AFRAME.THREE;
@@ -163,6 +187,31 @@ export async function mountWorld(
     releasePage(document.documentElement);
   };
 
+  // Models replace their blocks as they arrive. The TV hooks are for the TV (set up by the TV code).
+  const startInterior = (interior) => {
+    const onItem = (id, value) => {
+      if (id === 'tv-still') return interior.tv?.setStill?.(value);
+      if (id === 'tv-clip') return interior.tv?.setClip?.(value);
+      const file = itemsForFile(
+        interiorManifest().find((a) => a.id === id)?.url,
+      );
+      for (const item of file)
+        interior.replace(item.id, value.scene.clone(true));
+    };
+    const onFail = (id) => {
+      if (id === 'tv-still') return interior.tv?.stillFailed?.();
+      if (id === 'tv-clip') return interior.tv?.clipFailed?.();
+      const url = interiorManifest().find((a) => a.id === id)?.url;
+      for (const item of itemsForFile(url)) interior.fail(item.id);
+      onNotice?.(INTERIOR_FAILED_MESSAGE);
+    };
+    loadInterior(interiorManifest(), makeLoaders(THREE), {
+      onItem,
+      onFail,
+      isCancelled: () => torn,
+    });
+  };
+
   try {
     const world = buildWorld(THREE, assets, { hair, clothing });
     root = scene.querySelector('#world-root');
@@ -189,6 +238,8 @@ export async function mountWorld(
         pickables: [...world.pickables, characterEl.object3D],
       });
     }
+    // The interior keeps loading after the place is ready; it is not awaited (FR-20).
+    if (houseLoaded && world.interior) startInterior(world.interior);
   } catch (error) {
     teardown();
     throw error;

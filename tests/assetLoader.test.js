@@ -5,6 +5,9 @@ import {
   LOAD_TIMEOUT_MS,
   ASSET_BUDGET_MS,
   assetBudgetMs,
+  loadInterior,
+  HOUSE_FAILED_MESSAGE,
+  INTERIOR_FAILED_MESSAGE,
 } from '../src/world/assetLoader.js';
 
 const manifest = [
@@ -125,5 +128,61 @@ describe('assetBudgetMs (FR-15, AC-8.6)', () => {
   });
   it('leaves room for building before the 30 second cover goes', () => {
     expect(ASSET_BUDGET_MS).toBeLessThan(LOAD_TIMEOUT_MS);
+  });
+});
+
+describe('loadInterior (FR-20, FR-23)', () => {
+  it('reports each file as it arrives, with no timeout', async () => {
+    const seen = [];
+    let release;
+    const slow = new Promise((r) => (release = r));
+    const done = loadInterior(
+      [
+        { id: 'a', type: 'model', url: '/a' },
+        { id: 'b', type: 'model', url: '/b' },
+      ],
+      { model: (url) => (url === '/a' ? Promise.resolve('A') : slow) },
+      { onItem: (id, v) => seen.push([id, v]) },
+    );
+    await new Promise((r) => setTimeout(r, 20));
+    expect(seen).toEqual([['a', 'A']]);
+    release('B');
+    await done;
+    expect(seen).toEqual([
+      ['a', 'A'],
+      ['b', 'B'],
+    ]);
+  });
+  it('reports a failed file through onFail and still loads the rest', async () => {
+    const failed = [];
+    const seen = [];
+    await loadInterior(
+      [
+        { id: 'a', type: 'model', url: '/a' },
+        { id: 'b', type: 'model', url: '/b' },
+      ],
+      {
+        model: (url) =>
+          url === '/a'
+            ? Promise.reject(new Error('404'))
+            : Promise.resolve('B'),
+      },
+      { onItem: (id) => seen.push(id), onFail: (id) => failed.push(id) },
+    );
+    expect(failed).toEqual(['a']);
+    expect(seen).toEqual(['b']);
+  });
+  it('ignores files that arrive after the world was torn down', async () => {
+    const seen = [];
+    await loadInterior(
+      [{ id: 'a', type: 'model', url: '/a' }],
+      { model: async () => 'A' },
+      { onItem: (id) => seen.push(id), isCancelled: () => true },
+    );
+    expect(seen).toEqual([]);
+  });
+  it('has one-sentence load messages for the house and for the interior', () => {
+    for (const m of [HOUSE_FAILED_MESSAGE, INTERIOR_FAILED_MESSAGE])
+      expect(m.split('.').filter(Boolean).length).toBe(1);
   });
 });

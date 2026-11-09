@@ -75,3 +75,26 @@ export const HOUSE_FAILED_MESSAGE =
   'The house could not be loaded, so it cannot be entered.';
 export const INTERIOR_FAILED_MESSAGE =
   'Something in the house could not be loaded, so a plain block is shown in its place.';
+
+// Loads each interior file on its own. Never rejects. No timeout: the interior may keep loading after the
+// place is ready (FR-20). onItem(id, value) per arrival, onFail(id) per failure (FR-23).
+export function loadInterior(
+  manifest,
+  loaders,
+  { onItem, onFail, isCancelled = () => false } = {},
+) {
+  return Promise.all(
+    manifest.map((asset) =>
+      Promise.resolve()
+        .then(() => loaders[asset.type](asset.url))
+        .then(
+          (value) => {
+            if (!isCancelled()) onItem?.(asset.id, value);
+          },
+          () => {
+            if (!isCancelled()) onFail?.(asset.id);
+          },
+        ),
+    ),
+  );
+}

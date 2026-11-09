@@ -1,4 +1,7 @@
 // Every file the place loads. All are served from the product's own address (FR-20, AC-11.2).
+import { INTERIOR_ITEMS } from './layout.js';
+import { TV_MODE } from './interiorConfig.js';
+
 const base = import.meta.env.BASE_URL;
 const url = (path) => `${base}assets/${path}`;
 
@@ -16,3 +19,24 @@ export const MANIFEST = [
   { id: 'house', type: 'model', url: url('models/house.glb') },
   { id: 'character', type: 'model', url: url('character.glb') },
 ];
+
+// The interior loads after the place is ready (OQ-3). One entry per file: the two pendants share one.
+// A model entry's id is the id of the first item that uses the file; itemsForFile finds them all.
+export function interiorManifest(tvMode = TV_MODE) {
+  const seen = new Set();
+  const models = INTERIOR_ITEMS.filter((i) => i.file)
+    .map((i) => ({ id: i.id, type: 'model', url: url(i.file) }))
+    .filter((m) => (seen.has(m.url) ? false : seen.add(m.url)));
+  return [
+    ...models,
+    { id: 'tv-still', type: 'texture', url: url('interior/tv-still.jpg') },
+    ...(tvMode === 'clip'
+      ? [{ id: 'tv-clip', type: 'video', url: url('interior/tv-clip.mp4') }]
+      : []),
+  ];
+}
+
+// Every interior item that uses the file at this URL.
+export function itemsForFile(fileUrl) {
+  return INTERIOR_ITEMS.filter((i) => i.file && url(i.file) === fileUrl);
+}
