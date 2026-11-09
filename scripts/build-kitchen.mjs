@@ -1,3 +1,4 @@
+/* global Buffer, URL, console */
 // Builds public/assets/interior/kitchen.glb: one row of Kenney Furniture Kit (CC0) kitchen pieces,
 // at the kit's own scale, front facing +z. Reads the raw pack from the git-ignored /assets folder.
 // Run: node scripts/build-kitchen.mjs
