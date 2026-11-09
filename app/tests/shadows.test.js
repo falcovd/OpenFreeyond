@@ -134,3 +134,111 @@ describe('applyShadows', () => {
     expect(g.children[1].castShadow).toBe(true);
   });
 });
+
+describe('neighbour shadows (FR-13 step 2, AC-5.6)', () => {
+  const neighbour = (kind, ...children) => {
+    const g = group(kind, ...children);
+    g.userData.neighbour = true;
+    return g;
+  };
+  it("with 'off', nothing under a neighbour group casts or receives", () => {
+    for (const kind of [
+      'fence',
+      'gate',
+      'house',
+      'furniture',
+      'car',
+      'lamp',
+      'slab',
+      'tree',
+    ]) {
+      const m = mesh();
+      const inner = new THREE.Group();
+      inner.add(m);
+      applyShadows(neighbour(kind, inner), {
+        enabled: true,
+        neighbourShadows: 'off',
+      });
+      expect([m.castShadow, m.receiveShadow], kind).toEqual([false, false]);
+    }
+  });
+  it("with 'off', a stand-in block directly marked neighbour does neither", () => {
+    const block = mesh();
+    block.userData.kind = 'house';
+    block.userData.neighbour = true;
+    applyShadows(block, { enabled: true, neighbourShadows: 'off' });
+    expect([block.castShadow, block.receiveShadow]).toEqual([false, false]);
+  });
+  it("with 'off', our own plot keeps its rules", () => {
+    for (const kind of [
+      'fence',
+      'gate',
+      'slab',
+      'house',
+      'tree',
+      'car',
+      'lamp',
+      'furniture',
+    ]) {
+      const m = mesh();
+      applyShadows(group(kind, m), { enabled: true, neighbourShadows: 'off' });
+      expect([m.castShadow, m.receiveShadow], kind).toEqual([true, true]);
+    }
+  });
+  it("with 'off', the street switch still works on our own car and lamp", () => {
+    const m = mesh();
+    applyShadows(group('car', m), {
+      enabled: true,
+      neighbourShadows: 'off',
+      streetShadows: 'off',
+    });
+    expect([m.castShadow, m.receiveShadow]).toEqual([false, false]);
+  });
+  it("with 'on', neighbour objects follow the same kind rules as ours", () => {
+    for (const kind of [
+      'fence',
+      'gate',
+      'house',
+      'furniture',
+      'car',
+      'lamp',
+      'tree',
+      'bush',
+      'slab',
+    ]) {
+      const m = mesh();
+      applyShadows(neighbour(kind, m), {
+        enabled: true,
+        neighbourShadows: 'on',
+      });
+      expect([m.castShadow, m.receiveShadow], kind).toEqual([true, true]);
+    }
+    const bed = mesh();
+    applyShadows(neighbour('flower-bed', bed), {
+      enabled: true,
+      neighbourShadows: 'on',
+    });
+    expect([bed.castShadow, bed.receiveShadow]).toEqual([false, true]);
+  });
+  it("with 'on', a stand-in block casts and receives", () => {
+    const block = mesh();
+    block.userData.kind = 'house';
+    block.userData.neighbour = true;
+    applyShadows(block, { enabled: true, neighbourShadows: 'on' });
+    expect([block.castShadow, block.receiveShadow]).toEqual([true, true]);
+  });
+  it('the backdrop neither casts nor receives, with the switch on or off', () => {
+    for (const neighbourShadows of ['on', 'off']) {
+      const m = mesh();
+      applyShadows(group('backdrop', m), { enabled: true, neighbourShadows });
+      expect([m.castShadow, m.receiveShadow]).toEqual([false, false]);
+    }
+  });
+  it('defaults to NEIGHBOUR_SHADOWS', async () => {
+    const { NEIGHBOUR_SHADOWS } =
+      await import('../src/world/neighbourhoodConfig.js');
+    const m = mesh();
+    applyShadows(neighbour('fence', m), { enabled: true });
+    expect(m.castShadow).toBe(NEIGHBOUR_SHADOWS === 'on');
+  });
+});

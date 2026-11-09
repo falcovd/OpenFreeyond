@@ -4,7 +4,6 @@ import {
   STREET,
   CARS,
   LAMPS,
-  SHADOW_REGION,
   carsFor,
   lampsFor,
 } from '../src/world/streetLayout.js';
@@ -25,8 +24,7 @@ describe('far sidewalk (D-27)', () => {
     expect(STREET.farSidewalk.top).toBe(0.15);
     expect(STREET.farSidewalk.z1).toBeCloseTo(STREET.farSidewalk.z0 + 1.8);
   });
-  it('is inside the shadow region and not reachable', () => {
-    expect(SHADOW_REGION.maxZ).toBeCloseTo(STREET.farSidewalk.z1 + 0.5);
+  it('is not reachable', () => {
     expect(SOLIDS.some((s) => s.z - (s.d ?? 0) / 2 >= STREET.farCurb.z0)).toBe(
       false,
     );
@@ -159,15 +157,10 @@ describe('cars and lamps follow the plots (FR-7, FR-8, AC-3.1..3.5)', () => {
   });
 });
 
-describe('build-time switches and shadow region (FR-13, OQ-2)', () => {
+describe('build-time switches (FR-13, OQ-2)', () => {
   it('set shadows and neighbour switches to on or off', () => {
     expect(['on', 'off']).toContain(STREET_SHADOWS);
     expect(['on', 'off']).toContain(NEIGHBOUR_CARS);
-  });
-  it('hold the whole street in the shadow region', () => {
-    expect(SHADOW_REGION.maxZ).toBeGreaterThan(STREET.road.z1);
-    expect(SHADOW_REGION.minX).toBe(BOUNDS.minX);
-    expect(SHADOW_REGION.maxX).toBe(BOUNDS.maxX);
   });
 });
 

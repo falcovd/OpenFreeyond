@@ -211,6 +211,24 @@ AFRAME.registerComponent('world-motion', {
   },
 });
 
+// Keeps the sun's shadow box on the person (OQ-3). On the camera rig. scene.js adds it only when SHADOWS is 'on'.
+AFRAME.registerComponent('shadow-follow', {
+  init() {
+    this.sky = null;
+  },
+  tick() {
+    if (!this.sky) {
+      const world = this.el.sceneEl
+        ?.querySelector('#world-root')
+        ?.getObject3D('world');
+      this.sky = world?.children.find((c) => c.userData.follow) ?? null;
+      if (!this.sky) return;
+    }
+    const p = this.el.object3D.position;
+    this.sky.userData.follow({ x: p.x, z: p.z });
+  },
+});
+
 const DOOR_BOX = { hinge: HINGE, w: DOOR.w, h: DOOR.h, t: 0.05 };
 const CHECK_SECONDS = 0.1; // how often the view checks run
 // Points on the door (in the door's own space) that are tried to see whether any part of it is in view.

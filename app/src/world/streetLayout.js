@@ -86,6 +86,3 @@ export function lampsFor(plots) {
 
 export const CARS = carsFor(visiblePlots(), { neighbourCars: NEIGHBOUR_CARS });
 export const LAMPS = lampsFor(visiblePlots());
-
-// The sun's shadow box must hold the whole street, far sidewalk included (OQ-2).
-export const SHADOW_REGION = { ...BOUNDS, maxZ: STREET.farSidewalk.z1 + 0.5 };

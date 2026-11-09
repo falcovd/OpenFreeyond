@@ -165,7 +165,7 @@ export async function mountWorld(
         character-mouth
         character-animation
         character-wander></a-entity>
-      <a-entity camera="far: 1000" look-controls wasd-controls="acceleration: 25" walk-limiter position="${SPAWN.x} 1.6 ${SPAWN.z}"></a-entity>
+      <a-entity camera="far: 1000" look-controls wasd-controls="acceleration: 25" walk-limiter ${SHADOWS === 'on' ? 'shadow-follow' : ''} position="${SPAWN.x} 1.6 ${SPAWN.z}"></a-entity>
     </a-scene>`;
   container.appendChild(scene);
   const sceneEl = scene.querySelector('a-scene');
