@@ -31,7 +31,7 @@ describe('applyShadows', () => {
     }
   });
   it('lets the ground, the path, flower beds and interior items receive only', () => {
-    for (const kind of ['ground', 'path', 'flower-bed', 'interior']) {
+    for (const kind of ['ground', 'flower-bed', 'interior']) {
       const m = mesh();
       applyShadows(group(kind, m), { enabled: true });
       expect([m.castShadow, m.receiveShadow], kind).toEqual([false, true]);
@@ -79,7 +79,7 @@ describe('applyShadows', () => {
       'interior',
       'character',
       'ground',
-      'path',
+      'slab',
       'sky',
     ])
       expect(SHADOW_RULES[kind], kind).toBeTruthy();

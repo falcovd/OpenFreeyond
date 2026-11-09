@@ -128,10 +128,16 @@ describe('ground (FR-3, FR-4, FR-5)', () => {
     expect(g.material.map).not.toBeNull();
     expect(g.material.map.repeat.x).toBeGreaterThan(1);
   });
-  it('draws a path from the street to the door', () => {
+  it('draws a slab path from the gate to the door, centred on the path', () => {
     const p = buildPath(THREE, none);
-    expect(p.geometry.parameters.width).toBeCloseTo(PATH.w);
-    expect(p.geometry.parameters.height).toBeCloseTo(PATH.z1 - PATH.z0);
+    expect(p.userData.kind).toBe('slab');
+    expect(p.userData.noPick).toBe(true);
+    expect(p.position.x).toBeCloseTo(PATH.x);
+    expect(p.position.z).toBeCloseTo(PATH.z1);
+    const box = new THREE.Box3().setFromObject(p);
+    expect(box.min.z).toBeCloseTo(PATH.z0, 1);
+    expect(box.max.z).toBeCloseTo(PATH.z1, 1);
+    expect(box.max.x - box.min.x).toBeCloseTo(PATH.w, 1);
   });
 });
 

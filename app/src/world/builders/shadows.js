@@ -14,7 +14,7 @@ export const SHADOW_RULES = {
   'flower-bed': { cast: false, receive: true },
   interior: { cast: false, receive: true },
   ground: { cast: false, receive: true },
-  path: { cast: false, receive: true },
+  slab: { cast: true, receive: true },
   sky: { cast: false, receive: false },
 };
 const NONE = { cast: false, receive: false };
