@@ -9,6 +9,7 @@ import {
 } from './builders/plants.js';
 import { buildHouse } from './builders/house.js';
 import { buildFence, buildFurniture } from './builders/furniture.js';
+import { buildGate } from './builders/gate.js';
 import { buildFigure } from './builders/figure.js';
 import { buildInterior } from './builders/interior.js';
 import { applyShadows } from './builders/shadows.js';
@@ -19,6 +20,7 @@ const BUILDERS = {
   bush: buildBush,
   hedge: buildHedge,
   fence: buildFence,
+  gate: buildGate,
   furniture: buildFurniture,
 };
 

@@ -19,6 +19,16 @@ const gltf = () => {
 };
 
 describe('buildWorld', () => {
+  it('draws a fence group per fence solid and one gate that clicks pass through', () => {
+    const world = buildWorld(THREE, makeAssets(new Map()), colours, {
+      withCharacter: false,
+    });
+    expect(count(world.group, 'fence')).toBe(
+      SOLIDS.filter((s) => s.kind === 'fence').length,
+    );
+    expect(count(world.group, 'gate')).toBe(1);
+    expect(world.pickables.some((o) => o.userData.kind === 'gate')).toBe(false);
+  });
   it('survives every asset failing (AC-8.4)', () => {
     const world = buildWorld(THREE, makeAssets(new Map()), colours, {
       withCharacter: false,

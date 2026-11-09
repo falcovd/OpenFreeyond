@@ -6,6 +6,7 @@ export const SHADOW_RULES = {
   bush: { cast: true, receive: true },
   hedge: { cast: true, receive: true },
   fence: { cast: true, receive: true },
+  gate: { cast: true, receive: true },
   furniture: { cast: true, receive: true },
   house: { cast: true, receive: true },
   character: { cast: true, receive: true },

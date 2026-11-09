@@ -76,7 +76,7 @@ describe('the fence stops the person at every point (AC-1.2, AC-1.3, AC-4.7)', (
       return p;
     };
     // The person stops at the inner face of the fence minus the radius (0.3), to within one step,
-    // so 0.2 m short of the bounds clamp (which would stop at 0.1 from the fence face).
+    // so about 0.1 m short of the bounds clamp (which would stop at 0.1 from the fence face).
     const R = 0.3;
     const near = (got, want, label) =>
       expect(Math.abs(got - want), label).toBeLessThan(0.08);

@@ -1,3 +1,4 @@
+import { fencePosts } from '../../logic/fenceLine.js';
 import { box, surface } from './common.js';
 
 function tag(mesh, part) {
@@ -5,7 +6,7 @@ function tag(mesh, part) {
   return mesh;
 }
 
-// Posts every metre and two rails, along the longer side (FR-8). Collision stays the solid's box.
+// Posts at most a metre apart (fencePosts) and two rails, along the longer side (FR-8). Collision stays the solid's box.
 export function buildFence(THREE, assets, solid) {
   const g = new THREE.Group();
   g.position.set(solid.x, 0, solid.z);
@@ -14,9 +15,7 @@ export function buildFence(THREE, assets, solid) {
   const length = alongZ ? solid.d : solid.w;
   const wood = () =>
     surface(THREE, assets, 'wood', solid.color, { repeat: [1, 1] });
-  const posts = Math.floor(length) + 1;
-  for (let i = 0; i < posts; i++) {
-    const t = -length / 2 + (i * length) / (posts - 1);
+  for (const t of fencePosts(solid)) {
     const post = alongZ
       ? box(THREE, 0.12, solid.h, 0.12, wood(), 0, solid.h / 2, t)
       : box(THREE, 0.12, solid.h, 0.12, wood(), t, solid.h / 2, 0);
