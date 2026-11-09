@@ -1,5 +1,5 @@
 import { FENCE, GATE } from './layout.js';
-import { STREET } from './streetLayout.js';
+import { STREET } from './streetDims.js';
 import { fenceLine } from '../logic/fenceLine.js';
 import { LOOKS, HOUSE_SIZE } from './houseLooks.js';
 import { FAR_PLOT_COUNT } from './neighbourhoodConfig.js';

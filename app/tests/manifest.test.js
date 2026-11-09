@@ -1,10 +1,9 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import {
   MANIFEST,
   interiorManifest,
-  streetManifest,
   itemsForFile,
 } from '../src/world/manifest.js';
 import { ASSET_RECORDS } from '../src/data/licences.js';
@@ -92,32 +91,18 @@ describe('interior manifest (FR-20, FR-22)', () => {
   });
 });
 
-describe('street manifest (FR-16, AC-6.8)', () => {
-  it('lists car-1..car-3 and the lamp by default, all under the app base', () => {
-    const m = streetManifest();
-    expect(m.map((a) => a.id)).toEqual(['car-1', 'car-2', 'car-3', 'lamp']);
-    expect(MANIFEST.filter((a) => a.url.includes('models/street/'))).toEqual(m);
-  });
-  it('lists only the cars and the lamp the build switches use', () => {
-    expect(streetManifest(2, 1).map((a) => a.id)).toEqual([
-      'car-1',
-      'car-2',
-      'lamp',
-    ]);
-    expect(streetManifest(1, 0).map((a) => a.id)).toEqual(['car-1']);
-  });
-  it('skips ids that have no file in the list it is given', () => {
-    expect(streetManifest(3, 1, ['car-2', 'lamp']).map((a) => a.id)).toEqual([
-      'car-2',
-      'lamp',
-    ]);
-  });
-  it('points only to files that exist, with a licence record each', () => {
+describe('street models (FR-16, AC-6.8)', () => {
+  it('keep a licence record for every file under models/street, and stay out of the first load', () => {
     const recorded = new Set(ASSET_RECORDS.flatMap((r) => r.files));
-    for (const a of streetManifest(99, 1)) {
-      expect(a.url, a.id).not.toMatch(/^(https?:)?\/\//);
-      expect(existsSync(publicDir + a.url.replace(/^\//, '')), a.id).toBe(true);
-      expect(recorded.has(a.url.replace(/^\/assets\//, '')), a.id).toBe(true);
-    }
+    const files = readdirSync(publicDir + 'assets/models/street');
+    expect(files.sort()).toEqual([
+      'car-1.glb',
+      'car-2.glb',
+      'car-3.glb',
+      'lamp.glb',
+    ]);
+    for (const f of files)
+      expect(recorded.has(`models/street/${f}`), f).toBe(true);
+    expect(MANIFEST.some((a) => a.url.includes('models/street/'))).toBe(false);
   });
 });

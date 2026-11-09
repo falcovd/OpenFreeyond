@@ -5,12 +5,12 @@ import {
   CARS,
   LAMPS,
   SHADOW_REGION,
+  carsFor,
+  lampsFor,
 } from '../src/world/streetLayout.js';
-import {
-  STREET_CARS,
-  STREET_LAMPS,
-  STREET_SHADOWS,
-} from '../src/world/streetConfig.js';
+import { visiblePlots, gateLine } from '../src/world/plots.js';
+import { STREET_SHADOWS } from '../src/world/streetConfig.js';
+import { NEIGHBOUR_CARS } from '../src/world/neighbourhoodConfig.js';
 import { GROUND_SIZE, FOG } from '../src/world/builders/ground.js';
 
 // Assumption: A-Frame's linear fog uses view depth, so at a wide angle the street ends (x = +-STREET.length / 2)
@@ -62,57 +62,107 @@ describe('street dimensions (FR-8, AC-4.2)', () => {
   });
 });
 
-describe('cars and lamps (FR-9, FR-10, AC-4.4, AC-4.7)', () => {
-  it('match the build-time counts', () => {
-    expect(CARS).toHaveLength(STREET_CARS);
-    expect(LAMPS).toHaveLength(STREET_LAMPS);
+describe('cars and lamps follow the plots (FR-7, FR-8, AC-3.1..3.5)', () => {
+  const plots = visiblePlots();
+  const all = [{ id: 'ours', side: 'near', gateX: GATE.x }, ...plots];
+  const byPlot = (list, id) => list.find((o) => o.plotId === id);
+  const xRange = (p) =>
+    p.id === 'ours'
+      ? [BOUNDS.minX, BOUNDS.maxX]
+      : [p.bounds.minX, p.bounds.maxX];
+
+  it('has one car and one lamp per visible plot plus ours', () => {
+    expect(CARS).toHaveLength(8);
+    expect(LAMPS).toHaveLength(8);
+    expect(CARS.filter((c) => c.rot === 0)).toHaveLength(3);
+    expect(CARS.filter((c) => c.rot === Math.PI)).toHaveLength(5);
+    expect(byPlot(CARS, 'ours').x).toBe(0);
   });
-  it('stand within 10 m of the gate', () => {
-    for (const o of [...CARS, ...LAMPS]) {
-      expect(Math.abs(o.x - GATE.x), o.id).toBeLessThanOrEqual(10);
+  it('centres each car on its plot and parks it next to its own curb', () => {
+    for (const p of all) {
+      const c = byPlot(CARS, p.id);
+      const [a, b] = xRange(p);
+      expect(c.x, p.id).toBeCloseTo((a + b) / 2);
+      if (p.side === 'near') {
+        expect(c.z, p.id).toBeGreaterThanOrEqual(STREET.road.z0);
+        expect(c.z, p.id).toBeLessThanOrEqual(STREET.road.z0 + 3);
+        expect(c.rot).toBe(0);
+      } else {
+        expect(c.z, p.id).toBeGreaterThanOrEqual(STREET.road.z1 - 3);
+        expect(c.z, p.id).toBeLessThanOrEqual(STREET.road.z1);
+        expect(c.rot).toBe(Math.PI);
+      }
     }
   });
-  it('park cars on the road next to the curb', () => {
-    for (const c of CARS) {
-      expect(c.z, c.id).toBeGreaterThanOrEqual(STREET.road.z0);
-      expect(c.z, c.id).toBeLessThanOrEqual(STREET.road.z0 + 3);
-    }
+  it('uses the three car models, by plot index modulo 3, with the model box sizes', () => {
+    expect(new Set(CARS.map((c) => c.model))).toEqual(
+      new Set(['car-1', 'car-2', 'car-3']),
+    );
+    expect(CARS.find((c) => c.model === 'car-1').w).toBe(4.43);
+    for (const c of CARS) expect(c.kind).toBe('car');
   });
-  it('put lamps on the sidewalk', () => {
-    for (const l of LAMPS) {
-      expect(l.z, l.id).toBeGreaterThanOrEqual(STREET.sidewalk.z0);
-      expect(l.z, l.id).toBeLessThanOrEqual(STREET.sidewalk.z1);
+  it('shows at least 3 colours and never the same colour on neighbouring cars of one side', () => {
+    expect(new Set(CARS.map((c) => c.colour)).size).toBeGreaterThanOrEqual(4);
+    for (const side of [0, Math.PI]) {
+      const row = CARS.filter((c) => c.rot === side).sort((a, b) => a.x - b.x);
+      for (let i = 1; i < row.length; i++)
+        expect(row[i].colour).not.toBe(row[i - 1].colour);
     }
   });
   it('does not overlap cars', () => {
-    for (let i = 0; i < CARS.length; i++) {
+    for (let i = 0; i < CARS.length; i++)
       for (let j = i + 1; j < CARS.length; j++) {
         const a = CARS[i];
         const b = CARS[j];
-        expect(Math.abs(a.x - b.x)).toBeGreaterThanOrEqual(
-          Math.max(a.w, b.w) + 0.5,
-        );
+        if (a.rot === b.rot)
+          expect(Math.abs(a.x - b.x)).toBeGreaterThanOrEqual(
+            Math.max(a.w, b.w) + 0.5,
+          );
       }
+  });
+  it('puts lamps on the sidewalk of their side, turned by PI on the far side', () => {
+    for (const p of all) {
+      const l = byPlot(LAMPS, p.id);
+      const s = p.side === 'near' ? STREET.sidewalk : STREET.farSidewalk;
+      expect(l.z, p.id).toBeGreaterThanOrEqual(s.z0);
+      expect(l.z, p.id).toBeLessThanOrEqual(s.z1);
+      expect(l.rot).toBe(p.side === 'near' ? 0 : Math.PI);
+    }
+  });
+  it('keeps every lamp at least 1.2 m from its plot gate line', () => {
+    for (const p of all) {
+      const l = byPlot(LAMPS, p.id);
+      const g = p.id === 'ours' ? { x: GATE.x, w: 1.2 } : gateLine(p);
+      expect(Math.abs(l.x - g.x) - g.w / 2, p.id).toBeGreaterThanOrEqual(1.2);
     }
   });
   it('stand beyond the walkable garden and are not solids', () => {
     for (const o of [...CARS, ...LAMPS]) {
-      expect(o.z - o.d / 2, o.id).toBeGreaterThan(BOUNDS.maxZ);
+      expect(o.z - o.d / 2).toBeGreaterThan(BOUNDS.maxZ);
       expect(
         SOLIDS.some((s) => s.id === o.id),
         o.id,
       ).toBe(false);
     }
   });
+  it('drops the neighbours cars when NEIGHBOUR_CARS is off, never our own', () => {
+    const cars = carsFor(plots, { neighbourCars: 'off' });
+    expect(cars.map((c) => c.plotId)).toEqual(['ours']);
+  });
+  it('drops the cars and lamps of the removed far plots (FAR_PLOT_COUNT 3)', () => {
+    const few = visiblePlots(3);
+    expect(carsFor(few)).toHaveLength(6);
+    expect(lampsFor(few)).toHaveLength(6);
+    expect(carsFor([]).map((c) => c.plotId)).toEqual(['ours']);
+    expect(lampsFor([]).map((l) => l.plotId)).toEqual(['ours']);
+    expect(carsFor(few).some((c) => c.plotId === 'far-0')).toBe(false);
+  });
 });
 
-describe('build-time switches and shadow region (FR-17, OQ-2)', () => {
-  it('keep at least one car and one lamp', () => {
-    expect(STREET_CARS).toBeGreaterThanOrEqual(1);
-    expect(STREET_LAMPS).toBeGreaterThanOrEqual(1);
-  });
-  it('set shadows to on or off', () => {
+describe('build-time switches and shadow region (FR-13, OQ-2)', () => {
+  it('set shadows and neighbour switches to on or off', () => {
     expect(['on', 'off']).toContain(STREET_SHADOWS);
+    expect(['on', 'off']).toContain(NEIGHBOUR_CARS);
   });
   it('hold the whole street in the shadow region', () => {
     expect(SHADOW_REGION.maxZ).toBeGreaterThan(STREET.road.z1);

@@ -19,7 +19,7 @@ const all = (g) => {
 describe('buildCar and buildLamp', () => {
   it('with a model: a group at the position, kind car, no plain label, fitted to the box', () => {
     const car = CARS[0];
-    const g = buildCar(THREE, makeAssets(new Map([[car.id, stub()]])), car);
+    const g = buildCar(THREE, makeAssets(new Map([[car.model, stub()]])), car);
     expect(g.position.x).toBe(car.x);
     expect(g.position.z).toBe(car.z);
     expect(g.userData.kind).toBe('car');

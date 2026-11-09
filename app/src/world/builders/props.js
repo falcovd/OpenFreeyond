@@ -18,7 +18,11 @@ function buildProp(THREE, assets, item, modelId, kind, y = 0) {
     );
     g.position.set(item.x, y, item.z);
   } else {
-    g = plainBlock(THREE, { ...item, kind }, 'plain');
+    g = plainBlock(
+      THREE,
+      { ...item, kind, color: item.colour ?? item.color },
+      'plain',
+    );
     g.position.y += y;
   }
   g.userData.kind = kind;
@@ -27,7 +31,7 @@ function buildProp(THREE, assets, item, modelId, kind, y = 0) {
 }
 
 export const buildCar = (THREE, assets, car) =>
-  buildProp(THREE, assets, car, car.id, 'car');
+  buildProp(THREE, assets, car, car.model, 'car');
 
 // Every lamp uses the one model 'lamp'.
 export const buildLamp = (THREE, assets, lamp) =>

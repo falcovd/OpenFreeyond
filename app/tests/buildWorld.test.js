@@ -28,8 +28,8 @@ describe('buildWorld', () => {
     expect(count(group, 'gate')).toBe(1);
     expect(count(group, 'car')).toBe(CARS.length);
     expect(count(group, 'lamp')).toBe(LAMPS.length);
-    expect(CARS.length).toBe(3);
-    expect(LAMPS.length).toBe(3);
+    expect(CARS.length).toBe(8);
+    expect(LAMPS.length).toBe(8);
     const plain = [];
     group.traverse((o) => {
       if (o.userData.plain && ['car', 'lamp'].includes(o.userData.kind))
