@@ -134,6 +134,7 @@ No garden object had to move. `tests/garden-layout.test.js` "keeps every garden 
 - AC-5.2 does not apply: the area did not need the place to grow, so no edge moved. The walkable area outside the house is above 444.5 m2 with the fence counted as covered (`tests/garden-layout.test.js`, AC-5.1), and the front edge stays at z = 11.
 - The plain-block stand-in for a lamp is a 0.33 by 1.5 by 4.5 m slab (width, depth, height), the size of the lamp model with its arm over the road. It shows only when the lamp file fails (AC-6.10).
 - The car sizes were scaled: Kenney's cars are small and chunky, so `scripts/build-street-props.mjs` scales the three models (1.2, 1.35 and 1.25) and the car sizes in `streetLayout.js` follow the result (3.06, 3.85 and 3.37 m long).
+- Far sidewalk (D-27, beyond spec v1): the Product Owner asked for a second sidewalk on the far side of the road, with the same 1.8 m width, slabs and 15 cm curb. It is scenery and unreachable (no solids, no lamps or cars). AC-4.1 and AC-4.2 are judged for the near sidewalk; the far one is not part of them.
 
 ## Known open points
 

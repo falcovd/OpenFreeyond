@@ -17,63 +17,67 @@ function tag(object, kind) {
   return object;
 }
 
-// The street beyond the front fence: sidewalk of slabs on a platform, a curb, the road and a dashed
-// centre line. Along the street is world x; the street is data only and nothing in it can be reached.
+// The street beyond the front fence: sidewalk of slabs on a platform, a curb, the road, a dashed
+// centre line and the same curb and sidewalk on the far side. Along the street is world x; the street is data only and nothing in it can be reached.
 export function buildStreet(THREE, assets) {
-  const { sidewalk, curb, road, length } = STREET;
+  const { sidewalk, curb, road, length, farSidewalk, farCurb } = STREET;
   const g = new THREE.Group();
   g.userData.kind = 'street';
   g.userData.noPick = true;
 
-  // Sidewalk: the slab strip's local z (along it) runs along world x, local x across it runs to -z.
-  const slabs = buildSlabs(THREE, assets, {
-    width: sidewalk.w,
-    length,
-    texture: 'paving',
-    fallback: '#b9b3a8',
-    kind: 'street-slab',
-    top: sidewalk.top,
-  });
-  slabs.rotation.y = Math.PI / 2;
-  slabs.position.set(-length / 2, 0, (sidewalk.z0 + sidewalk.z1) / 2);
-  g.add(slabs);
+  // A sidewalk (slab strip on a platform) and its curb. The near and the far side are the same build.
+  const addSide = (sidewalk, curb) => {
+    // The slab strip's local z (along it) runs along world x, local x across it runs to -z.
+    const slabs = buildSlabs(THREE, assets, {
+      width: sidewalk.w,
+      length,
+      texture: 'paving',
+      fallback: '#b9b3a8',
+      kind: 'street-slab',
+      top: sidewalk.top,
+    });
+    slabs.rotation.y = Math.PI / 2;
+    slabs.position.set(-length / 2, 0, (sidewalk.z0 + sidewalk.z1) / 2);
+    g.add(slabs);
 
-  // The platform under the slabs, so the sidewalk does not float.
-  // Its top is the height of the slab underlay (see slabs.js), so no gap and no 5 mm step.
-  const platformH = sidewalk.top - SLAB_UNDER;
-  g.add(
-    tag(
-      box(
-        THREE,
-        length,
-        platformH,
-        sidewalk.w,
-        new THREE.MeshStandardMaterial({ color: '#a8a39a', roughness: 1 }),
-        0,
-        platformH / 2,
-        (sidewalk.z0 + sidewalk.z1) / 2,
+    // The platform under the slabs, so the sidewalk does not float.
+    // Its top is the height of the slab underlay (see slabs.js), so no gap and no 5 mm step.
+    const platformH = sidewalk.top - SLAB_UNDER;
+    g.add(
+      tag(
+        box(
+          THREE,
+          length,
+          platformH,
+          sidewalk.w,
+          new THREE.MeshStandardMaterial({ color: '#a8a39a', roughness: 1 }),
+          0,
+          platformH / 2,
+          (sidewalk.z0 + sidewalk.z1) / 2,
+        ),
+        'street-slab',
       ),
-      'street-slab',
-    ),
-  );
+    );
 
-  g.add(
-    tag(
-      box(
-        THREE,
-        length,
-        curb.h,
-        curb.w,
-        surface(THREE, assets, 'paving', '#c4c0b8', {
-          repeat: [length / 0.6, 1],
-        }),
-        0,
-        curb.h / 2,
-        (curb.z0 + curb.z1) / 2,
+    g.add(
+      tag(
+        box(
+          THREE,
+          length,
+          curb.h,
+          curb.w,
+          surface(THREE, assets, 'paving', '#c4c0b8', {
+            repeat: [length / 0.6, 1],
+          }),
+          0,
+          curb.h / 2,
+          (curb.z0 + curb.z1) / 2,
+        ),
+        'curb',
       ),
-      'curb',
-    ),
-  );
+    );
+  };
+  addSide(sidewalk, curb);
 
   // Asphalt repeats every 4 m both ways, so the tiles stay square.
   const roadMesh = new THREE.Mesh(
@@ -112,5 +116,7 @@ export function buildStreet(THREE, assets) {
   }
   dashes.instanceMatrix.needsUpdate = true;
   g.add(tag(dashes, 'road'));
+
+  addSide(farSidewalk, farCurb); // scenery on the far side of the road (D-27)
   return g;
 }

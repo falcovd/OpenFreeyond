@@ -8,12 +8,21 @@ const SIDEWALK = { z0, w: 1.8, top: 0.15 };
 const CURB = { z0: z0 + SIDEWALK.w, w: 0.2, h: 0.15 };
 const ROAD = { z0: CURB.z0 + CURB.w, w: 7 };
 ROAD.z1 = ROAD.z0 + ROAD.w;
+// The far side of the road (D-27): scenery like the rest, same sizes as the near curb and sidewalk.
+const FAR_CURB = { z0: ROAD.z1, w: CURB.w, h: CURB.h };
+const FAR_SIDEWALK = {
+  z0: FAR_CURB.z0 + FAR_CURB.w,
+  w: SIDEWALK.w,
+  top: SIDEWALK.top,
+};
 
 export const STREET = {
   length: 480, // x from -240 to 240: fully fogged at both ends from anywhere in the garden
   sidewalk: { ...SIDEWALK, z1: z0 + SIDEWALK.w },
   curb: { ...CURB, z1: CURB.z0 + CURB.w },
   road: ROAD,
+  farCurb: { ...FAR_CURB, z1: FAR_CURB.z0 + FAR_CURB.w },
+  farSidewalk: { ...FAR_SIDEWALK, z1: FAR_SIDEWALK.z0 + FAR_SIDEWALK.w },
   centreLineZ: ROAD.z0 + ROAD.w / 2,
 };
 
@@ -66,5 +75,5 @@ const ALL_LAMPS = [GATE.x - 6, GATE.x + 1, GATE.x + 7].map((x, i) => ({
 export const CARS = ALL_CARS.slice(0, STREET_CARS);
 export const LAMPS = ALL_LAMPS.slice(0, STREET_LAMPS);
 
-// The sun's shadow box must hold the whole street (OQ-2).
-export const SHADOW_REGION = { ...BOUNDS, maxZ: ROAD.z1 + 0.5 };
+// The sun's shadow box must hold the whole street, far sidewalk included (OQ-2).
+export const SHADOW_REGION = { ...BOUNDS, maxZ: STREET.farSidewalk.z1 + 0.5 };

@@ -15,6 +15,24 @@ import { GROUND_SIZE, FOG } from '../src/world/builders/ground.js';
 
 // Assumption: A-Frame's linear fog uses view depth, so at a wide angle the street ends (x = +-STREET.length / 2)
 // may be only partly fogged. The tests below check the numbers; the wide-angle look is checked by eye (plan Task 14).
+describe('far sidewalk (D-27)', () => {
+  it('has a 20 cm by 15 cm curb and a 1.8 m sidewalk beyond the road', () => {
+    expect(STREET.farCurb.z0).toBeCloseTo(STREET.road.z1);
+    expect(STREET.farCurb.w).toBe(0.2);
+    expect(STREET.farCurb.h).toBe(0.15);
+    expect(STREET.farSidewalk.z0).toBeCloseTo(STREET.farCurb.z1);
+    expect(STREET.farSidewalk.w).toBe(1.8);
+    expect(STREET.farSidewalk.top).toBe(0.15);
+    expect(STREET.farSidewalk.z1).toBeCloseTo(STREET.farSidewalk.z0 + 1.8);
+  });
+  it('is inside the shadow region and not reachable', () => {
+    expect(SHADOW_REGION.maxZ).toBeCloseTo(STREET.farSidewalk.z1 + 0.5);
+    expect(SOLIDS.some((s) => s.z - (s.d ?? 0) / 2 >= STREET.farCurb.z0)).toBe(
+      false,
+    );
+  });
+});
+
 describe('street dimensions (FR-8, AC-4.2)', () => {
   it('has a 1.8 m sidewalk that starts at the front fence (A-8)', () => {
     expect(STREET.sidewalk.w).toBe(1.8);

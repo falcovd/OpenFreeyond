@@ -105,6 +105,47 @@ describe('buildStreet (FR-8, FR-10, FR-11)', () => {
   });
 });
 
+describe('far sidewalk (D-27)', () => {
+  const strips = g.children.filter(
+    (c) => c.userData.kind === 'street-slab' && c.isGroup,
+  );
+  const far = strips[1];
+  it('has a second slab strip of 3 * 1600 slabs over the far z range', () => {
+    expect(strips).toHaveLength(2);
+    expect(far.children[1].isInstancedMesh).toBe(true);
+    expect(far.children[1].count).toBe(3 * 1600);
+    const b = new THREE.Box3().setFromObject(far.children[0]);
+    expect(b.min.x).toBeCloseTo(-STREET.length / 2);
+    expect(b.max.x).toBeCloseTo(STREET.length / 2);
+    expect(b.min.z).toBeCloseTo(STREET.farSidewalk.z0);
+    expect(b.max.z).toBeCloseTo(STREET.farSidewalk.z1);
+    const m = new THREE.Matrix4();
+    const p = new THREE.Vector3();
+    for (const i of [0, far.children[1].count - 1]) {
+      far.children[1].getMatrixAt(i, m);
+      m.premultiply(far.matrixWorld);
+      p.setFromMatrixPosition(m);
+      expect(p.z).toBeGreaterThan(STREET.farSidewalk.z0);
+      expect(p.z).toBeLessThan(STREET.farSidewalk.z1);
+    }
+  });
+  it('has a far platform and a far curb of the right size', () => {
+    const platforms = g.children.filter(
+      (c) => c.isMesh && c.userData.kind === 'street-slab',
+    );
+    expect(platforms).toHaveLength(2);
+    expect(sizeOf(platforms[1]).z).toBeCloseTo(1.8);
+    const curbs = byKind('curb');
+    expect(curbs).toHaveLength(2);
+    const s = sizeOf(curbs[1]);
+    expect(s.y).toBeCloseTo(0.15);
+    expect(s.z).toBeCloseTo(0.2);
+    expect(new THREE.Box3().setFromObject(curbs[1]).min.z).toBeCloseTo(
+      STREET.farCurb.z0,
+    );
+  });
+});
+
 describe('buildWorld with the street', () => {
   it('includes the street and builds with empty assets', () => {
     const { group, pickables } = buildWorld(
