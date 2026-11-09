@@ -1,7 +1,8 @@
 import { surface } from './common.js';
 import { PATH } from '../layout.js';
 
-const GROUND_SIZE = 600; // far beyond the fog, so the ground never ends in view (FR-3)
+export const GROUND_SIZE = 600; // far beyond the fog, so the ground never ends in view (FR-3)
+export const FOG = { near: 40, far: 220 };
 const GRASS_METRES_PER_TILE = 4;
 
 export function buildGround(THREE, assets) {
