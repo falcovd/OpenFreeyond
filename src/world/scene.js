@@ -1,6 +1,12 @@
 import 'aframe';
 import './components.js';
-import { SPAWN, CHARACTER_SPOT, resetCharacterSolid } from './layout.js';
+import {
+  SPAWN,
+  CHARACTER_SPOT,
+  resetCharacterSolid,
+  resetHouse,
+  useClosedHouse,
+} from './layout.js';
 import { releasePage } from './teardown.js';
 import { HAIR_COLOURS, CLOTHING_COLOURS } from '../logic/fields.js';
 import { MANIFEST } from './manifest.js';
@@ -8,12 +14,14 @@ import {
   loadAssets,
   failureMessage,
   assetBudgetMs,
+  HOUSE_FAILED_MESSAGE,
   LOAD_TIMEOUT_MS,
 } from './assetLoader.js';
 import { makeAssets } from './builders/common.js';
 import { buildWorld } from './buildWorld.js';
 import { disposeObject, disposeAssets } from './dispose.js';
 import { skyParams } from './builders/sky.js';
+import { FOG } from './builders/ground.js';
 
 // Only known colour ids may reach the markup; anything else gets the first entry.
 function safeId(set, id) {
@@ -81,7 +89,7 @@ function sceneReady(sceneEl, ms) {
 export async function mountWorld(
   container,
   character,
-  { stats = false, startedAt = Date.now() } = {},
+  { stats = false, startedAt = Date.now(), onDoorHint, onStepAside } = {},
 ) {
   const deadline = startedAt + LOAD_TIMEOUT_MS;
   const THREE = AFRAME.THREE;
@@ -89,6 +97,9 @@ export async function mountWorld(
     timeoutMs: assetBudgetMs(startedAt),
   });
   const assets = makeAssets(loaded.values);
+  // A house that did not load is one closed block, with solids to match (FR-21).
+  const houseLoaded = !!assets.gltf('house');
+  if (!houseLoaded) useClosedHouse();
   const sky = skyParams(assets);
   const hair = safeId(HAIR_COLOURS, character.hair);
   const clothing = safeId(CLOTHING_COLOURS, character.clothing);
@@ -97,10 +108,11 @@ export async function mountWorld(
   scene.className = 'world';
   scene.innerHTML = `
     <a-scene ${stats ? 'stats' : ''} vr-mode-ui="enabled: false" background="color: ${sky.horizon}"
-      fog="type: linear; color: ${sky.horizon}; near: 40; far: 220">
+      fog="type: linear; color: ${sky.horizon}; near: ${FOG.near}; far: ${FOG.far}">
       <a-light type="ambient" color="#ffd9b0" intensity="0.85"></a-light>
       <a-light type="point" color="#ffcf8a" intensity="0.8" distance="12" position="0 2.5 -3"></a-light>
       <a-entity id="world-root" world-motion></a-entity>
+      <a-entity id="door-controller" house-door></a-entity>
       <a-entity id="character-model-entity"
         position="${CHARACTER_SPOT.x} 0 ${CHARACTER_SPOT.z}"
         rotation="0 -30 0"
@@ -114,6 +126,10 @@ export async function mountWorld(
   const sceneEl = scene.querySelector('a-scene');
   let root = null;
   let torn = false;
+  const doorHint = (e) => onDoorHint?.(e.detail.visible);
+  const stepAside = (e) => onStepAside?.(e.detail.visible);
+  sceneEl.addEventListener('door-hint', doorHint);
+  sceneEl.addEventListener('door-step-aside', stepAside);
 
   // One teardown for destroy() and for a failed mount. Safe to call more than once.
   const teardown = () => {
@@ -127,6 +143,8 @@ export async function mountWorld(
       sceneEl.pause?.();
       sceneEl.renderer?.setAnimationLoop(null);
     }
+    sceneEl?.removeEventListener('door-hint', doorHint);
+    sceneEl?.removeEventListener('door-step-aside', stepAside);
     if (root) root.worldUpdaters = [];
     disposeObject(root?.getObject3D?.('world'));
     disposeObject(
@@ -140,6 +158,7 @@ export async function mountWorld(
     }
     scene.remove();
     resetCharacterSolid();
+    resetHouse();
     // A-Frame leaves its fullscreen class on <html>; without this the page cannot scroll.
     releasePage(document.documentElement);
   };
@@ -161,10 +180,25 @@ export async function mountWorld(
       el.emit('model-loaded');
     }
     await sceneReady(sceneEl, deadline - Date.now());
+    // The canvas exists only once the scene has loaded, so the door attaches now.
+    const door = houseLoaded && world.group.getObjectByName('Door');
+    if (door) {
+      const characterEl = scene.querySelector('#character-model-entity');
+      scene.querySelector('#door-controller').components['house-door']?.attach({
+        node: door,
+        pickables: [...world.pickables, characterEl.object3D],
+      });
+    }
   } catch (error) {
     teardown();
     throw error;
   }
 
-  return { warning: failureMessage(loaded), destroy: teardown };
+  const warning = [
+    failureMessage(loaded),
+    houseLoaded ? '' : HOUSE_FAILED_MESSAGE,
+  ]
+    .filter(Boolean)
+    .join(' ');
+  return { warning, destroy: teardown };
 }

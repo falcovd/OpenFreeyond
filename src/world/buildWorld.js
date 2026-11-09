@@ -20,7 +20,7 @@ const BUILDERS = {
 };
 
 // Builds the whole place from what loaded. Never throws for a missing asset (FR-16).
-// Returns the group and the functions that move things (trees, sky).
+// Returns the group, the functions that move things (trees, sky) and the objects a click can hit.
 export function buildWorld(
   THREE,
   assets,
@@ -48,5 +48,6 @@ export function buildWorld(
     if (typeof o.userData.update === 'function')
       updaters.push(o.userData.update);
   });
-  return { group, updaters };
+  const pickables = group.children.filter((c) => !c.userData.noPick);
+  return { group, updaters, pickables };
 }

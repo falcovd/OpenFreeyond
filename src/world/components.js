@@ -1,10 +1,30 @@
 import { resolveMove } from '../logic/collision.js';
 import { applyColours } from '../logic/colours.js';
 import {
+  createDoor,
+  stepDoor,
+  clickDoor,
+  doorAngle,
+  isAtRest,
+  isFullyOpen,
+  inDoorway,
+  distanceToDoor,
+  hintVisible,
+  stepAsideVisible,
+  CLICK_RANGE,
+} from '../logic/door.js';
+import { isClick } from '../logic/click.js';
+import {
   SOLIDS,
   BOUNDS,
   CHARACTER_SPOT,
+  DOOR,
+  HINGE,
+  OPENING,
+  SWING_SPACE,
+  doorSolids,
   resetCharacterSolid,
+  resetHouse,
   wanderSolids,
 } from './layout.js';
 import { initialState, stepWander } from '../logic/wander.js';
@@ -188,5 +208,138 @@ AFRAME.registerComponent('world-motion', {
   tick(time) {
     const seconds = time / 1000;
     for (const update of this.el.worldUpdaters ?? []) update(seconds);
+  },
+});
+
+const DOOR_BOX = { hinge: HINGE, w: DOOR.w, h: DOOR.h, t: 0.05 };
+const CHECK_SECONDS = 0.1; // how often the view checks run
+// Points on the door (in the door's own space) that are tried to see whether any part of it is in view.
+const DOOR_SPOTS = [
+  [0.6, 1.05],
+  [0.15, 0.3],
+  [1.05, 0.3],
+  [0.15, 1.8],
+  [1.05, 1.8],
+];
+
+// The front door: click to open and close, hint and step-aside events. A fresh component starts with the door
+// closed on every visit, and nothing is stored (FR-6, NFR-3). scene.js calls attach() once the house is built.
+AFRAME.registerComponent('house-door', {
+  init() {
+    this.door = createDoor();
+    this.node = null;
+    this.pickables = [];
+    this.player = null;
+    this.down = null;
+    this.requested = false; // a click was ignored because someone was in the doorway
+    this.hint = false;
+    this.stepAside = false;
+    this.sinceCheck = 0;
+    this.raycaster = new AFRAME.THREE.Raycaster();
+    this.canvas = null;
+  },
+  attach({ node, pickables }) {
+    this.node = node;
+    this.pickables = pickables;
+    this.player = this.el.sceneEl.querySelector('[camera]');
+    this.canvas = this.el.sceneEl.canvas;
+    this.onDown = (e) => {
+      if (e.button === 0) this.down = { x: e.clientX, y: e.clientY };
+    };
+    this.onUp = (e) => {
+      if (e.button !== 0) return;
+      const down = this.down;
+      this.down = null;
+      if (isClick(down, { x: e.clientX, y: e.clientY })) this.click(e);
+    };
+    this.canvas?.addEventListener('pointerdown', this.onDown);
+    this.canvas?.addEventListener('pointerup', this.onUp);
+  },
+  person() {
+    const p = this.player.object3D.position;
+    return { x: p.x, y: p.y, z: p.z };
+  },
+  blocked(person) {
+    return inDoorway(person, [OPENING, SWING_SPACE]);
+  },
+  isDoorHit(object) {
+    for (let o = object; o; o = o.parent) if (o === this.node) return true;
+    return false;
+  },
+  click(e) {
+    if (!this.node || !this.player) return;
+    const THREE = AFRAME.THREE;
+    const rect = this.canvas.getBoundingClientRect();
+    const ndc = new THREE.Vector2(
+      ((e.clientX - rect.left) / rect.width) * 2 - 1,
+      -((e.clientY - rect.top) / rect.height) * 2 + 1,
+    );
+    this.raycaster.setFromCamera(ndc, this.el.sceneEl.camera);
+    const hit = this.raycaster.intersectObjects(this.pickables, true)[0];
+    if (!hit || !this.isDoorHit(hit.object)) return; // a wall or an object is in the way (AC-1.4)
+    const person = this.person();
+    if (distanceToDoor(person, DOOR_BOX, doorAngle(this.door)) > CLICK_RANGE)
+      return; // FR-2
+    const result = clickDoor(this.door, { inDoorway: this.blocked(person) });
+    this.door = result.door;
+    if (result.outcome === 'step-aside') this.requested = true;
+  },
+  // True when some part of the door can be seen: on screen and the nearest thing along the ray is the door.
+  doorInView() {
+    const THREE = AFRAME.THREE;
+    const camera = this.el.sceneEl.camera;
+    const from = camera.getWorldPosition(new THREE.Vector3());
+    this.node.updateWorldMatrix(true, false);
+    this.raycaster.camera = camera;
+    for (const [x, y] of DOOR_SPOTS) {
+      const point = this.node.localToWorld(new THREE.Vector3(x, y, 0));
+      const ndc = point.clone().project(camera);
+      if (Math.abs(ndc.x) > 1 || Math.abs(ndc.y) > 1 || ndc.z > 1) continue;
+      const dir = point.clone().sub(from);
+      const dist = dir.length();
+      this.raycaster.set(from, dir.normalize());
+      this.raycaster.far = dist + 0.05;
+      const hit = this.raycaster.intersectObjects(this.pickables, true)[0];
+      this.raycaster.far = Infinity;
+      if (hit && this.isDoorHit(hit.object)) return true;
+    }
+    return false;
+  },
+  tick(time, delta) {
+    if (!this.node || !this.player) return;
+    this.door = stepDoor(this.door, Math.min(delta / 1000, 0.1));
+    this.node.rotation.y = doorAngle(this.door);
+    const { door, swing } = doorSolids();
+    door.off = isFullyOpen(this.door); // only a fully open door lets a person through (FR-4)
+    swing.off = isAtRest(this.door);
+    this.sinceCheck += delta / 1000;
+    if (this.sinceCheck < CHECK_SECONDS) return;
+    this.sinceCheck = 0;
+    const person = this.person();
+    const blocked = this.blocked(person);
+    const distance = distanceToDoor(person, DOOR_BOX, doorAngle(this.door));
+    const inView =
+      isAtRest(this.door) && distance <= CLICK_RANGE && this.doorInView();
+    const hint = hintVisible({
+      door: this.door,
+      distance,
+      inView,
+      inDoorway: blocked,
+    });
+    const stepAside = stepAsideVisible({
+      requested: this.requested,
+      inDoorway: blocked,
+    });
+    if (!blocked) this.requested = false;
+    if (hint !== this.hint) this.el.emit('door-hint', { visible: hint });
+    if (stepAside !== this.stepAside)
+      this.el.emit('door-step-aside', { visible: stepAside });
+    this.hint = hint;
+    this.stepAside = stepAside;
+  },
+  remove() {
+    this.canvas?.removeEventListener('pointerdown', this.onDown);
+    this.canvas?.removeEventListener('pointerup', this.onUp);
+    resetHouse();
   },
 });

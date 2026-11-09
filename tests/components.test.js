@@ -20,6 +20,9 @@ describe('A-Frame components', () => {
     ].map((m) => m[0].trim());
     expect(clashes).toEqual([]);
   });
+  it('registers the house-door component', () => {
+    expect(source).toMatch(/registerComponent\('house-door'/);
+  });
   it('keeps the scan able to fail', () => {
     const bad = '  play(name, fade = 0.25) {\n  }';
     expect(/^\s+(play|pause)\s*\(\s*[^)\s][^)]*\)\s*\{/m.test(bad)).toBe(true);

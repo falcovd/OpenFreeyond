@@ -70,3 +70,8 @@ export function failureMessage({ failed, stalled }) {
     return 'Some parts of the place could not be loaded. Plain colours and shapes are shown where they are missing.';
   return '';
 }
+
+export const HOUSE_FAILED_MESSAGE =
+  'The house could not be loaded, so it cannot be entered.';
+export const INTERIOR_FAILED_MESSAGE =
+  'Something in the house could not be loaded, so a plain block is shown in its place.';
