@@ -68,6 +68,22 @@ export function fitToHeight(THREE, object, height) {
   return wrapper;
 }
 
+// Scales a model uniformly to fit a footprint and a height, stands it on y = 0 and centres it on x and z.
+export function fitToBox(THREE, object, { w, d, h }, rot = 0) {
+  const wrapper = new THREE.Group();
+  object.rotation.y = rot;
+  wrapper.add(object);
+  const size = new THREE.Box3()
+    .setFromObject(object)
+    .getSize(new THREE.Vector3());
+  const fit = Math.min(w / (size.x || 1), d / (size.z || 1), h / (size.y || 1));
+  object.scale.multiplyScalar(fit);
+  const box = new THREE.Box3().setFromObject(object);
+  const centre = box.getCenter(new THREE.Vector3());
+  object.position.set(-centre.x, -box.min.y, -centre.z);
+  return wrapper;
+}
+
 // A small stable number from a string, for varying rotation and sway between objects.
 export function hash(text) {
   let h = 0;

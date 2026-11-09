@@ -13,5 +13,6 @@ export const MANIFEST = [
   { id: 'tree-round', type: 'model', url: url('models/tree-round.glb') },
   { id: 'tree-pine', type: 'model', url: url('models/tree-pine.glb') },
   { id: 'bush', type: 'model', url: url('models/bush.glb') },
+  { id: 'house', type: 'model', url: url('models/house.glb') },
   { id: 'character', type: 'model', url: url('character.glb') },
 ];
