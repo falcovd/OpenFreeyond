@@ -37,6 +37,17 @@ describe('the interior (FR-20, FR-23)', () => {
     expect(find(group, 'couch').userData.plain).toBeFalsy();
     expect(find(group, 'tv').userData.plain).toBeTruthy();
   });
+  it('lets a replaced model receive shadows but not cast them', () => {
+    const { replace } = buildInterior(THREE);
+    const fitted = replace('couch', model());
+    const meshes = [];
+    fitted.traverse((o) => o.isMesh && meshes.push(o));
+    expect(meshes.length).toBeGreaterThan(0);
+    for (const m of meshes) {
+      expect(m.receiveShadow).toBe(true);
+      expect(m.castShadow).toBe(false);
+    }
+  });
   it('fits the model into the footprint of its block', () => {
     const { group, replace } = buildInterior(THREE);
     replace('dining-table', model());

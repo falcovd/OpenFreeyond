@@ -46,6 +46,34 @@ describe('buildWorld', () => {
     }
     expect(count(group, 'flower-bed')).toBe(FLOWER_BEDS.length);
   });
+  it('flags trees as casters and the ground as a receiver only', () => {
+    const assets = makeAssets(
+      new Map([
+        ['tree-round', gltf()],
+        ['tree-pine', gltf()],
+      ]),
+    );
+    const { group } = buildWorld(THREE, assets, colours, {
+      withCharacter: false,
+    });
+    const meshesOf = (kind) => {
+      const out = [];
+      group.traverse((o) => {
+        if (o.userData.kind === kind)
+          o.traverse((m) => m.isMesh && out.push(m));
+      });
+      return out;
+    };
+    const trees = meshesOf('tree');
+    expect(trees.length).toBeGreaterThan(0);
+    for (const m of trees) expect(m.castShadow).toBe(true);
+    const ground = meshesOf('ground');
+    expect(ground.length).toBeGreaterThan(0);
+    for (const m of ground) {
+      expect(m.receiveShadow).toBe(true);
+      expect(m.castShadow).toBe(false);
+    }
+  });
   it('has exactly one directional light, the sun of the sky (FR-2, FR-14)', () => {
     const world = buildWorld(THREE, makeAssets(new Map()), colours, {
       withCharacter: false,

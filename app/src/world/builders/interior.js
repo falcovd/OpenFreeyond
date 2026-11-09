@@ -1,5 +1,6 @@
 import { INTERIOR_ITEMS } from '../layout.js';
 import { fitToBox } from './common.js';
+import { applyShadows } from './shadows.js';
 import { tvSource } from '../../logic/tv.js';
 import { TV_MODE, INTERIOR_DIM } from '../interiorConfig.js';
 import {
@@ -232,6 +233,7 @@ export function buildInterior(
       texturise(THREE, id, scene, textures, wrapped);
       group.remove(old);
       group.add(fitted);
+      applyShadows(fitted, { kind: 'interior' });
       slots.set(id, fitted);
       return fitted;
     },

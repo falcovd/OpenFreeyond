@@ -11,6 +11,7 @@ Rows marked "Auto" are also covered by a unit test (file and test named in the r
 - Date: ______
 - Chrome version: ______ Firefox version: ______ Safari version: ______ (latest stable at the time of testing)
 - `TV_MODE` used (`src/world/interiorConfig.js`): ______
+- `SHADOWS` used (`src/world/shadowConfig.js`): ______
 - Frame-rate walk values, Chrome, every 10 seconds (12 values): ______ . Average: ______ fps (needs 30 or more)
 - First-visit transfer (Chrome, cache disabled, stand in the house until nothing new arrives for 10 s): ______ MB (needs 100 MB or less)
 - Slow 4G: loading indicator gone after ______ s (needs 30 s or less)
@@ -119,6 +120,36 @@ Windows from inside supersede plan decision D-7. Person checks in the browser un
 - [ ] R-10 The TV stands on a wooden desk against the partition wall (not floating, not sunk in it), the TV body and stand are dark grey or black, and the picture still plays on the screen. The desk blocks walking, and the inner doorway stays free. (Auto: `tests/house-layout.test.js` "the TV desk", `tests/furniture-textures.test.js` and `tests/interior.test.js` "the dark TV frame", `tests/manifest.test.js`; the look is a person check.) The desk model `interior/tv-cabinet.glb` (Kenney) has a licence record in `src/data/licences.js`.
 - [ ] R-L2 The new textures `textures/fabric.jpg` (ambientCG Fabric 030) and `textures/cabinet.jpg` (ambientCG Wood 049) and the model `interior/chair.glb` (Kenney) have licence records and stay within the budgets. (Auto: `tests/manifest.test.js`, `tests/licences.test.js`, `tests/budget.test.js`.)
 - [ ] R-L The new texture `textures/wallpaper.jpg` has its licence record (ambientCG Fabric 036, CC0) and stays within the 1 MB texture budget. (Auto: `tests/manifest.test.js`, `tests/licences.test.js`, `tests/budget.test.js`.)
+
+## Shadows (beyond spec v1)
+
+Shadows are not in the spec. The rows below use no AC number of their own; AC-4.3 and AC-7.1 are re-checked with shadows on. Auto: `tests/shadowFrustum.test.js` (the shadow box holds the place for every sun azimuth), `tests/shadows.test.js` (flags by kind), `tests/buildWorld.test.js` (one sun). The look is a person check.
+
+- [ ] SH-1 Shadows fall away from the visible sun: stand in the garden, find the sun in the sky, and see that the shadows of the trees, the house and the fence point the other way. (Person only.)
+- [ ] SH-2 The shadows turn slowly with the sky: watch one tree's shadow for a minute or two and see that it creeps round as the sky drifts. (Person only.)
+- [ ] SH-3 No stripes on the ground, the walls or the character, and no shadow that floats away from its object. (Person only.)
+- [ ] SH-4 The character's shadow follows him while he wanders and waves. (Person only.)
+- [ ] SH-5 The door's shadow while it swings: open and close the door and look for a shadow that moves with it. The tuning could not confirm a distinct door shadow, so write down what you see, even if it is no separate shadow. (Person only.)
+- [ ] SH-6 AC-4.3 again, with shadows on: the rooms still look warm and cosy. The ambient light is now 0.7, which dims the interior slightly. If it is too dim, raise the intensities in `LIGHTS` (`src/world/layout.js`). (Person only.)
+- [ ] SH-7 AC-7.1 with shadows on: the frame-rate walk averages 30 fps or better. Average: ______ fps. (Person only.)
+- [ ] SH-8 The same walk with `SHADOWS = 'off'` in `src/world/shadowConfig.js` (rebuild first). Average: ______ fps. Shows what the shadows cost. (Person only.)
+- [ ] SH-9 The decision below is filled in. (Person only.)
+
+### Decision rule for shadows and the frame rate
+
+Measure the frame-rate walk with shadows on (SH-7).
+
+- Average 30 or better: ship.
+- Below 30: the builder decides the order of what to drop. FR-22 names only the TV. Recommended order: first the TV clip (`TV_MODE = 'still'`), then shadows (`SHADOWS = 'off'`). Never drop the warm lights or the furniture. Measure after each step and record both numbers.
+- Still below 30 with both dropped: the interior does not go online (AC-7.12).
+
+| Measurement | Average fps (12 values) |
+|---|---|
+| Shadows on, `TV_MODE = 'clip'` | ______ |
+| Shadows on, `TV_MODE = 'still'` (only if the line above is below 30) | ______ |
+| `SHADOWS = 'off'`, `TV_MODE = 'still'` (only if the line above is below 30) | ______ |
+
+Decision: ______ . Date: ______ .
 
 ## Missing items
 

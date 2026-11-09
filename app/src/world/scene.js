@@ -31,6 +31,8 @@ import { buildWorld } from './buildWorld.js';
 import { disposeObject, disposeAssets } from './dispose.js';
 import { skyParams } from './builders/sky.js';
 import { FOG } from './builders/ground.js';
+import { applyShadows } from './builders/shadows.js';
+import { SHADOWS } from './shadowConfig.js';
 
 // Only known colour ids may reach the markup; anything else gets the first entry.
 function safeId(set, id) {
@@ -140,7 +142,7 @@ export async function mountWorld(
   scene.innerHTML = `
     <a-scene ${stats ? 'stats' : ''} vr-mode-ui="enabled: false" background="color: ${sky.horizon}"
       fog="type: linear; color: ${sky.horizon}; near: ${FOG.near}; far: ${FOG.far}">
-      <a-light type="ambient" color="#ffd9b0" intensity="0.85"></a-light>
+      <a-light type="ambient" color="#ffd9b0" intensity="0.7"></a-light>
       <a-light type="point" color="#ffcf8a" intensity="0.8" distance="12" position="0 2.5 -3"></a-light>
       ${houseLoaded ? lightsMarkup(LIGHTS) : ''}
       <a-entity id="world-root" world-motion></a-entity>
@@ -256,9 +258,18 @@ export async function mountWorld(
       await whenLoaded(el, deadline - Date.now());
       characterGltf.scene.animations = characterGltf.animations;
       el.setObject3D('mesh', characterGltf.scene);
+      applyShadows(characterGltf.scene, { kind: 'character' });
       el.emit('model-loaded');
     }
     await sceneReady(sceneEl, deadline - Date.now());
+    // A-Frame turns the shadow map on only for its own components, and we use raw three objects.
+    if (SHADOWS === 'on' && sceneEl.renderer) {
+      sceneEl.renderer.shadowMap.enabled = true;
+      sceneEl.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      sceneEl.object3D.traverse((o) => {
+        for (const m of [].concat(o.material ?? [])) m.needsUpdate = true;
+      });
+    }
     // The canvas exists only once the scene has loaded, so the door attaches now.
     const door = houseLoaded && world.group.getObjectByName('Door');
     if (door) {

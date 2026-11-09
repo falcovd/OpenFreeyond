@@ -11,6 +11,8 @@ import { buildHouse } from './builders/house.js';
 import { buildFence, buildFurniture } from './builders/furniture.js';
 import { buildFigure } from './builders/figure.js';
 import { buildInterior } from './builders/interior.js';
+import { applyShadows } from './builders/shadows.js';
+import { SHADOWS } from './shadowConfig.js';
 
 const BUILDERS = {
   tree: buildTree,
@@ -30,7 +32,7 @@ export function buildWorld(
 ) {
   const group = new THREE.Group();
   group.add(
-    buildSky(THREE, assets),
+    buildSky(THREE, assets, undefined, { shadows: SHADOWS === 'on' }),
     buildGround(THREE, assets),
     buildPath(THREE, assets),
     buildHouse(THREE, assets),
@@ -46,6 +48,8 @@ export function buildWorld(
   // The character model is an entity (see scene.js). Without it, a plain figure stands in.
   if (withCharacter && !assets.model('character'))
     group.add(buildFigure(THREE, colours));
+
+  applyShadows(group);
 
   const updaters = [];
   group.traverse((o) => {
