@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { resolveMove, hitsSolid } from '../src/logic/collision.js';
+import { walkableArea } from '../src/logic/walkable.js';
 import { SOLIDS, BOUNDS, SPAWN, CHARACTER_SPOT } from '../src/world/layout.js';
 
 const box = [{ x: 0, z: 0, w: 2, d: 2 }];
@@ -53,5 +54,21 @@ describe('layout', () => {
     expect(
       SOLIDS.some((s) => s.x === CHARACTER_SPOT.x && s.z === CHARACTER_SPOT.z),
     ).toBe(true);
+  });
+});
+
+describe('solids that are off (FR-4)', () => {
+  const wall = { x: 0, z: 0, w: 2, d: 0.2 };
+  it('stops a person at a solid that is on', () => {
+    expect(hitsSolid(0, 0, [wall], 0.3)).toBe(true);
+  });
+  it('lets a person through a solid that is off', () => {
+    expect(hitsSolid(0, 0, [{ ...wall, off: true }], 0.3)).toBe(false);
+  });
+  it('does not count an off solid in the walkable area', () => {
+    const b = { minX: -5, maxX: 5, minZ: -5, maxZ: 5 };
+    expect(
+      walkableArea([{ x: 0, z: 0, w: 2, d: 2, off: true }], b),
+    ).toBeCloseTo(100, 0);
   });
 });

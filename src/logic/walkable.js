@@ -10,7 +10,8 @@ export function walkableArea(solids, bounds, cell = 0.1) {
     for (let j = 0; j < nz; j++) {
       const z = bounds.minZ + (j + 0.5) * cell;
       const covered = solids.some(
-        (s) => Math.abs(x - s.x) < s.w / 2 && Math.abs(z - s.z) < s.d / 2,
+        (s) =>
+          !s.off && Math.abs(x - s.x) < s.w / 2 && Math.abs(z - s.z) < s.d / 2,
       );
       if (!covered) free++;
     }
