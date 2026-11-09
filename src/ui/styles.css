@@ -153,7 +153,9 @@ textarea {
 }
 .notice,
 .hint,
-.credits {
+.credits,
+.door-hint,
+.door-step {
   background: rgba(20, 27, 54, 0.95);
   color: var(--text);
   border: 1px solid var(--line);
@@ -163,6 +165,16 @@ textarea {
 }
 .credits a {
   color: var(--teal);
+}
+.door-hint,
+.door-step {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 22rem;
+  margin: 0;
+  text-align: center;
 }
 
 .loading {

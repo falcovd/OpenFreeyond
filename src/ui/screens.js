@@ -91,6 +91,44 @@ function renderFooter() {
   return footer;
 }
 
+export const DOOR_HINT = 'Click the door to open or close it.';
+export const DOOR_STEP_ASIDE =
+  'Step out of the way of the door, then click it again.';
+
+// Lets the world change the overlay after it is drawn: the door hint, the step-aside message and the notice.
+export function worldMessages(overlay) {
+  let doorHint = null;
+  let stepAside = null;
+  const toggle = (current, visible, cls, text) => {
+    if (visible && !current) {
+      const el = h('p', { class: cls, role: 'status' }, text);
+      overlay.append(el);
+      return el;
+    }
+    if (!visible && current) current.remove();
+    return visible ? current : null;
+  };
+  return {
+    setDoorHint(visible) {
+      doorHint = toggle(doorHint, visible, 'door-hint', DOOR_HINT);
+    },
+    setStepAside(visible) {
+      stepAside = toggle(stepAside, visible, 'door-step', DOOR_STEP_ASIDE);
+    },
+    setNotice(text) {
+      const el = overlay.querySelector('.notice');
+      if (!text) el?.remove();
+      else if (el) el.textContent = text;
+      else {
+        const notice = h('p', { class: 'notice', role: 'status' }, text);
+        const back = overlay.querySelector('.back');
+        if (back) back.after(notice);
+        else overlay.prepend(notice);
+      }
+    },
+  };
+}
+
 export function renderWorldOverlay(
   root,
   { notice, showHint, onDismissHint, onBack },
