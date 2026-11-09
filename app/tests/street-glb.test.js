@@ -35,6 +35,22 @@ describe('street models (FR-16, AC-6.9)', () => {
     for (const i of gltf.images ?? [])
       expect(i.name ?? '', f).not.toMatch(/logo|plate|brand/i);
   });
+  // The cars' body paint is its own material named Body, so each parked car can get its own colour.
+  it.each(files.filter((f) => f.startsWith('car-')))(
+    '%s has exactly one Body material, used by the car and not by wheels, glass or lights',
+    (f) => {
+      const gltf = readGlb(join(DIR, f));
+      const names = gltf.materials.map((m) => m.name);
+      expect(names.filter((n) => n === 'Body')).toHaveLength(1);
+      for (const n of ['Windows', 'Black', 'Grey', 'Headlights', 'TailLights'])
+        if (f !== 'car-2.glb' || n !== 'Grey') expect(names).toContain(n);
+      const body = names.indexOf('Body');
+      for (const m of gltf.meshes) {
+        if (!/Wheel/i.test(m.name)) continue;
+        for (const p of m.primitives) expect(p.material).not.toBe(body);
+      }
+    },
+  );
   it('has only files that the street manifest can load', () => {
     for (const f of files) expect(f).toMatch(/^(car-\d+|lamp)\.glb$/);
   });
