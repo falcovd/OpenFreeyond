@@ -1,5 +1,6 @@
 import { SHADOWS } from '../shadowConfig.js';
 import { STREET_SHADOWS } from '../streetConfig.js';
+import { NEIGHBOUR_SHADOWS } from '../neighbourhoodConfig.js';
 
 // cast: throws a shadow. receive: has shadows drawn on it.
 export const SHADOW_RULES = {
@@ -22,6 +23,8 @@ export const SHADOW_RULES = {
   street: { cast: false, receive: true },
   car: { cast: true, receive: true },
   lamp: { cast: true, receive: true },
+  // The painted far scenery never throws or catches a shadow.
+  backdrop: { cast: false, receive: false },
   sky: { cast: false, receive: false },
 };
 const NONE = { cast: false, receive: false };
@@ -41,16 +44,30 @@ function kindOf(object, fallback) {
   return fallback;
 }
 
+function isNeighbour(object) {
+  for (let o = object; o; o = o.parent) if (o.userData?.neighbour) return true;
+  return false;
+}
+
 // Sets castShadow and receiveShadow on every mesh under `root` by the kind of its nearest ancestor.
+// With neighbourShadows 'off' (FR-13 step 2) everything under a `userData.neighbour` ancestor does neither.
 // See-through materials never cast (the window glass lets the sun in).
 export function applyShadows(
   root,
-  { enabled = SHADOWS === 'on', kind, streetShadows = STREET_SHADOWS } = {},
+  {
+    enabled = SHADOWS === 'on',
+    kind,
+    streetShadows = STREET_SHADOWS,
+    neighbourShadows = NEIGHBOUR_SHADOWS,
+  } = {},
 ) {
   root.traverse((o) => {
     if (!o.isMesh) return;
     const k = kindOf(o, kind);
-    const off = streetShadows === 'off' && STREET_KINDS.has(k);
+    // Our own car and lamp are not neighbour objects: they keep the street rule only.
+    const off =
+      (streetShadows === 'off' && STREET_KINDS.has(k)) ||
+      (neighbourShadows === 'off' && isNeighbour(o));
     const rule = enabled && !off ? (SHADOW_RULES[k] ?? NONE) : NONE;
     const see = [].concat(o.material ?? []).some((m) => m?.transparent);
     o.castShadow = rule.cast && !see && !o.userData.flat; // flat: a ground-level underlay that never casts

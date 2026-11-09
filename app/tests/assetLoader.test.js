@@ -8,6 +8,8 @@ import {
   loadInterior,
   HOUSE_FAILED_MESSAGE,
   INTERIOR_FAILED_MESSAGE,
+  NEIGHBOURHOOD_FAILED_MESSAGE,
+  onceNotice,
 } from '../src/world/assetLoader.js';
 
 const manifest = [
@@ -230,5 +232,25 @@ describe('failureMessage for the street (AC-6.12)', () => {
     });
     expect(typeof msg).toBe('string');
     expect(msg.length).toBeGreaterThan(0);
+  });
+});
+
+describe('onceNotice (FR-16, AC-6.16)', () => {
+  it('forwards only the first message', () => {
+    const send = vi.fn();
+    const notify = onceNotice(send);
+    notify('a');
+    notify('b');
+    expect(send.mock.calls).toEqual([['a']]);
+  });
+  it('forwards nothing when a message was already shown', () => {
+    const send = vi.fn();
+    onceNotice(send, true)('a');
+    expect(send).not.toHaveBeenCalled();
+  });
+  it('has one short sentence for the neighbourhood', () => {
+    expect(NEIGHBOURHOOD_FAILED_MESSAGE).toBe(
+      'Part of the neighbourhood could not be loaded, so plain blocks are shown in its place.',
+    );
   });
 });

@@ -13,6 +13,7 @@
     "test": "vitest run",
     "lint": "eslint .",
     "build:house": "node scripts/build-house.mjs",
+    "build:neighbours": "node scripts/build-neighbour-houses.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

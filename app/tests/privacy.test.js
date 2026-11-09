@@ -86,3 +86,25 @@ describe('the fence line and the street store and send nothing (NFR-3, AC-7.1, A
       expect(code(join(SRC, f)), f).not.toMatch(FORBIDDEN);
   });
 });
+
+describe('the neighbourhood stores and sends nothing (NFR-4, AC-7.1, AC-7.2)', () => {
+  const SRC = new URL('../src', import.meta.url).pathname;
+  const NEW_FILES = [
+    'world/plots.js',
+    'world/houseLooks.js',
+    'world/neighbourhood.js',
+    'world/neighbourhoodConfig.js',
+    'world/builders/plots.js',
+    'world/builders/neighbourHouse.js',
+    'world/builders/backdrop.js',
+    'logic/shadowFollow.js',
+  ];
+  it('keeps storage and the network out of the plot, neighbourhood and backdrop files', () => {
+    for (const f of NEW_FILES)
+      expect(code(join(SRC, f)), f).not.toMatch(FORBIDDEN);
+  });
+  it('has every one of those files', () => {
+    for (const f of NEW_FILES)
+      expect(code(join(SRC, f)).length, f).toBeGreaterThan(0);
+  });
+});

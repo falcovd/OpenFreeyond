@@ -76,6 +76,20 @@ export const HOUSE_FAILED_MESSAGE =
 export const INTERIOR_FAILED_MESSAGE =
   'Something in the house could not be loaded, so a plain block is shown in its place.';
 
+export const NEIGHBOURHOOD_FAILED_MESSAGE =
+  'Part of the neighbourhood could not be loaded, so plain blocks are shown in its place.';
+
+// One load message per visit (FR-16): only the first call is forwarded. `alreadyShown` is true when the
+// place's own warning is already on screen.
+export function onceNotice(send, alreadyShown = false) {
+  let shown = alreadyShown;
+  return (text) => {
+    if (shown) return;
+    shown = true;
+    send?.(text);
+  };
+}
+
 // Loads each interior file on its own. Never rejects. No timeout: the interior may keep loading after the
 // place is ready (FR-20). onItem(id, value) per arrival, onFail(id) per failure (FR-23). A throw in
 // onItem counts as a failure. After cancel, onLate(id, value) gets a value that arrives late, so it can be released.

@@ -3,14 +3,19 @@ import * as THREE from 'three';
 import { makeAssets } from '../src/world/builders/common.js';
 import { buildWorld } from '../src/world/buildWorld.js';
 import { SOLIDS, FLOWER_BEDS } from '../src/world/layout.js';
+import { visiblePlots } from '../src/world/plots.js';
 import { CARS, LAMPS } from '../src/world/streetLayout.js';
 
 const colours = { hair: 'brown', clothing: 'mustard' };
-const count = (root, kind) => {
+// Counts our own place; the scenery of the other plots (userData.neighbour) is counted separately.
+const count = (root, kind, { neighbours = false } = {}) => {
   let n = 0;
-  root.traverse((o) => {
+  const walk = (o) => {
+    if (o.userData.neighbour && !neighbours) return;
     if (o.userData.kind === kind) n++;
-  });
+    o.children.forEach(walk);
+  };
+  walk(root);
   return n;
 };
 const gltf = () => {
@@ -26,10 +31,10 @@ describe('buildWorld', () => {
     });
     expect(count(group, 'fence')).toBeGreaterThan(0);
     expect(count(group, 'gate')).toBe(1);
-    expect(count(group, 'car')).toBe(CARS.length);
-    expect(count(group, 'lamp')).toBe(LAMPS.length);
-    expect(CARS.length).toBe(3);
-    expect(LAMPS.length).toBe(3);
+    expect(count(group, 'car', { neighbours: true })).toBe(CARS.length);
+    expect(count(group, 'lamp', { neighbours: true })).toBe(LAMPS.length);
+    expect(CARS.length).toBe(8);
+    expect(LAMPS.length).toBe(8);
     const plain = [];
     group.traverse((o) => {
       if (o.userData.plain && ['car', 'lamp'].includes(o.userData.kind))
@@ -46,6 +51,18 @@ describe('buildWorld', () => {
     );
     expect(count(world.group, 'gate')).toBe(1);
     expect(world.pickables.some((o) => o.userData.kind === 'gate')).toBe(false);
+  });
+  it('adds fences, gates and paths for every visible plot, and no cars or lamps from them', () => {
+    const { group } = buildWorld(THREE, makeAssets(new Map()), colours, {
+      withCharacter: false,
+    });
+    const n = visiblePlots().length;
+    expect(n).toBe(7);
+    expect(count(group, 'gate', { neighbours: true })).toBe(1 + n);
+    expect(count(group, 'slab', { neighbours: true })).toBe(1 + n);
+    expect(count(group, 'fence', { neighbours: true })).toBeGreaterThan(
+      count(group, 'fence'),
+    );
   });
   it('survives every asset failing (AC-8.4)', () => {
     const world = buildWorld(THREE, makeAssets(new Map()), colours, {

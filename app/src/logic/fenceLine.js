@@ -2,11 +2,18 @@
 // The outer face of every piece is on the edge; the pieces touch end to end; the front is split by the gate.
 const POST = 0.12;
 
-export function fenceLine(bounds, { t, h, color }, gate) {
+// options.skip: edges to leave out ('left', 'right', 'back'), for sides shared with a neighbour. The back and
+// street pieces then run to the plot edge. options.gateSide: the street edge, 'maxZ' (default) or 'minZ'.
+export function fenceLine(
+  bounds,
+  { t, h, color },
+  gate,
+  { skip = [], gateSide = 'maxZ' } = {},
+) {
   const { minX, maxX, minZ, maxZ } = bounds;
   const cz = (minZ + maxZ) / 2;
-  const innerLo = minX + t;
-  const innerHi = maxX - t;
+  const innerLo = skip.includes('left') ? minX : minX + t;
+  const innerHi = skip.includes('right') ? maxX : maxX - t;
   const frontZ = maxZ - t / 2;
   const gl = gate.x - gate.w / 2;
   const gh = gate.x + gate.w / 2;
@@ -20,7 +27,7 @@ export function fenceLine(bounds, { t, h, color }, gate) {
     h,
     color,
   });
-  return [
+  const pieces = [
     piece('fence-left', minX + t / 2, cz, t, maxZ - minZ),
     piece('fence-right', maxX - t / 2, cz, t, maxZ - minZ),
     piece(
@@ -33,7 +40,12 @@ export function fenceLine(bounds, { t, h, color }, gate) {
     piece('fence-front-left', (innerLo + gl) / 2, frontZ, gl - innerLo, t),
     piece('gate', gate.x, frontZ, gate.w, t, 'gate'),
     piece('fence-front-right', (gh + innerHi) / 2, frontZ, innerHi - gh, t),
-  ];
+  ]
+    .filter((p) => !(p.id === 'fence-left' && skip.includes('left')))
+    .filter((p) => !(p.id === 'fence-right' && skip.includes('right')))
+    .filter((p) => !(p.id === 'fence-back' && skip.includes('back')));
+  if (gateSide !== 'minZ') return pieces;
+  return pieces.map((p) => ({ ...p, z: minZ + maxZ - p.z }));
 }
 
 // Post centres along the long side of a piece, relative to the piece centre. The first and last post are

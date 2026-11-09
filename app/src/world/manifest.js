@@ -2,7 +2,9 @@
 import { INTERIOR_ITEMS } from './layout.js';
 import { furnitureTextureIds } from '../logic/furniture-textures.js';
 import { TV_MODE } from './interiorConfig.js';
-import { STREET_CARS, STREET_LAMPS } from './streetConfig.js';
+import { visiblePlots } from './plots.js';
+import { LOOKS } from './houseLooks.js';
+import { CARS, LAMPS } from './streetLayout.js';
 
 // The textures the furniture needs. They load with the interior, after the place is ready.
 export const FURNITURE_TEXTURES = furnitureTextureIds();
@@ -10,24 +12,7 @@ export const FURNITURE_TEXTURES = furnitureTextureIds();
 const base = import.meta.env.BASE_URL;
 const url = (path) => `${base}assets/${path}`;
 
-// The street models that exist (FR-16). Add an id here when its file is added under models/street/;
-// tests/manifest.test.js fails if a listed file is missing. An item without a file is drawn as a plain block.
-const STREET_MODEL_IDS = ['car-1', 'car-2', 'car-3', 'lamp'];
-
-// Only the models the build switches use: car-1..car-N for N = STREET_CARS, and 'lamp' when STREET_LAMPS >= 1.
-export function streetManifest(
-  cars = STREET_CARS,
-  lamps = STREET_LAMPS,
-  ids = STREET_MODEL_IDS,
-) {
-  return ids
-    .filter((id) => {
-      if (id === 'lamp') return lamps >= 1;
-      const n = /^car-(\d+)$/.exec(id)?.[1];
-      return n !== undefined && Number(n) <= cars;
-    })
-    .map((id) => ({ id, type: 'model', url: url(`models/street/${id}.glb`) }));
-}
+// The neighbourhood (houses, cars, lamp) is not here: it loads late, see neighbourhoodManifest.
 
 export const MANIFEST = [
   { id: 'grass', type: 'texture', url: url('textures/grass.jpg') },
@@ -44,7 +29,6 @@ export const MANIFEST = [
   { id: 'bush', type: 'model', url: url('models/bush.glb') },
   { id: 'house', type: 'model', url: url('models/house.glb') },
   { id: 'character', type: 'model', url: url('character.glb') },
-  ...streetManifest(),
 ];
 
 // The interior loads after the place is ready (OQ-3). One entry per file: the two pendants share one.
@@ -71,4 +55,24 @@ export function interiorManifest(tvMode = TV_MODE) {
 // Every interior item that uses the file at this URL.
 export function itemsForFile(fileUrl) {
   return INTERIOR_ITEMS.filter((i) => i.file && url(i.file) === fileUrl);
+}
+
+// The neighbourhood loads after the place is ready (FR-14), outside the 30 s rule. One entry per file: the
+// house files of the looks the visible plots use, the car models the cars use and the lamp model.
+// The id of a house is house-<look> and of a car its model id, so neighbourhood.js finds the parts for it.
+// The backdrop picture (id 'backdrop', a texture) is always listed.
+export function neighbourhoodManifest(
+  plots = visiblePlots(),
+  cars = CARS,
+  lamps = LAMPS,
+) {
+  const entry = (id, file) => ({ id, type: 'model', url: url(file) });
+  const looks = [...new Set(plots.map((p) => p.look))];
+  const models = [...new Set(cars.map((c) => c.model))];
+  return [
+    ...looks.map((look) => entry(`house-${look}`, LOOKS[look].file)),
+    ...models.map((m) => entry(m, `models/street/${m}.glb`)),
+    ...(lamps.length > 0 ? [entry('lamp', 'models/street/lamp.glb')] : []),
+    { id: 'backdrop', type: 'texture', url: url('textures/backdrop.webp') },
+  ];
 }

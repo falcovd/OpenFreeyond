@@ -1,9 +1,9 @@
 import skyMeta from '../../data/sky.json';
-import { SHADOW_REGION } from '../streetLayout.js';
+import { shadowFollow } from '../../logic/shadowFollow.js';
 import { shadowFrustum } from '../../logic/shadowFrustum.js';
 import {
   SHADOW_MAP_SIZE,
-  SHADOW_MAX_HEIGHT,
+  SHADOW_RADIUS,
   SUN_DISTANCE,
   SHADOW_BIAS,
   SHADOW_NORMAL_BIAS,
@@ -117,11 +117,7 @@ export function buildSky(
   const sun = new THREE.DirectionalLight('#ffd9a0', 1.0);
   sun.position.set(...params.sun).multiplyScalar(SUN_DISTANCE);
   if (shadows) {
-    const f = shadowFrustum({
-      bounds: SHADOW_REGION,
-      maxHeight: SHADOW_MAX_HEIGHT,
-      distance: SUN_DISTANCE,
-    });
+    const f = shadowFrustum({ radius: SHADOW_RADIUS, distance: SUN_DISTANCE });
     sun.castShadow = true;
     sun.shadow.mapSize.set(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE);
     Object.assign(sun.shadow.camera, f);
@@ -130,7 +126,39 @@ export function buildSky(
     sun.shadow.normalBias = SHADOW_NORMAL_BIAS;
     sun.shadow.radius = SHADOW_BLUR;
   }
-  group.add(sun);
+  // The target is part of the scene so the shadow follower can move it (a light's target only counts
+  // when it has a world matrix).
+  group.add(sun, sun.target);
+  group.userData.sun = sun;
+  // The sun's direction now, in world space: the local direction turned by the group about y.
+  group.userData.sunDirection = () => {
+    const [x, y, z] = params.sun;
+    const a = group.rotation.y;
+    return [
+      x * Math.cos(a) + z * Math.sin(a),
+      y,
+      -x * Math.sin(a) + z * Math.cos(a),
+    ];
+  };
+  // Puts the shadow box on a person (world x, z). The light lives in the turning group, so the maths
+  // run in the group's own frame: the person is turned back by the group's angle, and the sun
+  // direction there is the constant local one. Rotation about y keeps the light's right and up axes,
+  // so snapping to whole texels in the local frame snaps in the light's frame too.
+  group.userData.follow = (person) => {
+    const a = group.rotation.y;
+    const local = {
+      x: person.x * Math.cos(a) - person.z * Math.sin(a),
+      z: person.x * Math.sin(a) + person.z * Math.cos(a),
+    };
+    const r = shadowFollow({
+      person: local,
+      dir: params.sun,
+      distance: SUN_DISTANCE,
+      texel: (2 * SHADOW_RADIUS) / SHADOW_MAP_SIZE,
+    });
+    sun.target.position.set(r.target.x, r.target.y, r.target.z);
+    sun.position.set(r.position.x, r.position.y, r.position.z);
+  };
   group.userData.update = (seconds) => {
     group.rotation.y = seconds * SKY_DRIFT;
   };

@@ -12,11 +12,10 @@ import { buildGround, buildPath } from '../src/world/builders/ground.js';
 import { PATH } from '../src/world/layout.js';
 import {
   SHADOW_MAP_SIZE,
-  SHADOW_MAX_HEIGHT,
+  SHADOW_RADIUS,
   SUN_DISTANCE,
 } from '../src/world/shadowConfig.js';
 import { shadowFrustum } from '../src/logic/shadowFrustum.js';
-import { SHADOW_REGION } from '../src/world/streetLayout.js';
 
 const none = makeAssets(new Map());
 
@@ -168,13 +167,52 @@ describe('the sun casts shadows (shadows on)', () => {
     const sun = sunOf(buildSky(THREE, none, undefined, { shadows: true }));
     expect(sun.castShadow).toBe(true);
     expect(sun.shadow.mapSize.x).toBe(SHADOW_MAP_SIZE);
-    const f = shadowFrustum({
-      bounds: SHADOW_REGION,
-      maxHeight: SHADOW_MAX_HEIGHT,
-      distance: SUN_DISTANCE,
-    });
+    const f = shadowFrustum({ radius: SHADOW_RADIUS, distance: SUN_DISTANCE });
     expect(sun.shadow.camera.right).toBeCloseTo(f.right);
-    expect(f.right).toBeGreaterThan(25);
+    expect(sun.shadow.camera.right).toBe(SHADOW_RADIUS);
+    expect(sun.shadow.camera.near).toBeCloseTo(SUN_DISTANCE - SHADOW_RADIUS);
+  });
+  it('returns the sun and puts its target in the group', () => {
+    const sky = buildSky(THREE, none, undefined, { shadows: true });
+    expect(sky.userData.sun).toBe(sunOf(sky));
+    expect(sky.children).toContain(sky.userData.sun.target);
+  });
+  it('reports the world direction of the sun, turned with the group', () => {
+    const sky = buildSky(THREE, none, undefined, { shadows: true });
+    const local = sky.userData.sun.position.clone().normalize();
+    expect(sky.userData.sunDirection()).toEqual([
+      expect.closeTo(local.x),
+      expect.closeTo(local.y),
+      expect.closeTo(local.z),
+    ]);
+    sky.rotation.y = 1.1;
+    sky.updateMatrixWorld(true);
+    const world = sky.userData.sun.getWorldPosition(new THREE.Vector3());
+    world.normalize();
+    const d = sky.userData.sunDirection();
+    expect(d[0]).toBeCloseTo(world.x);
+    expect(d[1]).toBeCloseTo(world.y);
+    expect(d[2]).toBeCloseTo(world.z);
+  });
+  it('follows a person: target on the person (within a texel), light at distance along the world sun direction', () => {
+    const sky = buildSky(THREE, none, undefined, { shadows: true });
+    const person = { x: 7.3, z: -4.1 };
+    for (const angle of [0, 0.7, 2.5]) {
+      sky.rotation.y = angle;
+      sky.userData.follow(person);
+      sky.updateMatrixWorld(true);
+      const sun = sky.userData.sun;
+      const t = sun.target.getWorldPosition(new THREE.Vector3());
+      const p = sun.getWorldPosition(new THREE.Vector3());
+      const texel = (2 * SHADOW_RADIUS) / SHADOW_MAP_SIZE;
+      expect(Math.hypot(t.x - person.x, t.z - person.z)).toBeLessThan(
+        texel * 2,
+      );
+      const d = sky.userData.sunDirection();
+      expect(p.x - t.x).toBeCloseTo(d[0] * SUN_DISTANCE, 6);
+      expect(p.y - t.y).toBeCloseTo(d[1] * SUN_DISTANCE, 6);
+      expect(p.z - t.z).toBeCloseTo(d[2] * SUN_DISTANCE, 6);
+    }
   });
   it('allocates no shadow map when shadows are off', () => {
     const sun = sunOf(buildSky(THREE, none, undefined, { shadows: false }));

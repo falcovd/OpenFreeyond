@@ -3,7 +3,8 @@
 export const SHADOWS = 'on';
 
 export const SHADOW_MAP_SIZE = 2048;
-export const SHADOW_MAX_HEIGHT = 8; // metres: above the roof ridge (6.8) and the tallest tree (5)
+// The shadow box is a sphere of this radius around the person (OQ-3). 2 x 27 / 2048 = 2.64 cm per texel.
+export const SHADOW_RADIUS = 27;
 export const SUN_DISTANCE = 100; // metres from the origin, as in sky.js
 export const SHADOW_BIAS = -0.0004;
 export const SHADOW_NORMAL_BIAS = 0.02;

@@ -1,13 +1,15 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import {
   MANIFEST,
   interiorManifest,
-  streetManifest,
+  neighbourhoodManifest,
   itemsForFile,
 } from '../src/world/manifest.js';
 import { ASSET_RECORDS } from '../src/data/licences.js';
+import { visiblePlots } from '../src/world/plots.js';
+import { CARS } from '../src/world/streetLayout.js';
 import { INTERIOR_ITEMS } from '../src/world/layout.js';
 
 const publicDir = new URL('../public/', import.meta.url).pathname;
@@ -92,32 +94,74 @@ describe('interior manifest (FR-20, FR-22)', () => {
   });
 });
 
-describe('street manifest (FR-16, AC-6.8)', () => {
-  it('lists car-1..car-3 and the lamp by default, all under the app base', () => {
-    const m = streetManifest();
-    expect(m.map((a) => a.id)).toEqual(['car-1', 'car-2', 'car-3', 'lamp']);
-    expect(MANIFEST.filter((a) => a.url.includes('models/street/'))).toEqual(m);
-  });
-  it('lists only the cars and the lamp the build switches use', () => {
-    expect(streetManifest(2, 1).map((a) => a.id)).toEqual([
-      'car-1',
-      'car-2',
-      'lamp',
-    ]);
-    expect(streetManifest(1, 0).map((a) => a.id)).toEqual(['car-1']);
-  });
-  it('skips ids that have no file in the list it is given', () => {
-    expect(streetManifest(3, 1, ['car-2', 'lamp']).map((a) => a.id)).toEqual([
-      'car-2',
-      'lamp',
-    ]);
-  });
-  it('points only to files that exist, with a licence record each', () => {
+describe('street models (FR-16, AC-6.8)', () => {
+  it('keep a licence record for every file under models/street, and stay out of the first load', () => {
     const recorded = new Set(ASSET_RECORDS.flatMap((r) => r.files));
-    for (const a of streetManifest(99, 1)) {
-      expect(a.url, a.id).not.toMatch(/^(https?:)?\/\//);
+    const files = readdirSync(publicDir + 'assets/models/street');
+    expect(files.sort()).toEqual([
+      'car-1.glb',
+      'car-2.glb',
+      'car-3.glb',
+      'lamp.glb',
+    ]);
+    for (const f of files)
+      expect(recorded.has(`models/street/${f}`), f).toBe(true);
+    expect(MANIFEST.some((a) => a.url.includes('models/street/'))).toBe(false);
+  });
+});
+
+describe('neighbourhood manifest (FR-14, AC-6.6)', () => {
+  const m = neighbourhoodManifest();
+  it('points only to files that exist, under the app base, with a licence record', () => {
+    const recorded = new Set(ASSET_RECORDS.flatMap((r) => r.files));
+    expect(m.length).toBeGreaterThan(0);
+    for (const a of m) {
+      expect(a.url, a.id).toMatch(/\/assets\//);
       expect(existsSync(publicDir + a.url.replace(/^\//, '')), a.id).toBe(true);
       expect(recorded.has(a.url.replace(/^\/assets\//, '')), a.id).toBe(true);
     }
+  });
+  it('derives from the visible plots: house files once each, only the car models used, the lamp', () => {
+    const looks = new Set(visiblePlots().map((p) => p.look));
+    const houses = m.filter((a) => a.id.startsWith('house-'));
+    expect(houses.map((a) => a.id).sort()).toEqual(
+      [...looks].map((l) => `house-${l}`).sort(),
+    );
+    expect(houses.every((a) => a.url.includes('models/houses/'))).toBe(true);
+    expect(
+      m
+        .filter((a) => a.id.startsWith('car-'))
+        .map((a) => a.id)
+        .sort(),
+    ).toEqual([...new Set(CARS.map((c) => c.model))].sort());
+    expect(m.some((a) => a.id === 'lamp')).toBe(true);
+    expect(new Set(m.map((a) => a.id)).size).toBe(m.length);
+  });
+  it('lists no lamp without lamps, and no house of a plot that is not shown', () => {
+    expect(neighbourhoodManifest([], [], []).map((a) => a.id)).toEqual([
+      'backdrop',
+    ]);
+    const one = neighbourhoodManifest(visiblePlots().slice(0, 1), [], []);
+    expect(one).toHaveLength(2);
+  });
+  it('lists the backdrop picture as one texture entry of this product', () => {
+    const b = m.filter((a) => a.id === 'backdrop');
+    expect(b).toHaveLength(1);
+    expect(b[0].type).toBe('texture');
+    expect(b[0].url).toMatch(/assets\/textures\/backdrop\.webp$/);
+  });
+  it('lists every file under models/houses and models/street, none deliberately unlisted (AC-6.12)', () => {
+    const urls = new Set(m.map((a) => a.url.replace(/^.*\/assets\//, '')));
+    for (const dir of ['houses', 'street'])
+      for (const f of readdirSync(publicDir + `assets/models/${dir}`))
+        expect(urls.has(`models/${dir}/${f}`), `${dir}/${f}`).toBe(true);
+  });
+  it('keeps every URL under the app base and off third-party hosts (AC-6.12)', () => {
+    for (const a of m) expect(a.url, a.id).not.toMatch(/^(https?:)?\/\/(?!\/)/);
+  });
+  it('keeps the street and house models out of the place manifest', () => {
+    expect(MANIFEST.some((a) => /models\/(street|houses)\//.test(a.url))).toBe(
+      false,
+    );
   });
 });

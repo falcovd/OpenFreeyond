@@ -1,5 +1,7 @@
 import { SOLIDS, FLOWER_BEDS } from './layout.js';
-import { buildSky } from './builders/sky.js';
+import { buildSky, skyParams } from './builders/sky.js';
+import { buildBackdrop } from './builders/backdrop.js';
+import { makeAssets } from './builders/common.js';
 import { buildGround, buildPath } from './builders/ground.js';
 import {
   buildTree,
@@ -10,13 +12,15 @@ import {
 import { buildHouse } from './builders/house.js';
 import { buildFence, buildFurniture } from './builders/furniture.js';
 import { buildStreet } from './builders/street.js';
-import { CARS, LAMPS } from './streetLayout.js';
-import { buildCar, buildLamp } from './builders/props.js';
+import { createNeighbourhood } from './neighbourhood.js';
 import { buildGate } from './builders/gate.js';
 import { buildFigure } from './builders/figure.js';
 import { buildInterior } from './builders/interior.js';
 import { applyShadows } from './builders/shadows.js';
 import { SHADOWS } from './shadowConfig.js';
+import { visiblePlots } from './plots.js';
+import { buildPlotScenery } from './builders/plots.js';
+import { NEIGHBOUR_GARDENS } from './neighbourhoodConfig.js';
 
 const BUILDERS = {
   tree: buildTree,
@@ -47,8 +51,27 @@ export function buildWorld(
     const build = BUILDERS[solid.kind];
     if (build) group.add(build(THREE, assets, solid));
   }
-  for (const car of CARS) group.add(buildCar(THREE, assets, car));
-  for (const lamp of LAMPS) group.add(buildLamp(THREE, assets, lamp));
+  // The other plots: fences, gates, paths and gardens (scenery only, never in SOLIDS or pickables).
+  for (const plot of visiblePlots()) {
+    group.add(
+      buildPlotScenery(THREE, assets, plot, { gardens: NEIGHBOUR_GARDENS }),
+    );
+  }
+  // Houses, cars and lamps load late: stand-ins first, swapped as their files arrive (FR-14).
+  const neighbourhood = createNeighbourhood(THREE, assets);
+  group.add(neighbourhood.group);
+  // The backdrop: a plain band of the horizon colour until its picture arrives (or if it never does).
+  const horizon = skyParams(assets).horizon;
+  neighbourhood.register({
+    id: 'backdrop',
+    parent: group,
+    neighbour: false,
+    node: buildBackdrop(THREE, assets, { horizon }),
+    build: (texture) =>
+      buildBackdrop(THREE, makeAssets(new Map([['backdrop', texture]])), {
+        horizon,
+      }),
+  });
   // The interior stands in the house, so without the house model there is none (FR-21).
   const interior = assets.gltf('house') ? buildInterior(THREE) : null;
   if (interior) group.add(interior.group);
@@ -65,5 +88,5 @@ export function buildWorld(
       updaters.push(o.userData.update);
   });
   const pickables = group.children.filter((c) => !c.userData.noPick);
-  return { group, updaters, pickables, interior };
+  return { group, updaters, pickables, interior, neighbourhood };
 }

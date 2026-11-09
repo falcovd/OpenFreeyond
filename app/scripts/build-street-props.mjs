@@ -15,13 +15,15 @@ const SRC = new URL('../source-assets/street-dl2/', import.meta.url);
 const OUT = new URL('../public/assets/models/street/', import.meta.url);
 const CARS = 'pp/';
 
-// scale: metres per source unit. recolour: base colour override for one named material.
+// scale: metres per source unit. recolour: base colour override for one named material. body: the name of
+// the body paint material, renamed 'Body' so the world can give each parked car its own colour.
 const JOBS = [
   {
     out: 'car-1.glb',
     src: CARS + 'Cz6yDaUcM9.glb',
     turn: Math.PI / 2,
     scale: 1.05,
+    body: 'Blue',
   },
   {
     out: 'car-2.glb',
@@ -29,12 +31,14 @@ const JOBS = [
     turn: Math.PI / 2,
     scale: 1.2,
     recolour: { LightBlue: [0.55, 0.22, 0.17, 1] },
+    body: 'LightBlue',
   },
   {
     out: 'car-3.glb',
     src: CARS + 'xsMtZhBkxL.glb',
     turn: Math.PI / 2,
     scale: 1,
+    body: 'White',
   },
   { out: 'lamp.glb', src: 'lamps/nFwrlcLvM5.glb', turn: 0, height: 4.5 },
 ];
@@ -120,6 +124,12 @@ async function build(job) {
   for (const m of json.materials ?? []) {
     const c = job.recolour?.[m.name];
     if (c) m.pbrMetallicRoughness.baseColorFactor = c;
+  }
+  if (job.body) {
+    const body = (json.materials ?? []).filter((m) => m.name === job.body);
+    if (body.length !== 1)
+      throw new Error(`${job.out}: no body material ${job.body}`);
+    body[0].name = 'Body';
   }
 
   // The colour palette image moves into the GLB.
