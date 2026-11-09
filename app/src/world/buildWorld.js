@@ -1,5 +1,7 @@
 import { SOLIDS, FLOWER_BEDS } from './layout.js';
-import { buildSky } from './builders/sky.js';
+import { buildSky, skyParams } from './builders/sky.js';
+import { buildBackdrop } from './builders/backdrop.js';
+import { makeAssets } from './builders/common.js';
 import { buildGround, buildPath } from './builders/ground.js';
 import {
   buildTree,
@@ -58,6 +60,18 @@ export function buildWorld(
   // Houses, cars and lamps load late: stand-ins first, swapped as their files arrive (FR-14).
   const neighbourhood = createNeighbourhood(THREE, assets);
   group.add(neighbourhood.group);
+  // The backdrop: a plain band of the horizon colour until its picture arrives (or if it never does).
+  const horizon = skyParams(assets).horizon;
+  neighbourhood.register({
+    id: 'backdrop',
+    parent: group,
+    neighbour: false,
+    node: buildBackdrop(THREE, assets, { horizon }),
+    build: (texture) =>
+      buildBackdrop(THREE, makeAssets(new Map([['backdrop', texture]])), {
+        horizon,
+      }),
+  });
   // The interior stands in the house, so without the house model there is none (FR-21).
   const interior = assets.gltf('house') ? buildInterior(THREE) : null;
   if (interior) group.add(interior.group);

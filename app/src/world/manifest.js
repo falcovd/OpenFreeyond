@@ -60,7 +60,7 @@ export function itemsForFile(fileUrl) {
 // The neighbourhood loads after the place is ready (FR-14), outside the 30 s rule. One entry per file: the
 // house files of the looks the visible plots use, the car models the cars use and the lamp model.
 // The id of a house is house-<look> and of a car its model id, so neighbourhood.js finds the parts for it.
-// Task 9 adds the backdrop texture here (id 'backdrop', textures/backdrop.webp) once the file exists.
+// The backdrop picture (id 'backdrop', a texture) is always listed.
 export function neighbourhoodManifest(
   plots = visiblePlots(),
   cars = CARS,
@@ -73,5 +73,6 @@ export function neighbourhoodManifest(
     ...looks.map((look) => entry(`house-${look}`, LOOKS[look].file)),
     ...models.map((m) => entry(m, `models/street/${m}.glb`)),
     ...(lamps.length > 0 ? [entry('lamp', 'models/street/lamp.glb')] : []),
+    { id: 'backdrop', type: 'texture', url: url('textures/backdrop.webp') },
   ];
 }

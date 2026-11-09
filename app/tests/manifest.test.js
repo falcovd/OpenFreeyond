@@ -138,9 +138,17 @@ describe('neighbourhood manifest (FR-14, AC-6.6)', () => {
     expect(new Set(m.map((a) => a.id)).size).toBe(m.length);
   });
   it('lists no lamp without lamps, and no house of a plot that is not shown', () => {
-    expect(neighbourhoodManifest([], [], []).length).toBe(0);
+    expect(neighbourhoodManifest([], [], []).map((a) => a.id)).toEqual([
+      'backdrop',
+    ]);
     const one = neighbourhoodManifest(visiblePlots().slice(0, 1), [], []);
-    expect(one).toHaveLength(1);
+    expect(one).toHaveLength(2);
+  });
+  it('lists the backdrop picture as one texture entry of this product', () => {
+    const b = m.filter((a) => a.id === 'backdrop');
+    expect(b).toHaveLength(1);
+    expect(b[0].type).toBe('texture');
+    expect(b[0].url).toMatch(/assets\/textures\/backdrop\.webp$/);
   });
   it('keeps the street and house models out of the place manifest', () => {
     expect(MANIFEST.some((a) => /models\/(street|houses)\//.test(a.url))).toBe(

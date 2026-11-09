@@ -7,6 +7,7 @@ import { visiblePlots, plotHouse } from '../src/world/plots.js';
 import { CARS, LAMPS } from '../src/world/streetLayout.js';
 import { SOLIDS } from '../src/world/layout.js';
 import { HOUSE_SIZE } from '../src/world/houseLooks.js';
+import { buildBackdrop } from '../src/world/builders/backdrop.js';
 
 const stub = (w = 8, h = 5, d = 5) => {
   const scene = new THREE.Group();
@@ -18,6 +19,63 @@ const nodes = (g) => g.children;
 const houses = (g) => g.children.filter((c) => c.userData.kind === 'house');
 const plain = (g, kind) =>
   g.children.filter((c) => c.userData.kind === kind && c.userData.plain);
+
+describe('the backdrop in the registry (FR-9, AC-4.7, AC-6.15)', () => {
+  const horizon = '#cfe6f5';
+  const setup = (assets = none()) => {
+    const hood = createNeighbourhood(THREE, assets);
+    const parent = new THREE.Group();
+    hood.register({
+      id: 'backdrop',
+      parent,
+      neighbour: false,
+      node: buildBackdrop(THREE, assets, { horizon }),
+      build: (tex) =>
+        buildBackdrop(THREE, makeAssets(new Map([['backdrop', tex]])), {
+          horizon,
+        }),
+    });
+    return { hood, parent };
+  };
+  const band = (parent) =>
+    parent.children.find((c) => c.userData.kind === 'backdrop');
+
+  it('stands as a plain band first and gets the picture when the texture arrives late', () => {
+    const { hood, parent } = setup();
+    expect(band(parent).userData.plain).toBe('backdrop');
+    const tex = new THREE.Texture();
+    hood.replace('backdrop', tex);
+    const now = band(parent);
+    expect(
+      parent.children.filter((c) => c.userData.kind === 'backdrop'),
+    ).toHaveLength(1);
+    expect(now.userData.plain).toBeUndefined();
+    expect(now.material.map).toBe(tex);
+    expect(now.userData.noPick).toBe(true);
+    expect(now.castShadow).toBe(false);
+  });
+  it('keeps the plain band when the file fails or arrives after dispose', () => {
+    const a = setup();
+    a.hood.fail('backdrop');
+    expect(band(a.parent).userData.plain).toBe('backdrop');
+    const b = setup();
+    b.hood.dispose();
+    b.hood.replace('backdrop', new THREE.Texture());
+    expect(band(b.parent).userData.plain).toBe('backdrop');
+  });
+  it('buildWorld stands a plain backdrop in the world without assets (AC-4.7)', () => {
+    const { group } = buildWorld(
+      THREE,
+      none(),
+      { shirt: '#fff', trousers: '#000' },
+      { withCharacter: false },
+    );
+    const b = group.children.filter((c) => c.userData.kind === 'backdrop');
+    expect(b).toHaveLength(1);
+    expect(b[0].userData.plain).toBe('backdrop');
+    expect(group.children.includes(b[0])).toBe(true);
+  });
+});
 
 describe('createNeighbourhood (FR-14)', () => {
   it('starts with a stand-in for every house, car and lamp, at its final place', () => {
