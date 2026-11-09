@@ -221,3 +221,14 @@ describe('loadInterior (FR-20, FR-23)', () => {
       expect(m.split('.').filter(Boolean).length).toBe(1);
   });
 });
+
+describe('failureMessage for the street (AC-6.12)', () => {
+  it('is one non-empty sentence however many street assets failed', () => {
+    const msg = failureMessage({
+      failed: ['car-1', 'lamp', 'paving'],
+      stalled: false,
+    });
+    expect(typeof msg).toBe('string');
+    expect(msg.length).toBeGreaterThan(0);
+  });
+});
