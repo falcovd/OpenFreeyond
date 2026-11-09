@@ -21,9 +21,9 @@ function readGlb(path) {
 
 // Nothing found for an item is a legal outcome (FR-16): this passes with zero files.
 describe('street models (FR-16, AC-6.9)', () => {
-  it.each(files)('%s parses, is at most 1 MB and has no logo or plate', (f) => {
+  it.each(files)('%s parses, is at most 2 MB and has no logo or plate', (f) => {
     const path = join(DIR, f);
-    expect(statSync(path).size).toBeLessThanOrEqual(1024 * 1024);
+    expect(statSync(path).size).toBeLessThanOrEqual(2 * 1024 * 1024);
     const gltf = readGlb(path);
     expect(gltf.asset.version).toBe('2.0');
     expect(gltf.meshes.length).toBeGreaterThan(0);

@@ -1,36 +1,42 @@
 /* global Buffer, URL, console */
-// Builds public/assets/models/street/{car-1,car-2,car-3,lamp}.glb from Kenney packs (CC0): Car Kit
-// (sedan, hatchback-sports, suv) and City Kit Roads (light-curved). Reads the raw packs from the
-// git-ignored source-assets/street-dl folder. The source files are treated as untrusted data: they are
-// only parsed (never executed) and rewritten at the glTF level, so the models stay byte-for-byte what
-// Kenney made, apart from one wrapping node (turn, scale, stand on y=0, centre) and the colour palette
-// image, which moves from an external file into the GLB.
-// Cars: Kenney cars face +z; the wrapper turns them to face +x. The lamp: its arm points to -z; the
-// wrapper turns it to point to +z (over the road).
+// Builds public/assets/models/street/{car-1,car-2,car-3,lamp}.glb from Quaternius models (CC0, via
+// Poly Pizza): Cars Bundle (Normal Car 1 = sedan, Normal Car 2 = hatchback, SUV) and Street Light.
+// Reads the raw files from the git-ignored source-assets/street-dl2 folder. The source files are treated
+// as untrusted data: they are only parsed (never executed) and rewritten at the glTF level, so the models
+// stay what Quaternius made, apart from one wrapping node (turn, scale, stand on y=0, centre) and, for
+// the hatchback, a new body colour (the original is light blue, like the sedan).
+// Cars: the models face +z; the wrapper turns them to face +x. The lamp: its arm already points to +z
+// (over the road), so it is not turned. The models have no textures (flat material colours), no logos
+// and no number plate text.
 // Run: node scripts/build-street-props.mjs
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 
-const SRC = new URL('../source-assets/street-dl/', import.meta.url);
+const SRC = new URL('../source-assets/street-dl2/', import.meta.url);
 const OUT = new URL('../public/assets/models/street/', import.meta.url);
-const CARS = 'kenney-car-kit/x/Models/GLB format/';
-const ROADS = 'kenney-city-kit-roads/x/Models/GLB format/';
+const CARS = 'pp/';
 
-// scale: metres per Kenney unit (Kenney's cars are small and chunky; the layout sizes follow the result).
+// scale: metres per source unit. recolour: base colour override for one named material.
 const JOBS = [
-  { out: 'car-1.glb', src: CARS + 'sedan.glb', turn: Math.PI / 2, scale: 1.2 },
+  {
+    out: 'car-1.glb',
+    src: CARS + 'Cz6yDaUcM9.glb',
+    turn: Math.PI / 2,
+    scale: 1.05,
+  },
   {
     out: 'car-2.glb',
-    src: CARS + 'hatchback-sports.glb',
+    src: CARS + 'unqqkULtRU.glb',
     turn: Math.PI / 2,
-    scale: 1.35,
+    scale: 1.2,
+    recolour: { LightBlue: [0.55, 0.22, 0.17, 1] },
   },
-  { out: 'car-3.glb', src: CARS + 'suv.glb', turn: Math.PI / 2, scale: 1.25 },
   {
-    out: 'lamp.glb',
-    src: ROADS + 'light-curved.glb',
-    turn: Math.PI,
-    height: 4.5,
+    out: 'car-3.glb',
+    src: CARS + 'xsMtZhBkxL.glb',
+    turn: Math.PI / 2,
+    scale: 1,
   },
+  { out: 'lamp.glb', src: 'lamps/nFwrlcLvM5.glb', turn: 0, height: 4.5 },
 ];
 
 function readGlb(file) {
@@ -43,27 +49,65 @@ function readGlb(file) {
   return { json, bin };
 }
 
-// Axis-aligned box of everything reachable from the scene (nodes here only translate).
+// 4x4 column-major matrix of a node (translation, rotation quaternion, scale).
+function nodeMatrix(n) {
+  if (n.matrix) throw new Error('unexpected node matrix');
+  const [x, y, z, w] = n.rotation ?? [0, 0, 0, 1];
+  const [sx, sy, sz] = n.scale ?? [1, 1, 1];
+  const [tx, ty, tz] = n.translation ?? [0, 0, 0];
+  return [
+    (1 - 2 * (y * y + z * z)) * sx,
+    2 * (x * y + z * w) * sx,
+    2 * (x * z - y * w) * sx,
+    0,
+    2 * (x * y - z * w) * sy,
+    (1 - 2 * (x * x + z * z)) * sy,
+    2 * (y * z + x * w) * sy,
+    0,
+    2 * (x * z + y * w) * sz,
+    2 * (y * z - x * w) * sz,
+    (1 - 2 * (x * x + y * y)) * sz,
+    0,
+    tx,
+    ty,
+    tz,
+    1,
+  ];
+}
+function mul(a, b) {
+  const r = new Array(16).fill(0);
+  for (let c = 0; c < 4; c++)
+    for (let rr = 0; rr < 4; rr++)
+      for (let k = 0; k < 4; k++) r[c * 4 + rr] += a[k * 4 + rr] * b[c * 4 + k];
+  return r;
+}
+
+// Axis-aligned box of everything reachable from the scene, with the node transforms applied.
 function sceneBox(json) {
   const min = [Infinity, Infinity, Infinity];
   const max = [-Infinity, -Infinity, -Infinity];
-  const walk = (i, off) => {
+  const walk = (i, parent) => {
     const n = json.nodes[i];
-    const t = n.translation ?? [0, 0, 0];
-    if (n.rotation || n.scale || n.matrix)
-      throw new Error('unexpected node transform');
-    const o = off.map((v, k) => v + t[k]);
+    const m = mul(parent, nodeMatrix(n));
     if (n.mesh !== undefined)
       for (const p of json.meshes[n.mesh].primitives) {
         const a = json.accessors[p.attributes.POSITION];
-        for (let k = 0; k < 3; k++) {
-          min[k] = Math.min(min[k], a.min[k] + o[k]);
-          max[k] = Math.max(max[k], a.max[k] + o[k]);
+        for (let corner = 0; corner < 8; corner++) {
+          const v = [0, 1, 2].map((k) =>
+            (corner >> k) & 1 ? a.max[k] : a.min[k],
+          );
+          for (let k = 0; k < 3; k++) {
+            const t =
+              m[12 + k] + m[k] * v[0] + m[4 + k] * v[1] + m[8 + k] * v[2];
+            min[k] = Math.min(min[k], t);
+            max[k] = Math.max(max[k], t);
+          }
         }
       }
-    for (const c of n.children ?? []) walk(c, o);
+    for (const c of n.children ?? []) walk(c, m);
   };
-  for (const i of json.scenes[json.scene ?? 0].nodes) walk(i, [0, 0, 0]);
+  const I = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+  for (const i of json.scenes[json.scene ?? 0].nodes) walk(i, I);
   return { min, max };
 }
 
@@ -73,6 +117,10 @@ async function build(job) {
   const box = sceneBox(json);
   const size = box.max.map((v, k) => v - box.min[k]);
   const scale = job.height ? job.height / size[1] : job.scale;
+  for (const m of json.materials ?? []) {
+    const c = job.recolour?.[m.name];
+    if (c) m.pbrMetallicRoughness.baseColorFactor = c;
+  }
 
   // The colour palette image moves into the GLB.
   const parts = [bin];
@@ -125,7 +173,7 @@ async function build(job) {
   json.asset = {
     version: '2.0',
     generator: 'scripts/build-street-props.mjs',
-    copyright: 'Kenney (www.kenney.nl), CC0',
+    copyright: 'Quaternius (quaternius.com), CC0',
   };
 
   const jbuf = Buffer.from(JSON.stringify(json));

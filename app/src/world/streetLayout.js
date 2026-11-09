@@ -30,44 +30,44 @@ const ALL_CARS = [
   {
     id: 'car-1',
     x: GATE.x - 7,
-    w: 3.06,
-    d: 1.8,
-    h: 1.56,
+    w: 4.43,
+    d: 1.9,
+    h: 1.24,
     rot: 0,
-    color: '#9aa7b8',
+    color: '#4a6ea3',
   },
   {
     id: 'car-2',
     x: GATE.x - 0.5,
-    w: 3.85,
-    d: 1.75,
-    h: 1.48,
+    w: 3.97,
+    d: 1.97,
+    h: 1.37,
     rot: 0,
-    color: '#b86b5a',
+    color: '#8c382b',
   },
   {
     id: 'car-3',
     x: GATE.x + 6.5,
-    w: 3.37,
-    d: 1.88,
-    h: 1.63,
+    w: 4.21,
+    d: 2.11,
+    h: 1.53,
     rot: 0,
-    color: '#d8c98a',
+    color: '#d9dcdf',
   },
 ].map((c) => ({ ...c, z: ROAD.z0 + 0.15 + c.d / 2, kind: 'car' }));
 
-// The lamp model is a pole with an arm that reaches 1.5 m over the road. The model is centred on its
-// footprint, so the pole stands 0.583 m behind the lamp's z: LAMP_Z puts the pole 1 m from the fence
+// The lamp model is a pole with a curved arm that reaches 0.83 m beyond the lamp's z. The model is centred
+// on its footprint, so the pole stands 0.67 m behind the lamp's z: LAMP_Z puts the pole 1 m from the fence
 // and the arm tip over the edge of the road.
 const LAMP_POLE_Z = SIDEWALK.z0 + 1.0;
-const LAMP_Z = LAMP_POLE_Z + 0.583;
+const LAMP_Z = LAMP_POLE_Z + 0.67;
 const ALL_LAMPS = [GATE.x - 6, GATE.x + 1, GATE.x + 7].map((x, i) => ({
   id: `lamp-${i + 1}`,
   kind: 'lamp',
   x,
   z: LAMP_Z,
   w: 0.33,
-  d: 1.5,
+  d: 1.66,
   h: 4.5,
   color: '#3d4148',
 }));

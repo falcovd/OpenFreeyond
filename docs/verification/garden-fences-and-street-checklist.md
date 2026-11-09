@@ -104,12 +104,12 @@ none missing
 
 Every car, lamp and texture has a free asset with a recorded licence (`src/data/licences.js`). Found on 2026-11-09:
 
-- Cars `models/street/car-1.glb` (sedan), `car-2.glb` (hatchback-sports) and `car-3.glb` (suv): Kenney, Car Kit 3.1, https://kenney.nl/assets/car-kit, CC0 1.0. The palette is plain colour swatches, with no logos, brand marks or number plates (AC-6.9).
-- Lamp `models/street/lamp.glb` (light-curved): Kenney, City Kit Roads 2.2, https://kenney.nl/assets/city-kit-roads, CC0 1.0. No emissive material, so the lamps are not lit.
+- Cars `models/street/car-1.glb` (sedan), `car-2.glb` (hatchback, body recoloured brick red) and `car-3.glb` (SUV): Quaternius, Cars Bundle via Poly Pizza (https://poly.pizza/m/Cz6yDaUcM9, https://poly.pizza/m/unqqkULtRU, https://poly.pizza/m/xsMtZhBkxL), CC0 1.0 ("Public Domain (CC0)" on each page). About 3,000 triangles each, rounded bodies, windows, spoked wheels, lights; flat colours, no texture, no logos, blank grey plates (AC-6.9). These replace the blockier Kenney Car Kit models after the Product Owner found them too blocky.
+- Lamp `models/street/lamp.glb`: Quaternius, Street Light via Poly Pizza (https://poly.pizza/m/nFwrlcLvM5), CC0 1.0. A pole with a smooth curved arm and a lamp head, 324 triangles, no emissive material, so the lamps are not lit. It replaces the Kenney light-curved model.
 - Paving texture `textures/paving.jpg`: ambientCG, Paving Stones 109, https://ambientcg.com/a/PavingStones109, CC0 1.0.
 - Asphalt texture `textures/asphalt.jpg`: ambientCG, Asphalt 031, https://ambientcg.com/a/Asphalt031, CC0 1.0.
 
-The cars and lamps were made from the Kenney pieces by `scripts/build-street-props.mjs`. None of the assets needs a credit line.
+The cars and lamps were made from the Quaternius files by `scripts/build-street-props.mjs`. None of the assets needs a credit line.
 
 ## Changed on purpose (AC-5.6)
 
@@ -132,8 +132,8 @@ No garden object had to move. `tests/garden-layout.test.js` "keeps every garden 
 - Frame-rate steps (FR-17, AC-6.2, AC-6.3): the order is fixed. First lower `STREET_CARS` and `STREET_LAMPS` (never below 1 and 1), then `STREET_SHADOWS = 'off'`. The fence, the slabs and the house are never reduced. Nothing switches at run time. Measured result and decision: ______ . Date: ______ .
 - Shadows: `STREET_SHADOWS` is 'on' by default, and `SHADOW_REGION` (in `src/world/streetLayout.js`) holds the whole street. If the shadows on the street are dropped, the fence line, the gate and the path still cast and show shadows (AC-4.10). Shadows dropped: ______ (yes or no).
 - AC-5.2 does not apply: the area did not need the place to grow, so no edge moved. The walkable area outside the house is above 444.5 m2 with the fence counted as covered (`tests/garden-layout.test.js`, AC-5.1), and the front edge stays at z = 11.
-- The plain-block stand-in for a lamp is a 0.33 by 1.5 by 4.5 m slab (width, depth, height), the size of the lamp model with its arm over the road. It shows only when the lamp file fails (AC-6.10).
-- The car sizes were scaled: Kenney's cars are small and chunky, so `scripts/build-street-props.mjs` scales the three models (1.2, 1.35 and 1.25) and the car sizes in `streetLayout.js` follow the result (3.06, 3.85 and 3.37 m long).
+- The plain-block stand-in for a lamp is a 0.33 by 1.66 by 4.5 m slab (width, depth, height), the size of the lamp model with its arm over the road. It shows only when the lamp file fails (AC-6.10).
+- The car sizes were scaled: `scripts/build-street-props.mjs` scales the three Quaternius cars (1.05, 1.2 and 1.0) and the sizes in `streetLayout.js` follow the result (4.43, 3.97 and 4.21 m long). The shipped street files may be up to 2 MB each (`tests/street-glb.test.js`); they are about 0.2 MB.
 - Far sidewalk (D-27, beyond spec v1): the Product Owner asked for a second sidewalk on the far side of the road, with the same 1.8 m width, slabs and 15 cm curb. It is scenery and unreachable (no solids, no lamps or cars). AC-4.1 and AC-4.2 are judged for the near sidewalk; the far one is not part of them.
 
 ## Known open points
