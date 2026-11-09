@@ -1,5 +1,5 @@
 import skyMeta from '../../data/sky.json';
-import { BOUNDS } from '../layout.js';
+import { SHADOW_REGION } from '../streetLayout.js';
 import { shadowFrustum } from '../../logic/shadowFrustum.js';
 import {
   SHADOW_MAP_SIZE,
@@ -118,7 +118,7 @@ export function buildSky(
   sun.position.set(...params.sun).multiplyScalar(SUN_DISTANCE);
   if (shadows) {
     const f = shadowFrustum({
-      bounds: BOUNDS,
+      bounds: SHADOW_REGION,
       maxHeight: SHADOW_MAX_HEIGHT,
       distance: SUN_DISTANCE,
     });

@@ -1,4 +1,5 @@
 import { SHADOWS } from '../shadowConfig.js';
+import { STREET_SHADOWS } from '../streetConfig.js';
 
 // cast: throws a shadow. receive: has shadows drawn on it.
 export const SHADOW_RULES = {
@@ -19,9 +20,20 @@ export const SHADOW_RULES = {
   curb: { cast: true, receive: true },
   road: { cast: false, receive: true },
   street: { cast: false, receive: true },
+  car: { cast: true, receive: true },
+  lamp: { cast: true, receive: true },
   sky: { cast: false, receive: false },
 };
 const NONE = { cast: false, receive: false };
+// Dropped first when the frame rate misses 30 (STREET_SHADOWS = 'off'). Fence, gate and path slabs keep theirs.
+const STREET_KINDS = new Set([
+  'street-slab',
+  'curb',
+  'road',
+  'street',
+  'car',
+  'lamp',
+]);
 
 function kindOf(object, fallback) {
   for (let o = object; o; o = o.parent)
@@ -31,12 +43,17 @@ function kindOf(object, fallback) {
 
 // Sets castShadow and receiveShadow on every mesh under `root` by the kind of its nearest ancestor.
 // See-through materials never cast (the window glass lets the sun in).
-export function applyShadows(root, { enabled = SHADOWS === 'on', kind } = {}) {
+export function applyShadows(
+  root,
+  { enabled = SHADOWS === 'on', kind, streetShadows = STREET_SHADOWS } = {},
+) {
   root.traverse((o) => {
     if (!o.isMesh) return;
-    const rule = enabled ? (SHADOW_RULES[kindOf(o, kind)] ?? NONE) : NONE;
+    const k = kindOf(o, kind);
+    const off = streetShadows === 'off' && STREET_KINDS.has(k);
+    const rule = enabled && !off ? (SHADOW_RULES[k] ?? NONE) : NONE;
     const see = [].concat(o.material ?? []).some((m) => m?.transparent);
-    o.castShadow = rule.cast && !see;
+    o.castShadow = rule.cast && !see && !o.userData.flat; // flat: a ground-level underlay that never casts
     o.receiveShadow = rule.receive;
   });
 }

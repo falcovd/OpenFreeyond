@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
+import { makeAssets } from '../src/world/builders/common.js';
+import { buildSlabs } from '../src/world/builders/slabs.js';
 import { applyShadows, SHADOW_RULES } from '../src/world/builders/shadows.js';
 
 const mesh = (material) =>
@@ -24,6 +26,12 @@ describe('applyShadows', () => {
       'furniture',
       'house',
       'character',
+      'slab',
+      'street-slab',
+      'curb',
+      'car',
+      'lamp',
+      'gate',
     ]) {
       const m = mesh();
       applyShadows(group(kind, m), { enabled: true });
@@ -31,7 +39,7 @@ describe('applyShadows', () => {
     }
   });
   it('lets the ground, the path, flower beds and interior items receive only', () => {
-    for (const kind of ['ground', 'flower-bed', 'interior']) {
+    for (const kind of ['ground', 'flower-bed', 'interior', 'road', 'street']) {
       const m = mesh();
       applyShadows(group(kind, m), { enabled: true });
       expect([m.castShadow, m.receiveShadow], kind).toEqual([false, true]);
@@ -80,8 +88,49 @@ describe('applyShadows', () => {
       'character',
       'ground',
       'slab',
+      'street-slab',
+      'curb',
+      'road',
+      'street',
+      'car',
+      'lamp',
+      'gate',
       'sky',
     ])
       expect(SHADOW_RULES[kind], kind).toBeTruthy();
+  });
+  it('drops the street kinds, and only those, when streetShadows is off (AC-4.10)', () => {
+    for (const kind of [
+      'street-slab',
+      'curb',
+      'road',
+      'street',
+      'car',
+      'lamp',
+    ]) {
+      const m = mesh();
+      applyShadows(group(kind, m), { enabled: true, streetShadows: 'off' });
+      expect([m.castShadow, m.receiveShadow], kind).toEqual([false, false]);
+    }
+    for (const kind of ['fence', 'gate', 'slab']) {
+      const m = mesh();
+      applyShadows(group(kind, m), { enabled: true, streetShadows: 'off' });
+      expect([m.castShadow, m.receiveShadow], kind).toEqual([true, true]);
+    }
+  });
+  it('never lets the flat slab underlay cast, while the slabs do', () => {
+    const g = buildSlabs(THREE, makeAssets(new Map()), {
+      width: 1.2,
+      length: 4,
+      texture: 'paving',
+      fallback: '#b9b3a8',
+      kind: 'slab',
+    });
+    applyShadows(g, { enabled: true });
+    expect([g.children[0].castShadow, g.children[0].receiveShadow]).toEqual([
+      false,
+      true,
+    ]);
+    expect(g.children[1].castShadow).toBe(true);
   });
 });

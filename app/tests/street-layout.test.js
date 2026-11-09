@@ -100,3 +100,10 @@ describe('build-time switches and shadow region (FR-17, OQ-2)', () => {
     expect(SHADOW_REGION.maxX).toBe(BOUNDS.maxX);
   });
 });
+
+describe('solids stay inside the garden (FR-14)', () => {
+  it('has nothing in SOLIDS that reaches past BOUNDS.maxZ', () => {
+    for (const s of SOLIDS)
+      expect(s.z - s.d / 2, s.id).toBeLessThanOrEqual(BOUNDS.maxZ);
+  });
+});

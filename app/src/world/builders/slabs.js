@@ -15,6 +15,8 @@ export function buildSlabs(
     new THREE.PlaneGeometry(width, length),
     new THREE.MeshStandardMaterial({ color: '#6f6a62', roughness: 1 }),
   );
+  under.castShadow = false;
+  under.userData.flat = true; // applyShadows keeps it from casting
   under.rotation.x = -Math.PI / 2;
   under.position.set(0, top - 0.035, length / 2);
   g.add(under);
