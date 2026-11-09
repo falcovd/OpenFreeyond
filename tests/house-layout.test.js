@@ -1,0 +1,384 @@
+import { describe, it, expect, afterEach } from 'vitest';
+import { resolveMove } from '../src/logic/collision.js';
+import { walkableArea, reachesWithin } from '../src/logic/walkable.js';
+import {
+  BOUNDS,
+  SOLIDS,
+  SPAWN,
+  CHARACTER_SPOT,
+  HOUSE,
+  DOOR,
+  INNER_DOORWAY,
+  ROOMS,
+  WALLS,
+  INTERIOR_ITEMS,
+  LIGHTS,
+  PATH,
+  SWING_SPACE,
+  FLOWER_BEDS,
+  outsideSolids,
+  resetHouse,
+  doorSolids,
+  useClosedHouse,
+} from '../src/world/layout.js';
+import { GROUND_SIZE, FOG } from '../src/world/builders/ground.js';
+import { PHASE1_BOUNDS, PHASE1_SOLIDS } from './fixtures/phase1-layout.js';
+
+const byId = (id) => SOLIDS.find((s) => s.id === id);
+const overlaps = (a, b) =>
+  Math.abs(a.x - b.x) < (a.w + b.w) / 2 &&
+  Math.abs(a.z - b.z) < (a.d + b.d) / 2;
+
+afterEach(() => resetHouse());
+describe('the house footprint and doorways (FR-12, AC-2.6)', () => {
+  it('is at least 5.5 by 4.5 m, larger in one, and fits in 10 by 8 m either way', () => {
+    const { w, d } = HOUSE;
+    expect(w).toBeGreaterThanOrEqual(5.5);
+    expect(d).toBeGreaterThanOrEqual(4.5);
+    expect(w > 5.5 || d > 4.5).toBe(true);
+    expect((w <= 10 && d <= 8) || (w <= 8 && d <= 10)).toBe(true);
+  });
+  it('has wall solids that add up to that footprint', () => {
+    const xs = WALLS.flatMap((s) => [s.x - s.w / 2, s.x + s.w / 2]);
+    const zs = WALLS.flatMap((s) => [s.z - s.d / 2, s.z + s.d / 2]);
+    expect(Math.max(...xs) - Math.min(...xs)).toBeCloseTo(HOUSE.w);
+    expect(Math.max(...zs) - Math.min(...zs)).toBeCloseTo(HOUSE.d);
+  });
+  it('has every doorway at least 1.2 m wide and 2 m high, the front door included', () => {
+    for (const d of [DOOR, INNER_DOORWAY]) {
+      expect(d.w).toBeGreaterThanOrEqual(1.2);
+      expect(d.h).toBeGreaterThanOrEqual(2);
+    }
+  });
+});
+
+describe('the rooms (FR-11, AC-4.1)', () => {
+  const size = (r) => [r.maxX - r.minX, r.maxZ - r.minZ];
+  it('has a living room and a kitchen room, each at least 3.5 by 3.5 m inside', () => {
+    expect(ROOMS.map((r) => r.id)).toEqual(['living', 'kitchen']);
+    for (const r of ROOMS)
+      for (const s of size(r)) expect(s).toBeGreaterThanOrEqual(3.5);
+  });
+  it('puts the couch and the TV in the living room, the kitchen units and the dining table in the kitchen room', () => {
+    const inRoom = (item, room) => {
+      const r = ROOMS.find((x) => x.id === room);
+      const s = INTERIOR_ITEMS.find((i) => i.id === item);
+      return s.x > r.minX && s.x < r.maxX && s.z > r.minZ && s.z < r.maxZ;
+    };
+    expect(inRoom('couch', 'living')).toBe(true);
+    expect(inRoom('tv', 'living')).toBe(true);
+    expect(inRoom('kitchen', 'kitchen')).toBe(true);
+    expect(inRoom('dining-table', 'kitchen')).toBe(true);
+  });
+  it('opens the front door into the living room', () => {
+    const living = ROOMS.find((r) => r.id === 'living');
+    expect(DOOR.x).toBeGreaterThan(living.minX);
+    expect(DOOR.x).toBeLessThan(living.maxX);
+  });
+  it('has several warm lights, each inside a room, and no more than 4 (frame-rate budget)', () => {
+    expect(LIGHTS.length).toBeGreaterThanOrEqual(3);
+    expect(LIGHTS.length).toBeLessThanOrEqual(4);
+    for (const l of LIGHTS) {
+      const room = ROOMS.find((r) => r.id === l.room);
+      expect(l.x).toBeGreaterThan(room.minX);
+      expect(l.x).toBeLessThan(room.maxX);
+      expect(l.z).toBeGreaterThan(room.minZ);
+      expect(l.z).toBeLessThan(room.maxZ);
+      const [r, g, b] = [1, 3, 5].map((i) =>
+        parseInt(l.color.slice(i, i + 2), 16),
+      );
+      expect(r).toBeGreaterThan(g);
+      expect(g).toBeGreaterThan(b); // warm
+    }
+  });
+  it('has no stairs and no solid or item that leads upward (AC-5.1)', () => {
+    expect(SOLIDS.some((s) => /stair|ladder/i.test(s.id))).toBe(false);
+    expect(INTERIOR_ITEMS.some((s) => /stair|ladder/i.test(s.id))).toBe(false);
+  });
+});
+
+describe('walking in the house (FR-4, FR-17, AC-2.1 to AC-2.7)', () => {
+  const door = byId('door');
+  const swing = byId('door-swing');
+  const approach = { x: DOOR.x, z: DOOR.z + 2 };
+  const into = (from, to) => resolveMove(from, to, SOLIDS, BOUNDS);
+
+  it('stops a person at a closed door (AC-2.2)', () => {
+    door.off = false;
+    let p = approach;
+    for (let i = 0; i < 40; i++) p = into(p, { x: DOOR.x, z: p.z - 0.1 });
+    expect(p.z).toBeGreaterThan(DOOR.z);
+  });
+  it('lets a person through a fully open door and out again (AC-2.1)', () => {
+    door.off = true;
+    swing.off = true;
+    let p = approach;
+    for (let i = 0; i < 50; i++) p = into(p, { x: DOOR.x, z: p.z - 0.1 });
+    expect(p.z).toBeLessThan(DOOR.z - 0.5);
+    for (let i = 0; i < 50; i++) p = into(p, { x: DOOR.x, z: p.z + 0.1 });
+    expect(p.z).toBeGreaterThan(DOOR.z + 1);
+    door.off = false;
+    swing.off = true;
+  });
+  it('stops a person at the swing space while the door swings (AC-2.3)', () => {
+    door.off = false;
+    swing.off = false;
+    let p = { x: DOOR.x, z: SWING_SPACE.maxZ + 1.5 };
+    for (let i = 0; i < 40; i++) p = into(p, { x: DOOR.x, z: p.z - 0.1 });
+    expect(p.z).toBeGreaterThanOrEqual(SWING_SPACE.maxZ);
+    swing.off = true;
+  });
+  it('stops a person at every wall, outside and inside (AC-2.4)', () => {
+    for (const w of WALLS) {
+      const s = byId(w.id);
+      const alongZ = s.d > s.w;
+      for (const side of [-1, 1]) {
+        const from = alongZ
+          ? { x: s.x + side * (s.w / 2 + 0.5), z: s.z }
+          : { x: s.x, z: s.z + side * (s.d / 2 + 0.5) };
+        if (
+          SOLIDS.some(
+            (o) =>
+              o !== s && !o.off && overlaps({ ...from, w: 0.6, d: 0.6 }, o),
+          )
+        )
+          continue;
+        let p = from;
+        for (let i = 0; i < 20; i++) {
+          p = into(
+            p,
+            alongZ
+              ? { x: p.x - side * 0.1, z: p.z }
+              : { x: p.x, z: p.z - side * 0.1 },
+          );
+        }
+        const inside =
+          Math.abs(p.x - s.x) < s.w / 2 && Math.abs(p.z - s.z) < s.d / 2;
+        expect(inside, `${w.id} side ${side}`).toBe(false);
+      }
+    }
+  });
+  it('stops a person at the couch, the TV (its desk), the kitchen units and the dining table (AC-2.5)', () => {
+    // The TV stands on its desk, which is the solid there (the TV itself does not block).
+    for (const id of ['couch', 'tv-cabinet', 'kitchen', 'dining-table']) {
+      const s = byId(id);
+      expect(s, id).toBeTruthy();
+      const from = { x: s.x, z: s.z + s.d / 2 + 0.6 };
+      if (
+        SOLIDS.some((o) => o !== s && overlaps({ ...from, w: 0.6, d: 0.6 }, o))
+      )
+        continue;
+      const r = into(from, { x: s.x, z: s.z });
+      expect(r.z, id).toBeGreaterThanOrEqual(s.z + s.d / 2);
+    }
+  });
+  it('lets a person walk between the rooms through the inner doorway, both ways (AC-2.7)', () => {
+    door.off = true;
+    swing.off = true;
+    const living = { x: -1.5, z: INNER_DOORWAY.z };
+    const kitchen = { x: 1.5, z: INNER_DOORWAY.z };
+    let p = living;
+    for (let i = 0; i < 40; i++)
+      p = into(p, { x: p.x + 0.1, z: INNER_DOORWAY.z });
+    expect(p.x).toBeGreaterThan(1);
+    for (let i = 0; i < 40; i++)
+      p = into(p, { x: p.x - 0.1, z: INNER_DOORWAY.z });
+    expect(p.x).toBeLessThan(-1);
+    expect(kitchen.x).toBeGreaterThan(0);
+    door.off = false;
+  });
+  it('lets a person reach every interior item once the door is open (AC-2.1, AC-4.2)', () => {
+    door.off = true;
+    swing.off = true;
+    for (const i of INTERIOR_ITEMS.filter((x) => x.solid !== false)) {
+      expect(reachesWithin(SPAWN, i, 1.2, SOLIDS, BOUNDS), i.id).toBe(true);
+    }
+    door.off = false;
+  });
+  it('keeps a person out when the door is closed', () => {
+    door.off = false;
+    expect(reachesWithin(SPAWN, byId('couch'), 1.2, SOLIDS, BOUNDS)).toBe(
+      false,
+    );
+  });
+});
+
+describe('the dining chairs (PO finding 7; FR-17)', () => {
+  const chairs = INTERIOR_ITEMS.filter((i) => i.id.startsWith('chair-'));
+  const kitchen = ROOMS.find((r) => r.id === 'kitchen');
+  const inside = (c) =>
+    c.x - c.w / 2 >= kitchen.minX &&
+    c.x + c.w / 2 <= kitchen.maxX &&
+    c.z - c.d / 2 >= kitchen.minZ &&
+    c.z + c.d / 2 <= kitchen.maxZ;
+  it('are four, share one model file and sit in the kitchen room', () => {
+    expect(chairs).toHaveLength(4);
+    expect(new Set(chairs.map((c) => c.file))).toEqual(
+      new Set(['interior/chair.glb']),
+    );
+    for (const c of chairs) expect(inside(c), c.id).toBe(true);
+  });
+  it('are solid and keep clear of the table, the kitchen units, the walls and each other', () => {
+    const others = SOLIDS.filter((s) => !s.off && !s.id.startsWith('chair-'));
+    for (const c of chairs) {
+      expect(byId(c.id), c.id).toBeTruthy();
+      for (const o of others)
+        expect(overlaps(c, o), `${c.id} ${o.id}`).toBe(false);
+    }
+    for (const a of chairs)
+      for (const b of chairs)
+        if (a !== b) expect(overlaps(a, b), `${a.id} ${b.id}`).toBe(false);
+  });
+  it('keep the inner doorway clear, with room to walk in and out', () => {
+    const gap = {
+      x: INNER_DOORWAY.x,
+      z: INNER_DOORWAY.z,
+      w: 1.2,
+      d: INNER_DOORWAY.w,
+    };
+    for (const c of chairs) {
+      expect(overlaps(c, gap), c.id).toBe(false);
+      // a person 0.6 m wide, standing in the doorway or just past it on the kitchen side
+      expect(
+        overlaps(c, { x: 0.7, z: INNER_DOORWAY.z, w: 1.2, d: 1.2 }),
+        c.id,
+      ).toBe(false);
+    }
+  });
+  it('face the table', () => {
+    const table = INTERIOR_ITEMS.find((i) => i.id === 'dining-table');
+    for (const c of chairs) {
+      // the model faces +z at rot 0; the facing direction is (sin rot, cos rot)
+      const f = { x: Math.sin(c.rot), z: Math.cos(c.rot) };
+      const toTable = { x: table.x - c.x, z: table.z - c.z };
+      expect(f.x * toTable.x + f.z * toTable.z, c.id).toBeGreaterThan(0.5);
+    }
+  });
+});
+
+describe('the TV desk (PO finding R-10; FR-17)', () => {
+  const cabinet = INTERIOR_ITEMS.find((i) => i.id === 'tv-cabinet');
+  const tv = INTERIOR_ITEMS.find((i) => i.id === 'tv');
+  const living = ROOMS.find((r) => r.id === 'living');
+  it('is one item with its own model file, inside the living room', () => {
+    expect(cabinet.file).toBe('interior/tv-cabinet.glb');
+    expect(
+      INTERIOR_ITEMS.filter((i) => i.file === cabinet.file),
+      'shares its file',
+    ).toHaveLength(1);
+    expect(cabinet.x - cabinet.w / 2).toBeGreaterThanOrEqual(living.minX);
+    expect(cabinet.x + cabinet.w / 2).toBeLessThanOrEqual(living.maxX);
+    expect(cabinet.z - cabinet.d / 2).toBeGreaterThanOrEqual(living.minZ);
+    expect(cabinet.z + cabinet.d / 2).toBeLessThanOrEqual(living.maxZ);
+  });
+  it('is solid, and clear of every other solid and of the inner doorway', () => {
+    expect(byId('tv-cabinet')).toBeTruthy();
+    for (const o of SOLIDS.filter((s) => s.id !== 'tv-cabinet'))
+      expect(overlaps(cabinet, o), o.id).toBe(false);
+    const gap = {
+      x: INNER_DOORWAY.x,
+      z: INNER_DOORWAY.z,
+      w: 1.2,
+      d: INNER_DOORWAY.w,
+    };
+    expect(overlaps(cabinet, gap)).toBe(false);
+    expect(cabinet.z - cabinet.d / 2).toBeGreaterThan(gap.z + gap.d / 2);
+  });
+  it('stands against the partition wall, under the TV, which stands on its top', () => {
+    const wall = WALLS.find((w) => w.id === 'wall-mid-front');
+    expect(cabinet.x + cabinet.w / 2).toBeCloseTo(wall.x - wall.w / 2, 1);
+    expect(tv.y).toBeCloseTo(cabinet.h, 2);
+    expect(tv.x).toBeCloseTo(cabinet.x);
+    expect(tv.z).toBeCloseTo(cabinet.z);
+    expect(Math.abs(tv.z - cabinet.z) + tv.d / 2).toBeLessThanOrEqual(
+      cabinet.d / 2,
+    );
+  });
+  it('leaves the TV itself non-solid, so the desk is what blocks walking', () => {
+    expect(tv.solid).toBe(false);
+    expect(byId('tv')).toBeUndefined();
+  });
+});
+
+describe('the larger place (FR-13, AC-6.3 to AC-6.6)', () => {
+  it('leaves at least the phase 1 walkable area outside the house (AC-6.3)', () => {
+    const phase1 = walkableArea(PHASE1_SOLIDS, PHASE1_BOUNDS);
+    expect(phase1).toBeGreaterThan(444);
+    expect(walkableArea(outsideSolids(), BOUNDS)).toBeGreaterThanOrEqual(
+      phase1,
+    );
+  });
+  it('keeps the ground, sky and fog beyond the new boundary (AC-6.4)', () => {
+    const far = Math.max(
+      Math.abs(BOUNDS.minX),
+      BOUNDS.maxX,
+      Math.abs(BOUNDS.minZ),
+      BOUNDS.maxZ,
+    );
+    expect(GROUND_SIZE / 2).toBeGreaterThan(far + FOG.far);
+  });
+  it('keeps every solid inside the boundary (AC-6.5)', () => {
+    for (const s of SOLIDS) {
+      expect(s.x - s.w / 2, s.id).toBeGreaterThanOrEqual(BOUNDS.minX);
+      expect(s.x + s.w / 2, s.id).toBeLessThanOrEqual(BOUNDS.maxX);
+      expect(s.z - s.d / 2, s.id).toBeGreaterThanOrEqual(BOUNDS.minZ);
+      expect(s.z + s.d / 2, s.id).toBeLessThanOrEqual(BOUNDS.maxZ);
+    }
+  });
+  it('has a free spawn in the street and a reachable, free start spot for the character (AC-6.6)', () => {
+    const free = (p) =>
+      !SOLIDS.some(
+        (s) =>
+          !s.off &&
+          s.id !== 'character' &&
+          overlaps({ ...p, w: 0.6, d: 0.6 }, s),
+      );
+    expect(free(SPAWN)).toBe(true);
+    expect(free(CHARACTER_SPOT)).toBe(true);
+    expect(CHARACTER_SPOT.z).toBeGreaterThan(HOUSE.z + HOUSE.d / 2);
+    expect(reachesWithin(SPAWN, CHARACTER_SPOT, 1.2, SOLIDS, BOUNDS)).toBe(
+      true,
+    );
+  });
+  it('keeps the path, the swing space and the flower beds clear of solids and of each other', () => {
+    expect(Math.abs(PATH.x - DOOR.x)).toBeLessThan(PATH.w / 2);
+    const swing = {
+      x: (SWING_SPACE.minX + SWING_SPACE.maxX) / 2,
+      z: (SWING_SPACE.minZ + SWING_SPACE.maxZ) / 2,
+      w: SWING_SPACE.maxX - SWING_SPACE.minX,
+      d: SWING_SPACE.maxZ - SWING_SPACE.minZ,
+    };
+    const garden = SOLIDS.filter((s) => !s.zone && s.id !== 'character');
+    for (const s of garden) expect(overlaps(swing, s), s.id).toBe(false);
+    for (const b of FLOWER_BEDS) {
+      expect(overlaps(b, swing), b.id).toBe(false);
+      expect(
+        overlaps(b, {
+          x: PATH.x,
+          z: (PATH.z0 + PATH.z1) / 2,
+          w: PATH.w,
+          d: PATH.z1 - PATH.z0,
+        }),
+        b.id,
+      ).toBe(false);
+    }
+  });
+});
+
+describe('a new visit starts with the house as it was (FR-6, AC-1.9)', () => {
+  it('resetHouse closes the door and puts the swing space back off', () => {
+    const { door, swing } = doorSolids();
+    door.off = true;
+    swing.off = false;
+    resetHouse();
+    expect(door.off).toBe(false);
+    expect(swing.off).toBe(true);
+  });
+  it('resetHouse after useClosedHouse brings the zone solids back', () => {
+    useClosedHouse();
+    expect(SOLIDS.some((s) => s.zone === 'house')).toBe(false);
+    resetHouse();
+    expect(SOLIDS.some((s) => s.zone === 'house')).toBe(true);
+    expect(SOLIDS.some((s) => s.id === 'house-block')).toBe(false);
+  });
+});

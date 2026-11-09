@@ -1,122 +1,128 @@
-import { box, surface } from './common.js';
-import { HOUSE, DOOR } from '../layout.js';
+import { surface, plainBlock } from './common.js';
+import { HOUSE, HOUSE_BLOCK } from '../layout.js';
+import { INTERIOR_DIM, CEILING_DIM } from '../interiorConfig.js';
 
-// A gable roof. The ridge runs along x. Front slope faces the garden (+z).
-// The slope runs from the wall top (y 0 at z = +-hd) to the ridge, and carries
-// on over the overhang, so the eaves sit slightly lower and meet the walls.
-function roofGeometry(THREE, hw, hd, rh, o) {
-  const ey = (-rh * o) / hd;
-  const a = [-hw - o, ey, hd + o];
-  const b = [hw + o, ey, hd + o];
-  const c = [hw + o, rh, 0];
-  const d = [-hw - o, rh, 0];
-  const e = [hw + o, ey, -hd - o];
-  const f = [-hw - o, ey, -hd - o];
-  const pos = [
-    ...a,
-    ...b,
-    ...c,
-    ...a,
-    ...c,
-    ...d,
-    ...e,
-    ...f,
-    ...d,
-    ...e,
-    ...d,
-    ...c,
-  ];
-  const uv = [
-    0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1,
-  ];
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
-  g.computeVertexNormals();
-  return g;
-}
-
-// A triangle that fills the wall under the roof at one end.
-function gableGeometry(THREE, x, hd, rh) {
-  const g = new THREE.BufferGeometry();
-  g.setAttribute(
-    'position',
-    new THREE.Float32BufferAttribute([x, 0, hd, x, 0, -hd, x, rh, 0], 3),
-  );
-  g.setAttribute(
-    'uv',
-    new THREE.Float32BufferAttribute([0, 0, 1, 0, 0.5, 1], 2),
-  );
-  g.computeVertexNormals();
-  return g;
-}
+const PLASTER = '#f1e4cf';
+const WALLPAPER_TILE = 0.8; // metres of wall per texture repeat
+const GLASS_CLEAR_OPACITY = 0.3; // ground-floor window glass: 30% opaque, 70% see-through
+const WALLPAPER_GAIN = 1.6; // the fabric texture is mid grey, so it needs brightening
 
 function tag(object, part) {
   object.userData.part = part;
   return object;
 }
 
+// The size of a mesh. The generated model shares one unit cube and scales it per node.
+function size(THREE, mesh) {
+  mesh.geometry.computeBoundingBox();
+  return mesh.geometry.boundingBox
+    .getSize(new THREE.Vector3())
+    .multiply(mesh.scale);
+}
+
+// The house is the generated model (scripts/build-house.mjs). Materials are swapped by name, as the
+// character's colours are. Without the model the house is one closed block: no door, no rooms (FR-21).
 export function buildHouse(THREE, assets) {
-  const { w, d, wallHeight: wh, roofHeight: rh, floors } = HOUSE;
-  const hw = w / 2;
-  const hd = d / 2;
+  const gltf = assets.gltf('house');
+  if (!gltf?.scene) {
+    const block = plainBlock(THREE, HOUSE_BLOCK, 'house');
+    block.userData.closed = true;
+    return block;
+  }
   const g = new THREE.Group();
   g.position.set(HOUSE.x, 0, HOUSE.z);
   g.userData.kind = 'house';
+  const scene = gltf.scene;
+  g.add(scene);
 
-  const wallMaterial = () =>
-    surface(THREE, assets, 'brick', '#e8c9a0', { repeat: [w / 2, wh / 2] });
-  g.add(tag(box(THREE, w, wh, d, wallMaterial(), 0, wh / 2, 0), 'walls'));
-
-  const roofMaterial = surface(THREE, assets, 'roof', '#b5543a', {
-    repeat: [w / 1.5, d / 1.5],
-    tint: '#d9a98c',
-    gain: 2.8,
-  });
-  roofMaterial.side = THREE.DoubleSide;
-  const roof = new THREE.Mesh(
-    roofGeometry(THREE, hw, hd, rh, 0.4),
-    roofMaterial,
-  );
-  roof.position.y = wh;
-  g.add(tag(roof, 'roof'));
-  for (const x of [-hw, hw]) {
-    const gable = new THREE.Mesh(
-      gableGeometry(THREE, x, hd, rh),
-      wallMaterial(),
-    );
-    gable.material.side = THREE.DoubleSide;
-    gable.position.y = wh;
-    g.add(gable);
-  }
-
-  const wood = () => surface(THREE, assets, 'wood', '#8b5a2b');
-  const front = hd + 0.05; // just outside the garden wall
-  const door = new THREE.Group();
-  door.add(box(THREE, 1.0, 2.1, 0.1, wood(), 0, 1.05, 0));
-  door.add(box(THREE, 1.2, 0.12, 0.14, wood(), 0, 2.16, 0)); // lintel
-  door.position.set(DOOR.x - HOUSE.x, 0, front);
-  g.add(tag(door, 'door'));
-
-  const glass = new THREE.MeshStandardMaterial({
-    color: '#9cc7e8',
-    roughness: 0.2,
-    emissive: '#3b5a73',
-    emissiveIntensity: 0.25,
-  });
-  const rowHeight = wh / floors;
-  const windowXs = [-1.6, 1.6];
-  for (let floor = 0; floor < floors; floor++) {
-    const y = floor * rowHeight + rowHeight * 0.6;
-    const xs = floor === 0 ? windowXs : [...windowXs, 0];
-    for (const x of xs) {
-      const win = new THREE.Group();
-      win.add(box(THREE, 0.9, 1.1, 0.06, wood(), 0, 0, 0)); // frame
-      win.add(box(THREE, 0.7, 0.9, 0.08, glass, 0, 0, 0.01)); // pane
-      win.add(box(THREE, 1.05, 0.08, 0.16, wood(), 0, -0.6, 0.04)); // sill
-      win.position.set(x, y, front);
-      g.add(tag(win, 'window'));
+  let walls = null;
+  const meshes = [];
+  scene.traverse((o) => o.isMesh && meshes.push(o));
+  for (const mesh of meshes) {
+    const old = mesh.material;
+    switch (old?.name) {
+      case 'Wall': {
+        const s = size(THREE, mesh);
+        mesh.material = surface(THREE, assets, 'brick', '#e8c9a0', {
+          repeat: [Math.max(s.x, s.z) / 2, s.y / 2],
+        });
+        if (old.side === THREE.DoubleSide)
+          mesh.material.side = THREE.DoubleSide;
+        if (!walls) walls = tag(mesh, 'walls');
+        break;
+      }
+      case 'Roof':
+        mesh.material = surface(THREE, assets, 'roof', '#b5543a', {
+          repeat: [HOUSE.w / 1.5, HOUSE.d / 1.5],
+          tint: '#d9a98c',
+          gain: 2.8,
+        });
+        mesh.material.side = THREE.DoubleSide;
+        tag(mesh, 'roof');
+        break;
+      case 'Wood':
+        mesh.material = surface(THREE, assets, 'wood', '#8b5a2b');
+        break;
+      case 'Floor':
+        mesh.material = surface(THREE, assets, 'wood', '#c9a06b', {
+          repeat: [3, 3],
+        });
+        break;
+      case 'Plaster': {
+        // Wallpaper: a fabric-like texture, tiled by size so the weave has the same scale on every piece.
+        const s = size(THREE, mesh);
+        mesh.material = surface(
+          THREE,
+          assets,
+          'wallpaper',
+          new THREE.Color(PLASTER).multiplyScalar(INTERIOR_DIM),
+          {
+            repeat: [Math.max(s.x, s.z) / WALLPAPER_TILE, s.y / WALLPAPER_TILE],
+            tint: PLASTER,
+            gain: INTERIOR_DIM * WALLPAPER_GAIN,
+          },
+        );
+        break;
+      }
+      case 'Ceiling':
+        // White, and brighter than the walls, so that it reads as white under the warm lights.
+        mesh.material = new THREE.MeshStandardMaterial({
+          color: new THREE.Color('#ffffff').multiplyScalar(CEILING_DIM),
+          roughness: 1,
+        });
+        break;
+      case 'TrimIn':
+        mesh.material = new THREE.MeshStandardMaterial({
+          color: new THREE.Color(old.color).multiplyScalar(INTERIOR_DIM),
+          roughness: 1,
+        });
+        break;
+      case 'Glass':
+        old.color.set('#9cc7e8');
+        old.roughness = 0.2;
+        old.emissive.set('#3b5a73');
+        old.emissiveIntensity = 0.25;
+        break;
+      case 'GlassClear':
+        // Ground-floor panes: 30% opaque, so you look through them from both sides. No depth write,
+        // so the pane never hides the garden or the rooms; it draws after the opaque things.
+        old.color.set('#bcd9ee');
+        old.roughness = 0.1;
+        old.metalness = 0;
+        old.transparent = true;
+        old.opacity = GLASS_CLEAR_OPACITY;
+        old.depthWrite = false;
+        // The pane is a closed box, so front faces only: one layer seen from each side, not four.
+        old.side = THREE.FrontSide;
+        mesh.renderOrder = 2;
+        break;
     }
   }
+  scene.traverse((o) => {
+    if (o.name === 'Door') {
+      tag(o, 'door');
+      g.userData.door = o;
+    } else if (/^Window/.test(o.name)) tag(o, 'window');
+  });
   return g;
 }

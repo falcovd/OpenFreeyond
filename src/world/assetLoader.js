@@ -70,3 +70,37 @@ export function failureMessage({ failed, stalled }) {
     return 'Some parts of the place could not be loaded. Plain colours and shapes are shown where they are missing.';
   return '';
 }
+
+export const HOUSE_FAILED_MESSAGE =
+  'The house could not be loaded, so it cannot be entered.';
+export const INTERIOR_FAILED_MESSAGE =
+  'Something in the house could not be loaded, so a plain block is shown in its place.';
+
+// Loads each interior file on its own. Never rejects. No timeout: the interior may keep loading after the
+// place is ready (FR-20). onItem(id, value) per arrival, onFail(id) per failure (FR-23). A throw in
+// onItem counts as a failure. After cancel, onLate(id, value) gets a value that arrives late, so it can be released.
+export function loadInterior(
+  manifest,
+  loaders,
+  { onItem, onFail, onLate, isCancelled = () => false } = {},
+) {
+  return Promise.all(
+    manifest.map((asset) =>
+      Promise.resolve()
+        .then(() => loaders[asset.type](asset.url))
+        .then(
+          (value) => {
+            if (isCancelled()) return onLate?.(asset.id, value);
+            try {
+              onItem?.(asset.id, value);
+            } catch {
+              if (!isCancelled()) onFail?.(asset.id);
+            }
+          },
+          () => {
+            if (!isCancelled()) onFail?.(asset.id);
+          },
+        ),
+    ),
+  );
+}

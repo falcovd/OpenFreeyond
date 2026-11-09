@@ -24,6 +24,7 @@ import {
   renderIntake,
   renderMessage,
   renderWorldOverlay,
+  worldMessages,
   renderLoading,
 } from './ui/screens.js';
 
@@ -58,18 +59,43 @@ async function enterWorld(character, { notice = null } = {}) {
     leaveWorld();
     app.replaceChildren();
     const stats = new URLSearchParams(window.location.search).has('stats');
-    const mounted = await mountWorld(app, character, { stats, startedAt });
+    // Messages from the world can arrive before the overlay exists, so they are kept here.
+    const live = { hint: false, step: false, notices: [] };
+    let ui = null;
+    let warning = '';
+    const noticeText = () =>
+      [notice, warning, ...live.notices].filter(Boolean).join(' ');
+    const mounted = await mountWorld(app, character, {
+      stats,
+      startedAt,
+      onDoorHint: (visible) => {
+        live.hint = visible;
+        ui?.setDoorHint(visible);
+      },
+      onStepAside: (visible) => {
+        live.step = visible;
+        ui?.setStepAside(visible);
+      },
+      onNotice: (text) => {
+        if (!live.notices.includes(text)) live.notices.push(text);
+        ui?.setNotice(noticeText());
+      },
+    });
     if (token !== screenToken) {
       mounted.destroy();
       return;
     }
     world = mounted;
-    renderWorldOverlay(app, {
-      notice: [notice, mounted.warning].filter(Boolean).join(' ') || null,
+    warning = mounted.warning ?? '';
+    const overlay = renderWorldOverlay(app, {
+      notice: noticeText() || null,
       showHint: !isHintSeen(storage),
       onDismissHint: () => markHintSeen(storage),
       onBack: showStart,
     });
+    ui = worldMessages(overlay);
+    ui.setDoorHint(live.hint);
+    ui.setStepAside(live.step);
   } catch (error) {
     console.error(error);
     if (token !== screenToken) return;

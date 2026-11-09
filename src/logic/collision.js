@@ -1,6 +1,7 @@
 export function hitsSolid(x, z, solids, radius) {
   return solids.some(
     (s) =>
+      !s.off &&
       Math.abs(x - s.x) < s.w / 2 + radius &&
       Math.abs(z - s.z) < s.d / 2 + radius,
   );

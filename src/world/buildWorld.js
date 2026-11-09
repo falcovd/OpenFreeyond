@@ -10,6 +10,7 @@ import {
 import { buildHouse } from './builders/house.js';
 import { buildFence, buildFurniture } from './builders/furniture.js';
 import { buildFigure } from './builders/figure.js';
+import { buildInterior } from './builders/interior.js';
 
 const BUILDERS = {
   tree: buildTree,
@@ -20,7 +21,7 @@ const BUILDERS = {
 };
 
 // Builds the whole place from what loaded. Never throws for a missing asset (FR-16).
-// Returns the group and the functions that move things (trees, sky).
+// Returns the group, the functions that move things (trees, sky) and the objects a click can hit.
 export function buildWorld(
   THREE,
   assets,
@@ -38,6 +39,9 @@ export function buildWorld(
     const build = BUILDERS[solid.kind];
     if (build) group.add(build(THREE, assets, solid));
   }
+  // The interior stands in the house, so without the house model there is none (FR-21).
+  const interior = assets.gltf('house') ? buildInterior(THREE) : null;
+  if (interior) group.add(interior.group);
   for (const bed of FLOWER_BEDS) group.add(buildFlowerBed(THREE, assets, bed));
   // The character model is an entity (see scene.js). Without it, a plain figure stands in.
   if (withCharacter && !assets.model('character'))
@@ -48,5 +52,6 @@ export function buildWorld(
     if (typeof o.userData.update === 'function')
       updaters.push(o.userData.update);
   });
-  return { group, updaters };
+  const pickables = group.children.filter((c) => !c.userData.noPick);
+  return { group, updaters, pickables, interior };
 }

@@ -7,7 +7,14 @@ import {
   stepWander,
   WANDER,
 } from '../src/logic/wander.js';
-import { SOLIDS, BOUNDS, CHARACTER_SPOT } from '../src/world/layout.js';
+import {
+  SOLIDS,
+  BOUNDS,
+  CHARACTER_SPOT,
+  HOUSE,
+  wanderSolids,
+  doorSolids,
+} from '../src/world/layout.js';
 
 const bounds = { minX: -5, maxX: 5, minZ: -5, maxZ: 5 };
 const wall = { id: 'wall', x: 0, z: 0, w: 6, d: 0.4 };
@@ -387,5 +394,39 @@ describe('waving at a person who comes close', () => {
     expect(s.waved).toBe(false);
     count((c) => near(c, 2), 5); // comes back
     expect(waves).toBe(2);
+  });
+});
+
+describe('he stays out of the house, open door or not (FR-10, AC-6.1)', () => {
+  it('treats the doorway and every room as blocked', () => {
+    doorSolids().door.off = true; // the door is fully open
+    const solids = wanderSolids();
+    const inside = { x: HOUSE.x, z: HOUSE.z };
+    expect(isFree(inside.x, inside.z, solids, BOUNDS)).toBe(false);
+    expect(isFree(-1.95, -4.9, solids, BOUNDS)).toBe(false); // in the open doorway
+    expect(
+      findPath({ x: -1.95, z: 0 }, { x: -1.95, z: -6 }, solids, BOUNDS),
+    ).toBeNull();
+    doorSolids().door.off = false;
+  });
+  it('never picks a target inside the house', () => {
+    doorSolids().door.off = true;
+    const solids = wanderSolids();
+    let n = 0;
+    const rng = () => ((n = (n * 9301 + 49297) % 233280), n / 233280 || 0.5);
+    for (let i = 0; i < 200; i++) {
+      const t = pickTarget(rng, { x: 3, z: -1 }, solids, BOUNDS);
+      if (!t) continue;
+      const p = t.target;
+      const inHouse =
+        Math.abs(p.x - HOUSE.x) < HOUSE.w / 2 &&
+        Math.abs(p.z - HOUSE.z) < HOUSE.d / 2;
+      expect(inHouse).toBe(false);
+    }
+    doorSolids().door.off = false;
+  });
+  it('keeps the character solid out of the garden list (his own solid is moved by the component)', () => {
+    expect(wanderSolids().some((s) => s.id === 'character')).toBe(false);
+    expect(SOLIDS.some((s) => s.id === 'character')).toBe(true);
   });
 });

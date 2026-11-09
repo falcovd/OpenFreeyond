@@ -1,7 +1,8 @@
 import { surface } from './common.js';
 import { PATH } from '../layout.js';
 
-const GROUND_SIZE = 600; // far beyond the fog, so the ground never ends in view (FR-3)
+export const GROUND_SIZE = 600; // far beyond the fog, so the ground never ends in view (FR-3)
+export const FOG = { near: 40, far: 220 };
 const GRASS_METRES_PER_TILE = 4;
 
 export function buildGround(THREE, assets) {
@@ -11,6 +12,7 @@ export function buildGround(THREE, assets) {
     surface(THREE, assets, 'grass', '#8fae6b', { repeat: [tiles, tiles] }),
   );
   mesh.rotation.x = -Math.PI / 2;
+  mesh.userData.noPick = true;
   return mesh;
 }
 
@@ -24,5 +26,6 @@ export function buildPath(THREE, assets) {
   );
   mesh.rotation.x = -Math.PI / 2;
   mesh.position.set(PATH.x, 0.02, (PATH.z0 + PATH.z1) / 2);
+  mesh.userData.noPick = true;
   return mesh;
 }

@@ -12,6 +12,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "lint": "eslint .",
+    "build:house": "node scripts/build-house.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
