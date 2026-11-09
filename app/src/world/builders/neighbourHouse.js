@@ -8,7 +8,7 @@ const WINDOW = '#1c2630'; // dark and opaque: nothing shows inside
 const DOOR = '#8b5a2b';
 const TRIM = '#efe6d4';
 
-const assetId = (plot) => `house-${plot.look}`;
+export const houseAssetId = (plot) => `house-${plot.look}`;
 
 function standIn(THREE, plot) {
   const house = plotHouse(plot);
@@ -89,7 +89,7 @@ export function finishNeighbourHouse(THREE, assets, plot, gltf) {
 
 // The house of a plot: the finished model when it is loaded, otherwise the plain block (AC-6.7, AC-6.9).
 export function buildNeighbourHouse(THREE, assets, plot) {
-  const gltf = assets.gltf(assetId(plot));
+  const gltf = assets.gltf(houseAssetId(plot));
   return gltf?.scene
     ? finishNeighbourHouse(THREE, assets, plot, gltf)
     : standIn(THREE, plot);

@@ -15,6 +15,7 @@ import {
   MANIFEST,
   FURNITURE_TEXTURES,
   interiorManifest,
+  neighbourhoodManifest,
   itemsForFile,
 } from './manifest.js';
 import {
@@ -24,6 +25,8 @@ import {
   assetBudgetMs,
   HOUSE_FAILED_MESSAGE,
   INTERIOR_FAILED_MESSAGE,
+  NEIGHBOURHOOD_FAILED_MESSAGE,
+  onceNotice,
   LOAD_TIMEOUT_MS,
 } from './assetLoader.js';
 import { makeAssets } from './builders/common.js';
@@ -133,6 +136,14 @@ export async function mountWorld(
   // A house that did not load is one closed block, with solids to match (FR-21).
   const houseLoaded = !!assets.gltf('house');
   if (!houseLoaded) useClosedHouse();
+  const warning = [
+    failureMessage(loaded),
+    houseLoaded ? '' : HOUSE_FAILED_MESSAGE,
+  ]
+    .filter(Boolean)
+    .join(' ');
+  // One load message per visit (FR-16): the warning above counts as shown.
+  const notify = onceNotice(onNotice, warning !== '');
   const sky = skyParams(assets);
   const hair = safeId(HAIR_COLOURS, character.hair);
   const clothing = safeId(CLOTHING_COLOURS, character.clothing);
@@ -160,6 +171,7 @@ export async function mountWorld(
   const sceneEl = scene.querySelector('a-scene');
   let root = null;
   let interior = null;
+  let neighbourhood = null;
   let torn = false;
   const doorHint = (e) => onDoorHint?.(e.detail.visible);
   const stepAside = (e) => onStepAside?.(e.detail.visible);
@@ -183,6 +195,7 @@ export async function mountWorld(
     if (root) root.worldUpdaters = [];
     // Stops the clip and frees the video and the textures (FR-18, AC-8.1).
     interior?.tv?.dispose();
+    neighbourhood?.dispose();
     disposeObject(root?.getObject3D?.('world'));
     disposeObject(
       scene.querySelector('#character-model-entity')?.getObject3D?.('mesh'),
@@ -202,6 +215,8 @@ export async function mountWorld(
 
   // A video that arrives after teardown is never given to the TV, so release it here.
   const releaseLate = (value) => {
+    if (value?.scene) return disposeObject(value.scene);
+    if (value?.isTexture) return value.dispose();
     if (typeof value?.pause !== 'function') return;
     try {
       value.pause();
@@ -227,18 +242,31 @@ export async function mountWorld(
       if (id === 'tv-still' || id === 'tv-clip') {
         if (id === 'tv-still') house.tv?.stillFailed?.();
         else house.tv?.clipFailed?.();
-        return onNotice?.(INTERIOR_FAILED_MESSAGE);
+        return notify(INTERIOR_FAILED_MESSAGE);
       }
       // A furniture texture that fails leaves the kit colours on the furniture.
       if (FURNITURE_TEXTURES.includes(id))
-        return onNotice?.(INTERIOR_FAILED_MESSAGE);
+        return notify(INTERIOR_FAILED_MESSAGE);
       const url = interiorManifest().find((a) => a.id === id)?.url;
       for (const item of itemsForFile(url)) house.fail(item.id);
-      onNotice?.(INTERIOR_FAILED_MESSAGE);
+      notify(INTERIOR_FAILED_MESSAGE);
     };
     loadInterior(interiorManifest(), makeLoaders(THREE), {
       onItem,
       onFail,
+      onLate: (id, value) => releaseLate(value),
+      isCancelled: () => torn,
+    });
+  };
+
+  // Houses, cars and lamps replace their blocks as their files arrive. A file that fails leaves its blocks.
+  const startNeighbourhood = (hood) => {
+    loadInterior(neighbourhoodManifest(), makeLoaders(THREE), {
+      onItem: (id, value) => hood.replace(id, value),
+      onFail: (id) => {
+        hood.fail(id);
+        notify(NEIGHBOURHOOD_FAILED_MESSAGE);
+      },
       onLate: (id, value) => releaseLate(value),
       isCancelled: () => torn,
     });
@@ -281,17 +309,13 @@ export async function mountWorld(
     }
     // The interior keeps loading after the place is ready; it is not awaited (FR-20).
     interior = world.interior;
+    neighbourhood = world.neighbourhood;
+    startNeighbourhood(neighbourhood);
     if (houseLoaded && interior) startInterior(interior);
   } catch (error) {
     teardown();
     throw error;
   }
 
-  const warning = [
-    failureMessage(loaded),
-    houseLoaded ? '' : HOUSE_FAILED_MESSAGE,
-  ]
-    .filter(Boolean)
-    .join(' ');
   return { warning, destroy: teardown };
 }

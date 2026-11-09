@@ -2,6 +2,9 @@
 import { INTERIOR_ITEMS } from './layout.js';
 import { furnitureTextureIds } from '../logic/furniture-textures.js';
 import { TV_MODE } from './interiorConfig.js';
+import { visiblePlots } from './plots.js';
+import { LOOKS } from './houseLooks.js';
+import { CARS, LAMPS } from './streetLayout.js';
 
 // The textures the furniture needs. They load with the interior, after the place is ready.
 export const FURNITURE_TEXTURES = furnitureTextureIds();
@@ -9,7 +12,7 @@ export const FURNITURE_TEXTURES = furnitureTextureIds();
 const base = import.meta.env.BASE_URL;
 const url = (path) => `${base}assets/${path}`;
 
-// The street models (cars and lamp) are not here: they load late, after the place is ready.
+// The neighbourhood (houses, cars, lamp) is not here: it loads late, see neighbourhoodManifest.
 
 export const MANIFEST = [
   { id: 'grass', type: 'texture', url: url('textures/grass.jpg') },
@@ -52,4 +55,23 @@ export function interiorManifest(tvMode = TV_MODE) {
 // Every interior item that uses the file at this URL.
 export function itemsForFile(fileUrl) {
   return INTERIOR_ITEMS.filter((i) => i.file && url(i.file) === fileUrl);
+}
+
+// The neighbourhood loads after the place is ready (FR-14), outside the 30 s rule. One entry per file: the
+// house files of the looks the visible plots use, the car models the cars use and the lamp model.
+// The id of a house is house-<look> and of a car its model id, so neighbourhood.js finds the parts for it.
+// Task 9 adds the backdrop texture here (id 'backdrop', textures/backdrop.webp) once the file exists.
+export function neighbourhoodManifest(
+  plots = visiblePlots(),
+  cars = CARS,
+  lamps = LAMPS,
+) {
+  const entry = (id, file) => ({ id, type: 'model', url: url(file) });
+  const looks = [...new Set(plots.map((p) => p.look))];
+  const models = [...new Set(cars.map((c) => c.model))];
+  return [
+    ...looks.map((look) => entry(`house-${look}`, LOOKS[look].file)),
+    ...models.map((m) => entry(m, `models/street/${m}.glb`)),
+    ...(lamps.length > 0 ? [entry('lamp', 'models/street/lamp.glb')] : []),
+  ];
 }

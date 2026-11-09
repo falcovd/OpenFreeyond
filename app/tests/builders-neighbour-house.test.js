@@ -131,7 +131,7 @@ describe('buildWorld with the neighbour houses', () => {
       { hair: 'brown', clothing: 'mustard' },
       { withCharacter: false },
     );
-    const blocks = world.group.children.filter(
+    const blocks = world.neighbourhood.group.children.filter(
       (c) => c.userData.neighbour && c.userData.plain === 'house',
     );
     expect(blocks.length).toBe(visiblePlots().length);

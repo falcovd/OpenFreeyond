@@ -4,9 +4,12 @@ import { existsSync, readdirSync } from 'node:fs';
 import {
   MANIFEST,
   interiorManifest,
+  neighbourhoodManifest,
   itemsForFile,
 } from '../src/world/manifest.js';
 import { ASSET_RECORDS } from '../src/data/licences.js';
+import { visiblePlots } from '../src/world/plots.js';
+import { CARS } from '../src/world/streetLayout.js';
 import { INTERIOR_ITEMS } from '../src/world/layout.js';
 
 const publicDir = new URL('../public/', import.meta.url).pathname;
@@ -104,5 +107,44 @@ describe('street models (FR-16, AC-6.8)', () => {
     for (const f of files)
       expect(recorded.has(`models/street/${f}`), f).toBe(true);
     expect(MANIFEST.some((a) => a.url.includes('models/street/'))).toBe(false);
+  });
+});
+
+describe('neighbourhood manifest (FR-14, AC-6.6)', () => {
+  const m = neighbourhoodManifest();
+  it('points only to files that exist, under the app base, with a licence record', () => {
+    const recorded = new Set(ASSET_RECORDS.flatMap((r) => r.files));
+    expect(m.length).toBeGreaterThan(0);
+    for (const a of m) {
+      expect(a.url, a.id).toMatch(/\/assets\//);
+      expect(existsSync(publicDir + a.url.replace(/^\//, '')), a.id).toBe(true);
+      expect(recorded.has(a.url.replace(/^\/assets\//, '')), a.id).toBe(true);
+    }
+  });
+  it('derives from the visible plots: house files once each, only the car models used, the lamp', () => {
+    const looks = new Set(visiblePlots().map((p) => p.look));
+    const houses = m.filter((a) => a.id.startsWith('house-'));
+    expect(houses.map((a) => a.id).sort()).toEqual(
+      [...looks].map((l) => `house-${l}`).sort(),
+    );
+    expect(houses.every((a) => a.url.includes('models/houses/'))).toBe(true);
+    expect(
+      m
+        .filter((a) => a.id.startsWith('car-'))
+        .map((a) => a.id)
+        .sort(),
+    ).toEqual([...new Set(CARS.map((c) => c.model))].sort());
+    expect(m.some((a) => a.id === 'lamp')).toBe(true);
+    expect(new Set(m.map((a) => a.id)).size).toBe(m.length);
+  });
+  it('lists no lamp without lamps, and no house of a plot that is not shown', () => {
+    expect(neighbourhoodManifest([], [], []).length).toBe(0);
+    const one = neighbourhoodManifest(visiblePlots().slice(0, 1), [], []);
+    expect(one).toHaveLength(1);
+  });
+  it('keeps the street and house models out of the place manifest', () => {
+    expect(MANIFEST.some((a) => /models\/(street|houses)\//.test(a.url))).toBe(
+      false,
+    );
   });
 });

@@ -31,8 +31,8 @@ describe('buildWorld', () => {
     });
     expect(count(group, 'fence')).toBeGreaterThan(0);
     expect(count(group, 'gate')).toBe(1);
-    expect(count(group, 'car')).toBe(CARS.length);
-    expect(count(group, 'lamp')).toBe(LAMPS.length);
+    expect(count(group, 'car', { neighbours: true })).toBe(CARS.length);
+    expect(count(group, 'lamp', { neighbours: true })).toBe(LAMPS.length);
     expect(CARS.length).toBe(8);
     expect(LAMPS.length).toBe(8);
     const plain = [];

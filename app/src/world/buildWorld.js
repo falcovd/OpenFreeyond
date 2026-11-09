@@ -10,15 +10,13 @@ import {
 import { buildHouse } from './builders/house.js';
 import { buildFence, buildFurniture } from './builders/furniture.js';
 import { buildStreet } from './builders/street.js';
-import { CARS, LAMPS } from './streetLayout.js';
-import { buildCar, buildLamp } from './builders/props.js';
+import { createNeighbourhood } from './neighbourhood.js';
 import { buildGate } from './builders/gate.js';
 import { buildFigure } from './builders/figure.js';
 import { buildInterior } from './builders/interior.js';
 import { applyShadows } from './builders/shadows.js';
 import { SHADOWS } from './shadowConfig.js';
 import { visiblePlots } from './plots.js';
-import { buildNeighbourHouse } from './builders/neighbourHouse.js';
 import { buildPlotScenery } from './builders/plots.js';
 import { NEIGHBOUR_GARDENS } from './neighbourhoodConfig.js';
 
@@ -56,10 +54,10 @@ export function buildWorld(
     group.add(
       buildPlotScenery(THREE, assets, plot, { gardens: NEIGHBOUR_GARDENS }),
     );
-    group.add(buildNeighbourHouse(THREE, assets, plot));
   }
-  for (const car of CARS) group.add(buildCar(THREE, assets, car));
-  for (const lamp of LAMPS) group.add(buildLamp(THREE, assets, lamp));
+  // Houses, cars and lamps load late: stand-ins first, swapped as their files arrive (FR-14).
+  const neighbourhood = createNeighbourhood(THREE, assets);
+  group.add(neighbourhood.group);
   // The interior stands in the house, so without the house model there is none (FR-21).
   const interior = assets.gltf('house') ? buildInterior(THREE) : null;
   if (interior) group.add(interior.group);
@@ -76,5 +74,5 @@ export function buildWorld(
       updaters.push(o.userData.update);
   });
   const pickables = group.children.filter((c) => !c.userData.noPick);
-  return { group, updaters, pickables, interior };
+  return { group, updaters, pickables, interior, neighbourhood };
 }
