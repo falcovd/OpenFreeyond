@@ -8,6 +8,8 @@ OpenFreeyond is a cozy 3D place in the desktop browser (A-Frame 1.6 on three.js,
 
 ## Commands
 
+The app lives in `app/`. Run every command below from `app/`, and read every `src/`, `public/`, `scripts/`, `tests/` and config path in this file as relative to `app/`. Product documentation sits outside it: `specs/`, `discovery/` and `docs/` at the repository root.
+
 - Dev server: `npm run dev` (port 5173) or `docker compose up`
 - Tests: `npm test` (Vitest, jsdom). Single file: `npx vitest run tests/store.test.js`. Single test: `npx vitest run -t "name"`
 - Lint: `npm run lint`. Format: `npm run format` / `npm run format:check`
@@ -40,9 +42,9 @@ World details that span files:
 
 ## Repo notes
 
-- `/assets/` (root, git-ignored) holds raw source models (Quaternius, Downtown City MegaKit). Only `public/assets/` ships.
-- `specs/`, `discovery/`, `plans/`, `docs/` hold the product spec, plans, and verification checklist (`docs/verification/phase-1-checklist.md`). `plans/project-plan.md` is in Dutch. `specs/world-visuals/` is the spec for the next visual-overhaul work (sky, grass, trees, house, loading indicator; targets 30 fps). `specs/enter-the-house/` is the spec for the enterable house; its plan is `docs/plans/2026-11-09-enter-the-house.md` and its checklist `docs/verification/enter-the-house-checklist.md`. The first-visit transfer limit is 100 MB (it replaces the 30 MB of the world-visuals spec; `tests/budget.test.js` keeps shipped assets at 90 MB).
+- `app/source-assets/` (git-ignored) holds raw source models (Quaternius, Downtown City MegaKit). Only `public/assets/` ships.
+- `specs/`, `discovery/` and `docs/` (all at the repository root) hold the product spec, plans, and verification checklist (`docs/verification/phase-1-checklist.md`). `docs/plans/project-plan.md` is in Dutch. `specs/world-visuals/` is the spec for the next visual-overhaul work (sky, grass, trees, house, loading indicator; targets 30 fps). `specs/enter-the-house/` is the spec for the enterable house; its plan is `docs/plans/2026-11-09-enter-the-house.md` and its checklist `docs/verification/enter-the-house-checklist.md`. The first-visit transfer limit is 100 MB (it replaces the 30 MB of the world-visuals spec; `tests/budget.test.js` keeps shipped assets at 90 MB).
 - Prettier and ESLint are enforced; the phase 1 spec states no accessibility level and desktop browsers only.
-- Branding: read `BRAND.md` before changing colours, logos, fonts or on-screen wording. The start, confirm, intake and loading screens and the overlay use the dark brand look (CSS variables in `src/ui/styles.css`); the 3D place keeps its warm look. Brand images live in `public/brand/` (made by `scripts/make-brand-assets.mjs`), outside `public/assets/`, so the licence and budget tests do not cover them.
+- Branding: read `docs/BRAND.md` before changing colours, logos, fonts or on-screen wording. The start, confirm, intake and loading screens and the overlay use the dark brand look (CSS variables in `src/ui/styles.css`); the 3D place keeps its warm look. Brand images live in `public/brand/` (made by `scripts/make-brand-assets.mjs`), outside `public/assets/`, so the licence and budget tests do not cover them.
 
 @AGENTS.md

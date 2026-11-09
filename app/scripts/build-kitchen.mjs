@@ -1,6 +1,6 @@
 /* global Buffer, URL, console */
 // Builds public/assets/interior/kitchen.glb: one row of Kenney Furniture Kit (CC0) kitchen pieces,
-// at the kit's own scale, front facing +z. Reads the raw pack from the git-ignored /assets folder.
+// at the kit's own scale, front facing +z. Reads the raw pack from the git-ignored source-assets folder.
 // Run: node scripts/build-kitchen.mjs
 import { readFileSync, writeFileSync } from 'node:fs';
 import * as THREE from 'three';
@@ -26,7 +26,7 @@ globalThis.FileReader = class {
 };
 
 const PACK = new URL(
-  '../assets/kenney-furniture-kit/Models/GLTF format/',
+  '../source-assets/kenney-furniture-kit/Models/GLTF format/',
   import.meta.url,
 );
 const PIECES = [

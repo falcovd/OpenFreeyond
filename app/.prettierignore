@@ -1,9 +1,5 @@
 dist
 node_modules
 package-lock.json
-specs
-discovery
-plans
-docs
 public
-assets
+source-assets

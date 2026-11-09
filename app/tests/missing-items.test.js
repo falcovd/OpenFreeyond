@@ -5,7 +5,10 @@ import { INTERIOR_ITEMS } from '../src/world/layout.js';
 
 const root = new URL('../', import.meta.url).pathname;
 const checklist = readFileSync(
-  `${root}docs/verification/enter-the-house-checklist.md`,
+  new URL(
+    '../../docs/verification/enter-the-house-checklist.md',
+    import.meta.url,
+  ),
   'utf8',
 );
 

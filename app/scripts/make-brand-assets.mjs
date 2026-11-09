@@ -1,14 +1,14 @@
 /* global console, process, Buffer */
 // Cuts the brand picture into the small files the site uses, in public/brand/.
 // Usage: node scripts/make-brand-assets.mjs [source.jpeg]
-// The source sits in the git-ignored assets/ folder. `sharp` is only available
+// The source sits in the git-ignored source-assets/ folder. `sharp` is only available
 // through a transitive dev dependency, so run `npm ci` first.
 import sharp from 'sharp';
 import fs from 'fs';
 
 const source =
   process.argv[2] ??
-  'assets/images/Gemini_Generated_Image_hw9uvthw9uvthw9u.jpeg';
+  'source-assets/images/Gemini_Generated_Image_hw9uvthw9uvthw9u.jpeg';
 const out = 'public/brand';
 fs.mkdirSync(out, { recursive: true });
 

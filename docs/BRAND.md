@@ -2,7 +2,7 @@
 
 This file is the reference for every branding decision in the project. Read it before you change colours, type, logos or on-screen wording. When a change needs a new rule, update this file in the same commit. The builder decides changes to this file.
 
-Origin: `assets/images/Gemini_Generated_Image_hw9uvthw9uvthw9u.jpeg` (git-ignored, not shipped). `scripts/make-brand-assets.mjs` cuts it into the files in `public/brand/`.
+Origin: `app/source-assets/images/Gemini_Generated_Image_hw9uvthw9uvthw9u.jpeg` (git-ignored, not shipped). `app/scripts/make-brand-assets.mjs` cuts it into the files in `app/public/brand/`.
 
 ## Idea
 
