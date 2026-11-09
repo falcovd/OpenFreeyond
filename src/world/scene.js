@@ -190,7 +190,7 @@ export async function mountWorld(
     releasePage(document.documentElement);
   };
 
-  // Models replace their blocks as they arrive. The TV hooks are for the TV (set up by the TV code).
+  // Models replace their blocks as they arrive. The TV hooks feed the TV screen (builders/interior.js).
   const startInterior = (interior) => {
     const onItem = (id, value) => {
       if (id === 'tv-still') return interior.tv?.setStill?.(value);
@@ -202,8 +202,11 @@ export async function mountWorld(
         interior.replace(item.id, value.scene.clone(true));
     };
     const onFail = (id) => {
-      if (id === 'tv-still') return interior.tv?.stillFailed?.();
-      if (id === 'tv-clip') return interior.tv?.clipFailed?.();
+      if (id === 'tv-still' || id === 'tv-clip') {
+        if (id === 'tv-still') interior.tv?.stillFailed?.();
+        else interior.tv?.clipFailed?.();
+        return onNotice?.(INTERIOR_FAILED_MESSAGE);
+      }
       const url = interiorManifest().find((a) => a.id === id)?.url;
       for (const item of itemsForFile(url)) interior.fail(item.id);
       onNotice?.(INTERIOR_FAILED_MESSAGE);

@@ -76,3 +76,105 @@ describe('the interior in the world (FR-21)', () => {
     expect(found).toBe(false);
   });
 });
+
+describe('the TV screen (FR-15, FR-22, FR-23)', () => {
+  const tvItem = INTERIOR_ITEMS.find((i) => i.id === 'tv');
+  const still = () => new THREE.Texture();
+  const fakeVideo = (play = () => Promise.resolve()) => ({
+    muted: false,
+    loop: false,
+    play,
+    pause: () => {},
+    load: () => {},
+    removeAttribute: () => {},
+    addEventListener: () => {},
+  });
+  const mounted = (opts) => {
+    const interior = buildInterior(THREE, opts);
+    interior.replace('tv', model());
+    return interior;
+  };
+
+  it('sits on the model, in its own frame, so it scales with the model', () => {
+    const { tv, slots } = mounted();
+    const wrapper = slots.get('tv');
+    expect(tv.screen.parent).toBe(wrapper.children[0]);
+    expect(tv.screen.position.y).toBeCloseTo(tvItem.screen.y);
+    expect(tv.screen.position.z).toBeCloseTo(tvItem.screen.z);
+    expect(tv.screen.material.toneMapped).toBe(false);
+  });
+  it('is dark until a still arrives, then shows the still', () => {
+    const { tv } = mounted();
+    expect(tv.screen.material.map).toBeNull();
+    const t = still();
+    tv.setStill(t);
+    expect(tv.screen.material.map).toBe(t);
+  });
+  it('applies media that arrived before the model', () => {
+    const interior = buildInterior(THREE);
+    const t = still();
+    interior.tv.setStill(t);
+    interior.replace('tv', model());
+    expect(interior.tv.screen.material.map).toBe(t);
+  });
+  it('plays the clip muted and looping, and shows it', () => {
+    const { tv } = mounted();
+    tv.setStill(still());
+    const video = fakeVideo();
+    tv.setClip(video);
+    expect(video.muted).toBe(true);
+    expect(video.loop).toBe(true);
+    expect(tv.screen.material.map.isVideoTexture).toBe(true);
+  });
+  it('falls back to the still when the browser blocks the clip (AC-4.7)', async () => {
+    const { tv } = mounted();
+    const t = still();
+    tv.setStill(t);
+    tv.setClip(fakeVideo(() => Promise.reject(new Error('blocked'))));
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(tv.state.clip).toBe('blocked');
+    expect(tv.screen.material.map).toBe(t);
+  });
+  it('falls back to the still when the clip fails to load (AC-4.7)', () => {
+    const { tv } = mounted();
+    const t = still();
+    tv.setStill(t);
+    tv.clipFailed();
+    expect(tv.screen.material.map).toBe(t);
+  });
+  it('goes dark when both fail', () => {
+    const { tv } = mounted();
+    tv.clipFailed();
+    tv.stillFailed();
+    expect(tv.screen.material.map).toBeNull();
+  });
+  it('in still mode the clip never shows and no clip is expected (AC-4.8)', () => {
+    const { tv } = mounted({ tvMode: 'still' });
+    expect(tv.state.clip).toBe('none');
+    const t = still();
+    tv.setStill(t);
+    tv.setClip(fakeVideo());
+    expect(tv.screen.material.map).toBe(t);
+  });
+  it('dispose pauses the video, clears its source and frees the textures', () => {
+    const { tv } = mounted();
+    const t = still();
+    let t2 = 0;
+    t.addEventListener('dispose', () => t2++);
+    tv.setStill(t);
+    let paused = 0;
+    let loaded = 0;
+    const video = fakeVideo();
+    video.pause = () => paused++;
+    video.load = () => loaded++;
+    video.src = 'x.mp4';
+    tv.setClip(video);
+    tv.dispose();
+    expect(paused).toBe(1);
+    expect(loaded).toBe(1);
+    expect(video.src).toBe('');
+    expect(t2).toBe(1);
+    expect(() => tv.dispose()).not.toThrow();
+  });
+});
