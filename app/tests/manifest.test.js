@@ -150,6 +150,15 @@ describe('neighbourhood manifest (FR-14, AC-6.6)', () => {
     expect(b[0].type).toBe('texture');
     expect(b[0].url).toMatch(/assets\/textures\/backdrop\.webp$/);
   });
+  it('lists every file under models/houses and models/street, none deliberately unlisted (AC-6.12)', () => {
+    const urls = new Set(m.map((a) => a.url.replace(/^.*\/assets\//, '')));
+    for (const dir of ['houses', 'street'])
+      for (const f of readdirSync(publicDir + `assets/models/${dir}`))
+        expect(urls.has(`models/${dir}/${f}`), `${dir}/${f}`).toBe(true);
+  });
+  it('keeps every URL under the app base and off third-party hosts (AC-6.12)', () => {
+    for (const a of m) expect(a.url, a.id).not.toMatch(/^(https?:)?\/\/(?!\/)/);
+  });
   it('keeps the street and house models out of the place manifest', () => {
     expect(MANIFEST.some((a) => /models\/(street|houses)\//.test(a.url))).toBe(
       false,

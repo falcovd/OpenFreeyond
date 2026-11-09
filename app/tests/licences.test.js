@@ -40,6 +40,13 @@ describe('asset licence records (AC-11.1, AC-11.4)', () => {
     }
   });
 
+  it('records the backdrop picture and every house model (AC-6.10)', () => {
+    const recorded = ASSET_RECORDS.flatMap((r) => r.files);
+    expect(recorded).toContain('textures/backdrop.webp');
+    for (const f of readdirSync(`${ROOT}/models/houses`))
+      expect(recorded, f).toContain(`models/houses/${f}`);
+  });
+
   it('records the character (AC-11.4)', () => {
     expect(ASSET_RECORDS.some((r) => r.files.includes('character.glb'))).toBe(
       true,

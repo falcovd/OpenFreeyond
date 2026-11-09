@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { INTERIOR_ITEMS } from '../src/world/layout.js';
 
 const root = new URL('../', import.meta.url).pathname;
@@ -11,6 +11,7 @@ const read = (name) =>
   );
 const checklist = read('enter-the-house-checklist.md');
 const streetChecklist = read('garden-fences-and-street-checklist.md');
+const neighbourChecklist = read('neighbourhood-checklist.md');
 
 // The text of the "Missing items" section, up to the next heading of the same or a higher level.
 function missingSection(text = checklist) {
@@ -70,5 +71,36 @@ describe('missing street items are listed (AC-6.7, FR-16)', () => {
     for (const f of STREET_FILES)
       if (existsSync(`${root}public/assets/${f}`))
         expect(section, f).toContain(f.split('/').pop());
+  });
+});
+
+describe('missing neighbourhood items are listed (AC-6.14, FR-5, FR-9, FR-15)', () => {
+  const section = missingSection(neighbourChecklist);
+  const HOUSES = readdirSync(`${root}public/assets/models/houses`).map(
+    (f) => `models/houses/${f}`,
+  );
+  const FILES = [...HOUSES, 'textures/backdrop.webp'];
+
+  it('has a "Missing items" section, even when it says none', () => {
+    expect(section).not.toBeNull();
+    expect(section.trim().length).toBeGreaterThan(0);
+  });
+
+  it('lists every neighbourhood file that is not shipped', () => {
+    for (const f of FILES)
+      if (!existsSync(`${root}public/assets/${f}`))
+        expect(section, f).toContain(f);
+  });
+
+  it('names the source of every neighbourhood file that is shipped', () => {
+    expect(HOUSES.length).toBeGreaterThanOrEqual(4);
+    for (const f of FILES)
+      if (existsSync(`${root}public/assets/${f}`))
+        expect(section, f).toContain(f.split('/').pop());
+  });
+
+  it('says where the houses and the backdrop came from', () => {
+    expect(section).toMatch(/script/i);
+    expect(section).toMatch(/Gemini/);
   });
 });
