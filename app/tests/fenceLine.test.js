@@ -78,3 +78,69 @@ describe('fencePosts (FR-2, FR-4)', () => {
     expect(rightInnerFace - leftInnerFace).toBeCloseTo(1.2);
   });
 });
+
+describe('fenceLine with skipped edges and the gate on the minZ side (neighbourhood)', () => {
+  const FENCE = { t: 0.2, h: 1, color: '#f2e3c6' };
+  it('skips the right edge: no right piece, and the back and front pieces run to the edge', () => {
+    const B = { minX: -36, maxX: -12, minZ: -11, maxZ: 11 };
+    const s = fenceLine(B, FENCE, { x: -28, w: 1.2 }, { skip: ['right'] });
+    expect(s.find((p) => p.id === 'fence-right')).toBeUndefined();
+    const back = s.find((p) => p.id === 'fence-back');
+    expect(back.x + back.w / 2).toBeCloseTo(-12);
+  });
+  it('skips the left edge too, and the back edge', () => {
+    const B = { minX: 12, maxX: 36, minZ: -11, maxZ: 11 };
+    const s = fenceLine(
+      B,
+      FENCE,
+      { x: 25, w: 1.2 },
+      { skip: ['left', 'back'] },
+    );
+    expect(s.map((p) => p.id).sort()).toEqual([
+      'fence-front-left',
+      'fence-front-right',
+      'fence-right',
+      'gate',
+    ]);
+  });
+  it('puts the gate on the minZ edge for the far plots', () => {
+    const B = { minX: -12, maxX: 12, minZ: 22, maxZ: 44 };
+    const s = fenceLine(B, FENCE, { x: 4, w: 1.2 }, { gateSide: 'minZ' });
+    const gate = s.find((p) => p.id === 'gate');
+    expect(gate.z - 0.1).toBeCloseTo(22);
+    const back = s.find((p) => p.id === 'fence-back');
+    expect(back.z + 0.1).toBeCloseTo(44);
+  });
+  it('keeps every mirrored piece inside the bounds and touching end to end', () => {
+    const B = { minX: -12, maxX: 12, minZ: 22, maxZ: 44 };
+    const s = fenceLine(B, FENCE, { x: 4, w: 1.2 }, { gateSide: 'minZ' });
+    for (const p of s) {
+      expect(p.x - p.w / 2).toBeGreaterThanOrEqual(B.minX - 1e-9);
+      expect(p.x + p.w / 2).toBeLessThanOrEqual(B.maxX + 1e-9);
+      expect(p.z - p.d / 2).toBeGreaterThanOrEqual(B.minZ - 1e-9);
+      expect(p.z + p.d / 2).toBeLessThanOrEqual(B.maxZ + 1e-9);
+    }
+    const front = s
+      .filter((p) =>
+        ['fence-front-left', 'gate', 'fence-front-right'].includes(p.id),
+      )
+      .sort((a, b) => a.x - b.x);
+    expect(front.map((p) => p.id)).toEqual([
+      'fence-front-left',
+      'gate',
+      'fence-front-right',
+    ]);
+    expect(front[0].x + front[0].w / 2).toBeCloseTo(
+      front[1].x - front[1].w / 2,
+    );
+    expect(front[1].x + front[1].w / 2).toBeCloseTo(
+      front[2].x - front[2].w / 2,
+    );
+    for (const p of front) expect(p.z).toBeCloseTo(22.1);
+    for (const p of s) expect(fencePosts(p).length).toBeGreaterThanOrEqual(2);
+  });
+  it('is unchanged without options (our plot)', () => {
+    const B = { minX: -12, maxX: 12, minZ: -11, maxZ: 11 };
+    expect(fenceLine(B, FENCE, { x: -1.95, w: 1.2 })).toHaveLength(6);
+  });
+});
