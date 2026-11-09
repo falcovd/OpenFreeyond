@@ -89,7 +89,7 @@ describe('house.glb', () => {
           false,
         );
       const glass = boxes.filter(
-        (b) => b.group === `Window${i + 1}` && b.mat === 'Glass',
+        (b) => b.group === `Window${i + 1}` && b.mat === 'GlassClear',
       );
       expect(glass.length).toBe(1);
       // the pane is inside the wall thickness, so it is seen from both sides
@@ -137,8 +137,17 @@ describe('house.glb', () => {
       'Roof',
       'Wood',
       'Glass',
+      'GlassClear',
     ])
       expect(names, n).toContain(n);
+  });
+  it('keeps Glass for the upper windows and uses GlassClear only on Window1-3, and stays small (R-9)', () => {
+    const c = boxes.filter((b) => /^Window/.test(b.group ?? ''));
+    for (const b of c.filter((b) => b.mat === 'GlassClear'))
+      expect(['Window1', 'Window2', 'Window3']).toContain(b.group);
+    expect(c.filter((b) => b.mat === 'GlassClear')).toHaveLength(3);
+    expect(c.filter((b) => b.mat === 'Glass').length).toBeGreaterThanOrEqual(4);
+    expect(buf.length).toBeLessThan(300 * 1024);
   });
   it('has a Door node whose origin is the hinge', () => {
     const door = gltf.nodes.find((n) => n.name === 'Door');

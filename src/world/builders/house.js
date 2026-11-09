@@ -4,6 +4,7 @@ import { INTERIOR_DIM, CEILING_DIM } from '../interiorConfig.js';
 
 const PLASTER = '#f1e4cf';
 const WALLPAPER_TILE = 0.8; // metres of wall per texture repeat
+const GLASS_CLEAR_OPACITY = 0.3; // ground-floor window glass: 30% opaque, 70% see-through
 const WALLPAPER_GAIN = 1.6; // the fabric texture is mid grey, so it needs brightening
 
 function tag(object, part) {
@@ -101,6 +102,19 @@ export function buildHouse(THREE, assets) {
         old.roughness = 0.2;
         old.emissive.set('#3b5a73');
         old.emissiveIntensity = 0.25;
+        break;
+      case 'GlassClear':
+        // Ground-floor panes: 30% opaque, so you look through them from both sides. No depth write,
+        // so the pane never hides the garden or the rooms; it draws after the opaque things.
+        old.color.set('#bcd9ee');
+        old.roughness = 0.1;
+        old.metalness = 0;
+        old.transparent = true;
+        old.opacity = GLASS_CLEAR_OPACITY;
+        old.depthWrite = false;
+        // The pane is a closed box, so front faces only: one layer seen from each side, not four.
+        old.side = THREE.FrontSide;
+        mesh.renderOrder = 2;
         break;
     }
   }

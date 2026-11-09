@@ -42,8 +42,12 @@ function fakeHouse() {
   scene.add(door);
   const win = new THREE.Group();
   win.name = 'Window1';
-  win.add(mesh('Pane', 'Glass'));
+  win.add(mesh('Pane', 'GlassClear'));
   scene.add(win);
+  const upper = new THREE.Group();
+  upper.name = 'Window4';
+  upper.add(mesh('Pane', 'Glass'));
+  scene.add(upper);
   return { scene };
 }
 const texture = () => {
@@ -78,7 +82,7 @@ describe('buildHouse with the model', () => {
     expect(g.position.z).toBe(HOUSE.z);
     expect(g.userData.door.name).toBe('Door');
     expect(g.userData.door.userData.part).toBe('door');
-    expect(parts(g, 'window')).toHaveLength(1);
+    expect(parts(g, 'window')).toHaveLength(2);
     expect(parts(g, 'roof')).toHaveLength(1);
     expect(parts(g, 'walls')).toHaveLength(1);
     expect(parts(g, 'walls')[0].material.map).toBeTruthy();
@@ -106,6 +110,26 @@ describe('buildHouse with the model', () => {
     expect(c.r).toBeLessThanOrEqual(1);
     // indoor trim is dimmed like the plaster
     expect(trim.material.color.r).toBeCloseTo(INTERIOR_DIM, 1);
+  });
+  it('makes the ground-floor window glass 30% opaque and leaves the upper glass as it was (R-9)', () => {
+    const g = buildHouse(THREE, loadedAssets());
+    const pane = (win) => {
+      let p;
+      g.traverse((o) => o.name === win && (p = o.children[0]));
+      return p;
+    };
+    const low = pane('Window1');
+    expect(low.material.name).toBe('GlassClear');
+    expect(low.material.transparent).toBe(true);
+    expect(low.material.opacity).toBeCloseTo(0.3);
+    expect(low.material.depthWrite).toBe(false);
+    expect(low.material.side).toBe(THREE.FrontSide);
+    expect(low.renderOrder).toBeGreaterThan(0);
+    const high = pane('Window4');
+    expect(high.material.name).toBe('Glass');
+    expect(high.material.transparent).toBe(false);
+    expect(high.material.opacity).toBe(1);
+    expect(high.material.depthWrite).toBe(true);
   });
   it('scales the brick repeat by the node scale of the generated model', () => {
     const scene = new THREE.Group();

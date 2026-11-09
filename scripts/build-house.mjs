@@ -106,6 +106,8 @@ const materials = {
     emissive: '#3b5a73',
     emissiveIntensity: 0.25,
   }),
+  // The ground-floor panes: the builder makes this one see-through (PO request, finding R-9).
+  GlassClear: mat('GlassClear', '#bcd9ee', { roughness: 0.1 }),
 };
 
 // Every box shares one unit cube and is scaled by its node, so the file holds the cube once
@@ -359,7 +361,17 @@ const groundWindow = (name, x) => {
   const hh = (WINDOW_HOLE.y1 - WINDOW_HOLE.y0) / 2;
   const outer = 0.1; // outer frame bar width
   // glass in the middle of the wall
-  part(win, 'pane', 'Glass', hx * 2 - 0.04, hh * 2 - 0.04, 0.02, 0, 0, -0.1);
+  part(
+    win,
+    'pane',
+    'GlassClear',
+    hx * 2 - 0.04,
+    hh * 2 - 0.04,
+    0.02,
+    0,
+    0,
+    -0.1,
+  );
   // mullions
   part(win, 'mullion-v', 'Wood', 0.03, hh * 2, 0.04, 0, 0, -0.1);
   part(win, 'mullion-h', 'Wood', hx * 2, 0.03, 0.04, 0, 0, -0.1);
