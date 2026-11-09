@@ -11,7 +11,8 @@ const url = (path) => `${base}assets/${path}`;
 
 export const MANIFEST = [
   { id: 'grass', type: 'texture', url: url('textures/grass.jpg') },
-  { id: 'path', type: 'texture', url: url('textures/path.jpg') },
+  { id: 'paving', type: 'texture', url: url('textures/paving.jpg') },
+  { id: 'asphalt', type: 'texture', url: url('textures/asphalt.jpg') },
   { id: 'wood', type: 'texture', url: url('textures/wood.jpg') },
   { id: 'soil', type: 'texture', url: url('textures/soil.jpg') },
   { id: 'brick', type: 'texture', url: url('textures/brick.jpg') },

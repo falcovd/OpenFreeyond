@@ -25,14 +25,24 @@ export const ASSET_RECORDS = [
     checked: '2026-11-08',
   },
   {
-    files: ['textures/path.jpg'],
-    author: 'ambientCG (Gravel 023)',
-    source: 'https://ambientcg.com/a/Gravel023',
+    files: ['textures/paving.jpg'],
+    author: 'ambientCG (Paving Stones 109)',
+    source: 'https://ambientcg.com/a/PavingStones109',
     licence: 'CC0-1.0',
     licenceText:
       'CC0 1.0 Universal (CC0 1.0) Public Domain Dedication, https://creativecommons.org/publicdomain/zero/1.0/. ambientCG: "All assets are released under the Creative Commons CC0 license, making them free to use without attribution - even in commercial circumstances." (https://docs.ambientcg.com/license/).',
     credit: null,
-    checked: '2026-11-08',
+    checked: '2026-11-09',
+  },
+  {
+    files: ['textures/asphalt.jpg'],
+    author: 'ambientCG (Asphalt 031)',
+    source: 'https://ambientcg.com/a/Asphalt031',
+    licence: 'CC0-1.0',
+    licenceText:
+      'CC0 1.0 Universal (CC0 1.0) Public Domain Dedication, https://creativecommons.org/publicdomain/zero/1.0/. ambientCG: "All assets are released under the Creative Commons CC0 license, making them free to use without attribution - even in commercial circumstances." (https://docs.ambientcg.com/license/).',
+    credit: null,
+    checked: '2026-11-09',
   },
   {
     files: ['textures/soil.jpg'],
