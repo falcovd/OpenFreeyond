@@ -11,7 +11,12 @@ import {
 import { lightsMarkup } from './lightsMarkup.js';
 import { releasePage } from './teardown.js';
 import { HAIR_COLOURS, CLOTHING_COLOURS } from '../logic/fields.js';
-import { MANIFEST, interiorManifest, itemsForFile } from './manifest.js';
+import {
+  MANIFEST,
+  FURNITURE_TEXTURES,
+  interiorManifest,
+  itemsForFile,
+} from './manifest.js';
 import {
   loadAssets,
   loadInterior,
@@ -210,6 +215,7 @@ export async function mountWorld(
     const onItem = (id, value) => {
       if (id === 'tv-still') return house.tv?.setStill?.(value);
       if (id === 'tv-clip') return house.tv?.setClip?.(value);
+      if (FURNITURE_TEXTURES.includes(id)) return house.setTexture(id, value);
       const file = itemsForFile(
         interiorManifest().find((a) => a.id === id)?.url,
       );
@@ -221,6 +227,9 @@ export async function mountWorld(
         else house.tv?.clipFailed?.();
         return onNotice?.(INTERIOR_FAILED_MESSAGE);
       }
+      // A furniture texture that fails leaves the kit colours on the furniture.
+      if (FURNITURE_TEXTURES.includes(id))
+        return onNotice?.(INTERIOR_FAILED_MESSAGE);
       const url = interiorManifest().find((a) => a.id === id)?.url;
       for (const item of itemsForFile(url)) house.fail(item.id);
       onNotice?.(INTERIOR_FAILED_MESSAGE);

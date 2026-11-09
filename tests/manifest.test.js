@@ -50,6 +50,28 @@ describe('interior manifest (FR-20, FR-22)', () => {
       expect(recorded.has(a.url.replace(/^\/assets\//, '')), a.id).toBe(true);
     }
   });
+  it('lists the furniture textures, after the place, with a licence record each', () => {
+    const m = interiorManifest('clip');
+    for (const id of ['fabric', 'cabinet']) {
+      expect(m.find((a) => a.id === id)?.type, id).toBe('texture');
+      expect(
+        MANIFEST.some((a) => a.id === id),
+        id,
+      ).toBe(false);
+    }
+  });
+  it('lists the one chair file once, for four chairs', () => {
+    const m = interiorManifest('clip').filter((a) =>
+      a.url.endsWith('chair.glb'),
+    );
+    expect(m).toHaveLength(1);
+    expect(itemsForFile(m[0].url).map((i) => i.id)).toEqual([
+      'chair-1',
+      'chair-2',
+      'chair-3',
+      'chair-4',
+    ]);
+  });
   it('maps a shared file to every item that uses it', () => {
     const pendant = interiorManifest('clip').find(
       (a) => a.id === 'pendant-living',

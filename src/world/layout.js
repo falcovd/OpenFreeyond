@@ -135,7 +135,9 @@ export const WALLS = [
 // Interior items. `x`, `z` is the centre, `w` (x) and `d` (z) the footprint on the floor, `h` the height,
 // `y` the height of the bottom (default 0), `rot` the turn about y (the model faces +z at 0, so
 // +90 degrees faces +x). `file` is the model under public/assets/ (null when no free model was found,
-// FR-19). `solid: false` for things that hang. The plain block of an item has the footprint and `color`.
+// FR-19). The four dining chairs are an addition to the spec's item list (PO finding 7); FR-17 and FR-19
+// apply to them like the rest. They stand two on each long side of the table, because a chair at the short
+// end would stand on the line from the inner doorway. `solid: false` for things that hang. The plain block of an item has the footprint and `color`.
 export const INTERIOR_ITEMS = [
   {
     id: 'couch',
@@ -191,6 +193,50 @@ export const INTERIOR_ITEMS = [
     w: 1.4,
     d: 0.9,
     h: 0.76,
+    color: '#a9743b',
+  },
+  {
+    id: 'chair-1',
+    file: 'interior/chair.glb',
+    x: 2.0,
+    z: -7.72,
+    w: 0.45,
+    d: 0.45,
+    h: 0.9,
+    rot: 0,
+    color: '#a9743b',
+  },
+  {
+    id: 'chair-2',
+    file: 'interior/chair.glb',
+    x: 2.8,
+    z: -7.72,
+    w: 0.45,
+    d: 0.45,
+    h: 0.9,
+    rot: 0,
+    color: '#a9743b',
+  },
+  {
+    id: 'chair-3',
+    file: 'interior/chair.glb',
+    x: 2.0,
+    z: -6.28,
+    w: 0.45,
+    d: 0.45,
+    h: 0.9,
+    rot: Math.PI,
+    color: '#a9743b',
+  },
+  {
+    id: 'chair-4',
+    file: 'interior/chair.glb',
+    x: 2.8,
+    z: -6.28,
+    w: 0.45,
+    d: 0.45,
+    h: 0.9,
+    rot: Math.PI,
     color: '#a9743b',
   },
   {

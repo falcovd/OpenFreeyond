@@ -1,6 +1,10 @@
 // Every file the place loads. All are served from the product's own address (FR-20, AC-11.2).
 import { INTERIOR_ITEMS } from './layout.js';
+import { furnitureTextureIds } from '../logic/furniture-textures.js';
 import { TV_MODE } from './interiorConfig.js';
+
+// The textures the furniture needs. They load with the interior, after the place is ready.
+export const FURNITURE_TEXTURES = furnitureTextureIds();
 
 const base = import.meta.env.BASE_URL;
 const url = (path) => `${base}assets/${path}`;
@@ -30,6 +34,11 @@ export function interiorManifest(tvMode = TV_MODE) {
     .filter((m) => (seen.has(m.url) ? false : seen.add(m.url)));
   return [
     ...models,
+    ...FURNITURE_TEXTURES.map((id) => ({
+      id,
+      type: 'texture',
+      url: url(`textures/${id}.jpg`),
+    })),
     { id: 'tv-still', type: 'texture', url: url('interior/tv-still.jpg') },
     ...(tvMode === 'clip'
       ? [{ id: 'tv-clip', type: 'video', url: url('interior/tv-clip.mp4') }]

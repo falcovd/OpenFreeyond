@@ -202,6 +202,59 @@ describe('walking in the house (FR-4, FR-17, AC-2.1 to AC-2.7)', () => {
   });
 });
 
+describe('the dining chairs (PO finding 7; FR-17)', () => {
+  const chairs = INTERIOR_ITEMS.filter((i) => i.id.startsWith('chair-'));
+  const kitchen = ROOMS.find((r) => r.id === 'kitchen');
+  const inside = (c) =>
+    c.x - c.w / 2 >= kitchen.minX &&
+    c.x + c.w / 2 <= kitchen.maxX &&
+    c.z - c.d / 2 >= kitchen.minZ &&
+    c.z + c.d / 2 <= kitchen.maxZ;
+  it('are four, share one model file and sit in the kitchen room', () => {
+    expect(chairs).toHaveLength(4);
+    expect(new Set(chairs.map((c) => c.file))).toEqual(
+      new Set(['interior/chair.glb']),
+    );
+    for (const c of chairs) expect(inside(c), c.id).toBe(true);
+  });
+  it('are solid and keep clear of the table, the kitchen units, the walls and each other', () => {
+    const others = SOLIDS.filter((s) => !s.off && !s.id.startsWith('chair-'));
+    for (const c of chairs) {
+      expect(byId(c.id), c.id).toBeTruthy();
+      for (const o of others)
+        expect(overlaps(c, o), `${c.id} ${o.id}`).toBe(false);
+    }
+    for (const a of chairs)
+      for (const b of chairs)
+        if (a !== b) expect(overlaps(a, b), `${a.id} ${b.id}`).toBe(false);
+  });
+  it('keep the inner doorway clear, with room to walk in and out', () => {
+    const gap = {
+      x: INNER_DOORWAY.x,
+      z: INNER_DOORWAY.z,
+      w: 1.2,
+      d: INNER_DOORWAY.w,
+    };
+    for (const c of chairs) {
+      expect(overlaps(c, gap), c.id).toBe(false);
+      // a person 0.6 m wide, standing in the doorway or just past it on the kitchen side
+      expect(
+        overlaps(c, { x: 0.7, z: INNER_DOORWAY.z, w: 1.2, d: 1.2 }),
+        c.id,
+      ).toBe(false);
+    }
+  });
+  it('face the table', () => {
+    const table = INTERIOR_ITEMS.find((i) => i.id === 'dining-table');
+    for (const c of chairs) {
+      // the model faces +z at rot 0; the facing direction is (sin rot, cos rot)
+      const f = { x: Math.sin(c.rot), z: Math.cos(c.rot) };
+      const toTable = { x: table.x - c.x, z: table.z - c.z };
+      expect(f.x * toTable.x + f.z * toTable.z, c.id).toBeGreaterThan(0.5);
+    }
+  });
+});
+
 describe('the larger place (FR-13, AC-6.3 to AC-6.6)', () => {
   it('leaves at least the phase 1 walkable area outside the house (AC-6.3)', () => {
     const phase1 = walkableArea(PHASE1_SOLIDS, PHASE1_BOUNDS);

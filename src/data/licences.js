@@ -65,6 +65,26 @@ export const ASSET_RECORDS = [
     checked: '2026-11-09',
   },
   {
+    files: ['textures/fabric.jpg'],
+    author: 'ambientCG (Fabric 030)',
+    source: 'https://ambientcg.com/a/Fabric030',
+    licence: 'CC0-1.0',
+    licenceText:
+      'CC0 1.0 Universal (CC0 1.0) Public Domain Dedication, https://creativecommons.org/publicdomain/zero/1.0/. ambientCG: "All assets are released under the Creative Commons CC0 license, making them free to use without attribution - even in commercial circumstances." (https://docs.ambientcg.com/license/). Colour map only, resized to 512x512 JPEG by scripts/prepare-texture.mjs. Used on the couch (tinted with the kit colour).',
+    credit: null,
+    checked: '2026-11-09',
+  },
+  {
+    files: ['textures/cabinet.jpg'],
+    author: 'ambientCG (Wood 049)',
+    source: 'https://ambientcg.com/a/Wood049',
+    licence: 'CC0-1.0',
+    licenceText:
+      'CC0 1.0 Universal (CC0 1.0) Public Domain Dedication, https://creativecommons.org/publicdomain/zero/1.0/. ambientCG: "All assets are released under the Creative Commons CC0 license, making them free to use without attribution - even in commercial circumstances." (https://docs.ambientcg.com/license/). Colour map only, resized to 512x512 JPEG by scripts/prepare-texture.mjs. Used on the kitchen cabinets.',
+    credit: null,
+    checked: '2026-11-09',
+  },
+  {
     files: ['textures/brick.jpg', 'textures/roof.jpg'],
     author: 'Quaternius (Downtown City MegaKit, free standard version)',
     source: 'https://quaternius.com/packs/downtowncitymegakit.html',
@@ -113,13 +133,14 @@ export const ASSET_RECORDS = [
       'interior/lamp-floor.glb',
       'interior/lamp-pendant.glb',
       'interior/dining-table.glb',
+      'interior/chair.glb',
       'interior/kitchen.glb',
     ],
     author: 'Kenney (Furniture Kit 2.0)',
     source: 'https://kenney.nl/assets/furniture-kit',
     licence: 'CC0-1.0',
     licenceText:
-      'CC0 1.0 Universal (CC0 1.0) Public Domain Dedication, http://creativecommons.org/publicdomain/zero/1.0/. Quoted from License.txt in the pack: "License: (Creative Commons Zero, CC0)" and "This content is free to use in personal, educational and commercial projects. Support us by crediting Kenney or www.kenney.nl (this is not mandatory)". The pack page states "CC0 licensed". Models: loungeSofa (couch), televisionModern (tv), lampRoundFloor (lamp-floor), lampSquareCeiling (lamp-pendant), table (dining-table). kitchen.glb is one row of five pieces (kitchenCabinetDrawer, kitchenSink, kitchenCabinet, kitchenStove, kitchenCabinet) joined by scripts/build-kitchen.mjs.',
+      'CC0 1.0 Universal (CC0 1.0) Public Domain Dedication, http://creativecommons.org/publicdomain/zero/1.0/. Quoted from License.txt in the pack: "License: (Creative Commons Zero, CC0)" and "This content is free to use in personal, educational and commercial projects. Support us by crediting Kenney or www.kenney.nl (this is not mandatory)". The pack page states "CC0 licensed". Models: loungeSofa (couch), televisionModern (tv), lampRoundFloor (lamp-floor), lampSquareCeiling (lamp-pendant), table (dining-table), chair (chair-1 to chair-4, one file for the four dining chairs). kitchen.glb is one row of five pieces (kitchenCabinetDrawer, kitchenSink, kitchenCabinet, kitchenStove, kitchenCabinet) joined by scripts/build-kitchen.mjs.',
     credit: null,
     checked: '2026-11-09',
     verified: true,

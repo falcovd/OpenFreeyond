@@ -54,6 +54,125 @@ describe('the interior (FR-20, FR-23)', () => {
   });
 });
 
+// A model with a named material, a normal on every vertex, as the kit's models have.
+const furnitureModel = (name = 'wood') => {
+  const g = new THREE.Group();
+  const geo = new THREE.BoxGeometry(2, 1, 1);
+  geo.setAttribute('uv', geo.attributes.uv.clone());
+  const mat = new THREE.MeshStandardMaterial({ color: '#e5995f' });
+  mat.name = name;
+  g.add(new THREE.Mesh(geo, mat));
+  return g;
+};
+const firstMesh = (root) => {
+  let r;
+  root.traverse((o) => {
+    if (o.isMesh && !r) r = o;
+  });
+  return r;
+};
+
+describe('textured furniture (PO finding 4; FR-20, FR-23)', () => {
+  const tex = () => new THREE.Texture();
+  it('keeps the kit colour and its UVs until the texture arrives', () => {
+    const { group, replace } = buildInterior(THREE);
+    replace('dining-table', furnitureModel('wood'));
+    const mesh = firstMesh(find(group, 'dining-table'));
+    expect(mesh.material.map).toBeNull();
+    expect(mesh.userData.textured).toBeUndefined();
+  });
+  it('textures a part by its material name when the texture is already known', () => {
+    const { group, replace } = buildInterior(THREE, {
+      textures: { cabinet: tex() },
+    });
+    replace('dining-table', furnitureModel('wood'));
+    const mesh = firstMesh(find(group, 'dining-table'));
+    expect(mesh.material.map).toBeTruthy();
+    expect(mesh.material.map.wrapS).toBe(THREE.RepeatWrapping);
+    expect(mesh.userData.textured).toBe(true);
+  });
+  it('textures a model that is already in place when the texture arrives later', () => {
+    const { group, replace, setTexture } = buildInterior(THREE);
+    replace('kitchen', furnitureModel('wood'));
+    const mesh = firstMesh(find(group, 'kitchen'));
+    expect(mesh.material.map).toBeNull();
+    setTexture('cabinet', tex());
+    expect(firstMesh(find(group, 'kitchen')).material.map).toBeTruthy();
+  });
+  it('leaves parts without a rule (metal, lamp) as they were', () => {
+    const { group, replace, setTexture } = buildInterior(THREE);
+    replace('kitchen', furnitureModel('metal'));
+    setTexture('cabinet', tex());
+    setTexture('fabric', tex());
+    expect(firstMesh(find(group, 'kitchen')).material.map).toBeNull();
+  });
+  it('does nothing when the texture failed (nothing is ever set) and keeps the model', () => {
+    const { group, replace } = buildInterior(THREE);
+    replace('couch', furnitureModel('carpet'));
+    const slot = find(group, 'couch');
+    expect(slot.userData.plain).toBeFalsy();
+    expect(firstMesh(slot).material.map).toBeNull();
+  });
+  it('ignores an empty texture', () => {
+    const { replace, setTexture } = buildInterior(THREE);
+    replace('couch', furnitureModel('carpet'));
+    expect(() => setTexture('fabric', null)).not.toThrow();
+  });
+  it('gives clones of one file their own UVs and materials, so one chair does not change another', () => {
+    const { group, replace, setTexture } = buildInterior(THREE);
+    const shared = furnitureModel('wood');
+    replace('chair-1', shared.clone(true));
+    replace('chair-2', shared.clone(true));
+    setTexture('cabinet', tex());
+    const a = firstMesh(find(group, 'chair-1'));
+    const b = firstMesh(find(group, 'chair-2'));
+    expect(a.geometry).not.toBe(b.geometry);
+    expect(a.material).not.toBe(b.material);
+    expect(a.geometry).not.toBe(firstMesh(shared).geometry);
+    expect(firstMesh(shared).material.map).toBeNull();
+  });
+  it('projects UVs in metres: a bigger model gets more repeats', () => {
+    const { group, replace } = buildInterior(THREE, {
+      textures: { cabinet: tex() },
+    });
+    replace('dining-table', furnitureModel('wood'));
+    const uv = firstMesh(find(group, 'dining-table')).geometry.attributes.uv;
+    expect(uv.count).toBeGreaterThan(0);
+    let max = 0;
+    for (let i = 0; i < uv.count; i++)
+      max = Math.max(max, uv.getX(i), uv.getY(i));
+    // 1.4 m wide table, 0.6 m per repeat, about 2.3 repeats.
+    expect(max).toBeGreaterThan(1);
+  });
+});
+
+describe('the dining chairs (PO finding 7)', () => {
+  const chairs = INTERIOR_ITEMS.filter((i) => i.id.startsWith('chair-'));
+  it('has four chairs, each a plain block first and a model after replace, or a block on failure', () => {
+    expect(chairs.map((c) => c.id)).toEqual([
+      'chair-1',
+      'chair-2',
+      'chair-3',
+      'chair-4',
+    ]);
+    const { group, replace, fail } = buildInterior(THREE);
+    for (const c of chairs)
+      expect(find(group, c.id).userData.plain).toBeTruthy();
+    replace('chair-1', model());
+    fail('chair-2');
+    expect(find(group, 'chair-1').userData.plain).toBeFalsy();
+    expect(find(group, 'chair-2').userData.plain).toBeTruthy();
+    expect(find(group, 'chair-3').userData.plain).toBeTruthy();
+  });
+  it('blocks walking, like the other solid furniture (FR-17)', () => {
+    for (const c of chairs)
+      expect(
+        SOLIDS.some((s) => s.id === c.id),
+        c.id,
+      ).toBe(true);
+  });
+});
+
 describe('the interior in the world (FR-21)', () => {
   const colours = { hair: 'brown', clothing: 'mustard' };
   it('is added, and pickable, only when the house loaded', () => {

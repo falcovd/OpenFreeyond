@@ -1891,7 +1891,7 @@ Every ID from the spec and the task that delivers it. "Judged: T15" means a pers
 
 ## Addendum: PO review findings (2026-11-09)
 
-The builder (PO) reviewed the running house shell. This pass fixes findings 1, 2, 3, 5, 6 and 8. The furniture findings (4, 7 and later) come in a later pass. The spec is unchanged. Windows from inside supersede plan decision D-7 (windows on the outside only); no spec text said they had to stay outside.
+The builder (PO) reviewed the running house shell. This pass fixes findings 1, 2, 3, 5, 6 and 8. Findings 4 and 7 (furniture) are in the second table below; later findings come in a later pass. The spec is unchanged. Windows from inside supersede plan decision D-7 (windows on the outside only); no spec text said they had to stay outside.
 
 | Finding | Cause and fix |
 | --- | --- |
@@ -1906,3 +1906,12 @@ Other changes:
 
 - New materials `Trim`, `TrimIn` (indoor trim, dimmed by the builder like the plaster), `Paint`, `Metal` and `Stone`. The seven original names remain.
 - The model shares one unit cube and scales it per node, so `house.glb` stays small (about 46 KB). The builder reads sizes from the node scale.
+
+### Furniture pass: findings 4 and 7
+
+Chairs and textured furniture go beyond the interior item list of spec v1. FR-17 (solid furniture) and FR-19 (missing items are listed and shown as plain blocks) are applied to the chairs. The textures follow FR-16, FR-20 and FR-23: the flat-colour model stays until the texture arrives and stays for good if it fails.
+
+| Finding | Cause and fix |
+| --- | --- |
+| 4. Furniture has no textures | The Kenney models are flat-colour and their UVs point into a colour atlas, so a tiling texture cannot use them. `builders/interior.js` (`texturise`) now gives each model part a geometry copy with box-projected UVs, in metres, from `boxProject` in `src/logic/furniture-textures.js` (pure, unit-tested). The part is chosen by material name in `materialSpec`: `wood` and `woodDark` get wood (table, chairs, couch legs, kitchen cabinets), `carpet` on the couch gets fabric tinted with the kit colour. Metal, glass, the lamp shades and the TV keep their flat colours, so the shades still glow. Textures: new CC0 `textures/cabinet.jpg` (ambientCG Wood 049) and `textures/fabric.jpg` (ambientCG Fabric 030), 512 px, 28 KB and 35 KB, records in `src/data/licences.js`. They are in `interiorManifest()`, so they load after the place is ready, like the models. `replace` textures a model at once if its texture is known, and `setTexture` textures the models already in place when it arrives. A failed texture leaves the kit colours and shows the usual interior notice. Colours use `INTERIOR_DIM` (with a gain, as the wallpaper does) so the furniture is not brighter than the walls. The table and chairs use the pale cabinet wood, not `wood.jpg`, because the floor already uses `wood.jpg` and the table vanished into it. |
+| 7. Diner table: add 4 chairs | Four new interior items `chair-1` to `chair-4` in `INTERIOR_ITEMS`, one shared file `interior/chair.glb` (Kenney `chair`, CC0, added to the existing Kenney record; `itemsForFile` and clones, as for the pendants). Footprint 0.45 x 0.45, height 0.9, solids from the same list (FR-17), plain blocks first, replace and fail like the others. Two chairs on each long side of the table (z = -7.72 and -6.28, x = 2.0 and 2.8), facing it. A chair at a short end stood on the line from the inner doorway and blocked the existing "walk between the rooms" test, so there is none. Tests: `tests/house-layout.test.js` (four chairs, one file, inside the kitchen room, clear of the table, units, walls, doorway and each other, facing the table, reachability and the closed-door test unchanged), `tests/interior.test.js`, `tests/manifest.test.js`. |
