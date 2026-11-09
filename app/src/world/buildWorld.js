@@ -18,6 +18,7 @@ import { buildInterior } from './builders/interior.js';
 import { applyShadows } from './builders/shadows.js';
 import { SHADOWS } from './shadowConfig.js';
 import { visiblePlots } from './plots.js';
+import { buildNeighbourHouse } from './builders/neighbourHouse.js';
 import { buildPlotScenery } from './builders/plots.js';
 import { NEIGHBOUR_GARDENS } from './neighbourhoodConfig.js';
 
@@ -55,7 +56,7 @@ export function buildWorld(
     group.add(
       buildPlotScenery(THREE, assets, plot, { gardens: NEIGHBOUR_GARDENS }),
     );
-    // Task 6: the plot's house goes here.
+    group.add(buildNeighbourHouse(THREE, assets, plot));
   }
   for (const car of CARS) group.add(buildCar(THREE, assets, car));
   for (const lamp of LAMPS) group.add(buildLamp(THREE, assets, lamp));

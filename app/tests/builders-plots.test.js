@@ -135,7 +135,9 @@ describe('buildWorld with the plots (AC-1.8)', () => {
     const before = SOLIDS.length;
     const world = buildWorld(THREE, none, colours, { withCharacter: false });
     expect(SOLIDS.length).toBe(before);
-    const scenery = world.group.children.filter((c) => c.userData.neighbour);
+    const scenery = world.group.children.filter(
+      (c) => c.userData.neighbour && c.userData.kind === 'plot',
+    );
     expect(scenery.map((c) => c.userData.plotId)).toEqual(
       PLOTS.map((p) => p.id),
     );
