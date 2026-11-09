@@ -150,15 +150,31 @@ export const INTERIOR_ITEMS = [
     rot: Math.PI / 2,
     color: '#8a5a44',
   },
+  // The TV desk (PO finding R-10): against the partition wall (its inner face is at x = -0.1), under
+  // the TV. Kenney cabinetTelevisionDoors, native 0.8 x 0.31 x 0.25 m, scaled 1.8 to fill this box.
+  // It is the solid that blocks walking at the TV (FR-17); `tv` itself does not block.
+  {
+    id: 'tv-cabinet',
+    file: 'interior/tv-cabinet.glb',
+    x: -0.33,
+    z: -6.05,
+    w: 0.45,
+    d: 1.44,
+    h: 0.558,
+    rot: -Math.PI / 2,
+    color: '#a9743b',
+  },
+  // The TV stands on the cabinet: `y` is the top of the cabinet (the cabinet's `h`).
   {
     id: 'tv',
     file: 'interior/tv.glb',
-    x: -0.3,
+    x: -0.33,
     z: -6.05,
     w: 0.3,
     d: 1.2,
     h: 0.8,
-    y: 0.45,
+    y: 0.558,
+    solid: false,
     rot: -Math.PI / 2,
     color: '#1d1d22',
     // Measured on the model (Kenney televisionModern, native size 0.685 x 0.455 x 0.128 m, front +z):

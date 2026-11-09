@@ -72,6 +72,13 @@ describe('interior manifest (FR-20, FR-22)', () => {
       'chair-4',
     ]);
   });
+  it('lists the TV desk file once, for one item', () => {
+    const m = interiorManifest('clip').filter((a) =>
+      a.url.endsWith('tv-cabinet.glb'),
+    );
+    expect(m).toHaveLength(1);
+    expect(itemsForFile(m[0].url).map((i) => i.id)).toEqual(['tv-cabinet']);
+  });
   it('maps a shared file to every item that uses it', () => {
     const pendant = interiorManifest('clip').find(
       (a) => a.id === 'pendant-living',

@@ -1919,3 +1919,13 @@ Chairs and textured furniture go beyond the interior item list of spec v1. FR-17
 ### Window glass: finding R-9
 
 The PO asked for "windows on the main floor: make them with a transparency of 30% so you actually look through it". Read as 30% opaque (opacity 0.3, so 70% see-through), because the stated aim is to look through the glass. If the PO meant 30% see-through, set `GLASS_CLEAR_OPACITY` in `src/world/builders/house.js` to 0.7. The three ground-floor panes (`Window1` to `Window3`) now use a new material `GlassClear` in `scripts/build-house.mjs`; `Glass` stays on the upper windows. The builder makes `GlassClear` transparent (opacity 0.3, `depthWrite` off, double-sided, `renderOrder` 2) so it never hides the garden or the rooms. `house.glb` stays under 300 KB (tests).
+
+### TV desk and dark frame: finding R-10
+
+The PO said the TV is a standing TV and asked for a desk under it or a wall mount, and wanted a dark grey or black frame. Chosen: a desk. This goes beyond the spec's item list; FR-17 and FR-19 apply to the desk like the other items.
+
+| Part | Fix |
+| --- | --- |
+| Desk | New interior item `tv-cabinet`, one new file `interior/tv-cabinet.glb` (Kenney `cabinetTelevisionDoors`, CC0, added to the existing Kenney record). Footprint 0.45 x 1.44, height 0.558 (scale 1.8 of the native 0.25 x 0.8 x 0.31), against the partition wall (inner face x = -0.1) at z -6.77 to -5.33, so the inner doorway (z -8.1 to -6.9) stays clear. Plain block first, then the model; wood from `cabinet.jpg` through `materialSpec` (`wood`), handles keep the kit colour. |
+| TV on the desk | `tv` now has `y` = the desk height (0.558) and the desk's x and z. It is `solid: false`: the desk is the solid that blocks walking at the TV (AC-2.5 test now uses `tv-cabinet`; it asserts the same stop). The `tv` hooks (`attachTv`, screen plane, video) are unchanged. |
+| Dark frame | `forcedColour(itemId, materialName)` in `src/logic/furniture-textures.js` (pure): `tv` `metalDark` (body) is `#1a1a1d` and `metal` (stand) `#26262a`. `replace` in `builders/interior.js` sets these instead of dimming them. The screen is a separate `MeshBasicMaterial` and is not affected. |

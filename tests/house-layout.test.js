@@ -158,8 +158,9 @@ describe('walking in the house (FR-4, FR-17, AC-2.1 to AC-2.7)', () => {
       }
     }
   });
-  it('stops a person at the couch, the TV, the kitchen units and the dining table (AC-2.5)', () => {
-    for (const id of ['couch', 'tv', 'kitchen', 'dining-table']) {
+  it('stops a person at the couch, the TV (its desk), the kitchen units and the dining table (AC-2.5)', () => {
+    // The TV stands on its desk, which is the solid there (the TV itself does not block).
+    for (const id of ['couch', 'tv-cabinet', 'kitchen', 'dining-table']) {
       const s = byId(id);
       expect(s, id).toBeTruthy();
       const from = { x: s.x, z: s.z + s.d / 2 + 0.6 };
@@ -252,6 +253,50 @@ describe('the dining chairs (PO finding 7; FR-17)', () => {
       const toTable = { x: table.x - c.x, z: table.z - c.z };
       expect(f.x * toTable.x + f.z * toTable.z, c.id).toBeGreaterThan(0.5);
     }
+  });
+});
+
+describe('the TV desk (PO finding R-10; FR-17)', () => {
+  const cabinet = INTERIOR_ITEMS.find((i) => i.id === 'tv-cabinet');
+  const tv = INTERIOR_ITEMS.find((i) => i.id === 'tv');
+  const living = ROOMS.find((r) => r.id === 'living');
+  it('is one item with its own model file, inside the living room', () => {
+    expect(cabinet.file).toBe('interior/tv-cabinet.glb');
+    expect(
+      INTERIOR_ITEMS.filter((i) => i.file === cabinet.file),
+      'shares its file',
+    ).toHaveLength(1);
+    expect(cabinet.x - cabinet.w / 2).toBeGreaterThanOrEqual(living.minX);
+    expect(cabinet.x + cabinet.w / 2).toBeLessThanOrEqual(living.maxX);
+    expect(cabinet.z - cabinet.d / 2).toBeGreaterThanOrEqual(living.minZ);
+    expect(cabinet.z + cabinet.d / 2).toBeLessThanOrEqual(living.maxZ);
+  });
+  it('is solid, and clear of every other solid and of the inner doorway', () => {
+    expect(byId('tv-cabinet')).toBeTruthy();
+    for (const o of SOLIDS.filter((s) => s.id !== 'tv-cabinet'))
+      expect(overlaps(cabinet, o), o.id).toBe(false);
+    const gap = {
+      x: INNER_DOORWAY.x,
+      z: INNER_DOORWAY.z,
+      w: 1.2,
+      d: INNER_DOORWAY.w,
+    };
+    expect(overlaps(cabinet, gap)).toBe(false);
+    expect(cabinet.z - cabinet.d / 2).toBeGreaterThan(gap.z + gap.d / 2);
+  });
+  it('stands against the partition wall, under the TV, which stands on its top', () => {
+    const wall = WALLS.find((w) => w.id === 'wall-mid-front');
+    expect(cabinet.x + cabinet.w / 2).toBeCloseTo(wall.x - wall.w / 2, 1);
+    expect(tv.y).toBeCloseTo(cabinet.h, 2);
+    expect(tv.x).toBeCloseTo(cabinet.x);
+    expect(tv.z).toBeCloseTo(cabinet.z);
+    expect(Math.abs(tv.z - cabinet.z) + tv.d / 2).toBeLessThanOrEqual(
+      cabinet.d / 2,
+    );
+  });
+  it('leaves the TV itself non-solid, so the desk is what blocks walking', () => {
+    expect(tv.solid).toBe(false);
+    expect(byId('tv')).toBeUndefined();
   });
 });
 

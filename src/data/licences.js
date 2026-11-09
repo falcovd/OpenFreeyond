@@ -130,6 +130,7 @@ export const ASSET_RECORDS = [
     files: [
       'interior/couch.glb',
       'interior/tv.glb',
+      'interior/tv-cabinet.glb',
       'interior/lamp-floor.glb',
       'interior/lamp-pendant.glb',
       'interior/dining-table.glb',
@@ -140,7 +141,7 @@ export const ASSET_RECORDS = [
     source: 'https://kenney.nl/assets/furniture-kit',
     licence: 'CC0-1.0',
     licenceText:
-      'CC0 1.0 Universal (CC0 1.0) Public Domain Dedication, http://creativecommons.org/publicdomain/zero/1.0/. Quoted from License.txt in the pack: "License: (Creative Commons Zero, CC0)" and "This content is free to use in personal, educational and commercial projects. Support us by crediting Kenney or www.kenney.nl (this is not mandatory)". The pack page states "CC0 licensed". Models: loungeSofa (couch), televisionModern (tv), lampRoundFloor (lamp-floor), lampSquareCeiling (lamp-pendant), table (dining-table), chair (chair-1 to chair-4, one file for the four dining chairs). kitchen.glb is one row of five pieces (kitchenCabinetDrawer, kitchenSink, kitchenCabinet, kitchenStove, kitchenCabinet) joined by scripts/build-kitchen.mjs.',
+      'CC0 1.0 Universal (CC0 1.0) Public Domain Dedication, http://creativecommons.org/publicdomain/zero/1.0/. Quoted from License.txt in the pack: "License: (Creative Commons Zero, CC0)" and "This content is free to use in personal, educational and commercial projects. Support us by crediting Kenney or www.kenney.nl (this is not mandatory)". The pack page states "CC0 licensed". Models: loungeSofa (couch), televisionModern (tv), lampRoundFloor (lamp-floor), lampSquareCeiling (lamp-pendant), table (dining-table), chair (chair-1 to chair-4, one file for the four dining chairs), cabinetTelevisionDoors (tv-cabinet, the TV desk). kitchen.glb is one row of five pieces (kitchenCabinetDrawer, kitchenSink, kitchenCabinet, kitchenStove, kitchenCabinet) joined by scripts/build-kitchen.mjs.',
     credit: null,
     checked: '2026-11-09',
     verified: true,

@@ -72,6 +72,38 @@ const firstMesh = (root) => {
   return r;
 };
 
+describe('the dark TV frame (PO finding R-10)', () => {
+  const tvModel = () => {
+    const g = new THREE.Group();
+    for (const name of ['metalDark', 'metal']) {
+      const m = new THREE.MeshStandardMaterial({ color: '#bcd0d4' });
+      m.name = name;
+      g.add(new THREE.Mesh(new THREE.BoxGeometry(2, 1, 1), m));
+    }
+    return g;
+  };
+  it('makes the body and stand dark, not dimmed kit colours, and leaves the screen alone', () => {
+    const { group, replace, tv } = buildInterior(THREE);
+    replace('tv', tvModel());
+    const lum = (c) => (c.r + c.g + c.b) / 3;
+    group.traverse((o) => {
+      if (o.isMesh && o.material.name) {
+        expect(lum(o.material.color), o.material.name).toBeLessThan(0.05);
+      }
+    });
+    expect(tv.screen.material.toneMapped).toBe(false);
+    expect(tv.screen.material.color.getHex()).toBe(0x101014);
+  });
+  it('does not touch the colour of another item', () => {
+    const { group, replace } = buildInterior(THREE);
+    replace('kitchen', tvModel());
+    group.traverse((o) => {
+      if (o.isMesh && o.material.name)
+        expect(o.material.color.r).toBeGreaterThan(0.2);
+    });
+  });
+});
+
 describe('textured furniture (PO finding 4; FR-20, FR-23)', () => {
   const tex = () => new THREE.Texture();
   it('keeps the kit colour and its UVs until the texture arrives', () => {
@@ -193,6 +225,16 @@ describe('the interior in the world (FR-21)', () => {
       if (o.userData.kind === 'interior') found = true;
     });
     expect(found).toBe(false);
+  });
+});
+
+describe('the TV desk (PO finding R-10)', () => {
+  it('gets wood from the cabinet texture, like the other cabinets', () => {
+    const { group, replace } = buildInterior(THREE, {
+      textures: { cabinet: new THREE.Texture() },
+    });
+    replace('tv-cabinet', furnitureModel('wood'));
+    expect(firstMesh(find(group, 'tv-cabinet')).material.map).toBeTruthy();
   });
 });
 

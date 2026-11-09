@@ -2,7 +2,11 @@ import { INTERIOR_ITEMS } from '../layout.js';
 import { fitToBox } from './common.js';
 import { tvSource } from '../../logic/tv.js';
 import { TV_MODE, INTERIOR_DIM } from '../interiorConfig.js';
-import { materialSpec, boxProject } from '../../logic/furniture-textures.js';
+import {
+  materialSpec,
+  forcedColour,
+  boxProject,
+} from '../../logic/furniture-textures.js';
 
 function block(THREE, item) {
   const g = new THREE.Group();
@@ -199,12 +203,15 @@ export function buildInterior(
   const models = new Map();
   // Clones of one file share their materials, so each is dimmed once.
   const dimmed = new Set();
-  const dim = (object) =>
+  const dim = (id, object) =>
     object.traverse((o) => {
       for (const m of [].concat(o.material ?? [])) {
         if (!m.color || dimmed.has(m)) continue;
         dimmed.add(m);
-        m.color.multiplyScalar(INTERIOR_DIM);
+        // A part with a forced colour (the dark TV frame) is not dimmed, it is set.
+        const forced = forcedColour(id, m.name);
+        if (forced) m.color.set(forced);
+        else m.color.multiplyScalar(INTERIOR_DIM);
       }
     });
   return {
@@ -215,7 +222,7 @@ export function buildInterior(
       const item = INTERIOR_ITEMS.find((i) => i.id === id);
       const old = slots.get(id);
       if (!item || !old) return null;
-      dim(scene);
+      dim(id, scene);
       const fitted = fitToBox(THREE, scene, item, item.rot ?? 0);
       fitted.position.set(item.x, item.y ?? 0, item.z);
       fitted.userData.item = id;

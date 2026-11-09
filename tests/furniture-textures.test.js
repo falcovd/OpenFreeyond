@@ -3,6 +3,8 @@ import {
   boxUv,
   boxProject,
   materialSpec,
+  forcedColour,
+  DARK_FRAME,
   furnitureTextureIds,
 } from '../src/logic/furniture-textures.js';
 
@@ -52,7 +54,28 @@ describe('which material a furniture part gets, by name', () => {
     expect(materialSpec('tv', 'metalDark')).toBeNull();
     expect(materialSpec('nope', 'wood')).toBeNull();
   });
+  it('puts wood on the TV desk', () => {
+    expect(materialSpec('tv-cabinet', 'wood')).toBeTruthy();
+    expect(materialSpec('tv-cabinet', 'metal')).toBeNull();
+  });
   it('lists the texture ids the furniture can use', () => {
     expect(furnitureTextureIds().sort()).toEqual(['cabinet', 'fabric']);
+  });
+});
+
+describe('the dark TV frame (PO finding R-10)', () => {
+  const lum = (hex) => {
+    const n = parseInt(hex.slice(1), 16);
+    return ((n >> 16) + ((n >> 8) & 255) + (n & 255)) / 3;
+  };
+  it('forces the TV body and stand to a dark colour, by material name', () => {
+    expect(forcedColour('tv', 'metalDark')).toBe(DARK_FRAME);
+    for (const name of ['metalDark', 'metal'])
+      expect(lum(forcedColour('tv', name)), name).toBeLessThan(50);
+  });
+  it('leaves other items and unknown parts alone', () => {
+    expect(forcedColour('tv', 'glass')).toBeNull();
+    expect(forcedColour('kitchen', 'metal')).toBeNull();
+    expect(forcedColour('nope', 'metalDark')).toBeNull();
   });
 });

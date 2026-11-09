@@ -14,6 +14,7 @@ const FABRIC = { texture: 'fabric', size: 0.8, tint: 'kit', gain: 5 };
 export const FURNITURE_MATERIALS = {
   couch: { wood: WOOD, carpet: FABRIC },
   'dining-table': { wood: WOOD },
+  'tv-cabinet': { wood: CABINET },
   kitchen: {
     wood: CABINET,
     woodDark: { ...CABINET, tint: '#c9b8a6' },
@@ -27,6 +28,18 @@ export function materialSpec(itemId, materialName) {
     ? CHAIR
     : FURNITURE_MATERIALS[itemId];
   return table?.[materialName] ?? null;
+}
+
+// The TV body and stand are always dark (PO finding R-10), whatever the kit colours and the interior
+// dimming: the kit makes them light grey and teal grey. A colour per material name, by item id.
+export const DARK_FRAME = '#1a1a1d';
+const FORCED_COLOURS = {
+  tv: { metalDark: DARK_FRAME, metal: '#26262a' },
+};
+
+// The colour a part is forced to, or null when it keeps its kit colour.
+export function forcedColour(itemId, materialName) {
+  return FORCED_COLOURS[itemId]?.[materialName] ?? null;
 }
 
 // The texture ids the furniture can use, for the manifest and the tests.
