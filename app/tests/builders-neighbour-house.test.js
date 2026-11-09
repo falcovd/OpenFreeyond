@@ -111,6 +111,48 @@ describe('finished neighbour house (FR-4, FR-5, FR-14)', () => {
     });
   }
 
+  it('has few meshes and few materials, with one texture clone per house (NFR-1)', () => {
+    const real = makeAssets(
+      new Map([
+        ['brick', new THREE.Texture()],
+        ['roof', new THREE.Texture()],
+        ['wood', new THREE.Texture()],
+      ]),
+    );
+    const stubWithMany = (plot) => {
+      const model = stub(plot);
+      // many parts sharing a material name, as a model that was not merged would have
+      for (let i = 0; i < 30; i++) {
+        const m = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), named('Trim'));
+        model.scene.add(m);
+        const w = new THREE.Mesh(
+          new THREE.BoxGeometry(1, 1, 1),
+          named('Brick'),
+        );
+        model.scene.add(w);
+      }
+      return model;
+    };
+    for (const plot of [near, far]) {
+      const g = finishNeighbourHouse(THREE, real, plot, stubWithMany(plot));
+      const meshes = [];
+      const materials = new Set();
+      const maps = new Set();
+      g.traverse((o) => {
+        if (!o.isMesh) return;
+        meshes.push(o);
+        materials.add(o.material);
+        if (o.material.map) maps.add(o.material.map);
+      });
+      // the stub has 6 plus 60 meshes, but they share at most 6 materials and one brick clone
+      expect(materials.size).toBeLessThanOrEqual(6);
+      expect(maps.size).toBeLessThanOrEqual(3);
+      expect(
+        new Set(meshes.map((m) => m.material.name || 'x')).size,
+      ).toBeLessThanOrEqual(6);
+    }
+  });
+
   it('has the same footprint as the stand-in', () => {
     const a = new THREE.Box3().setFromObject(
       buildNeighbourHouse(THREE, none, near),

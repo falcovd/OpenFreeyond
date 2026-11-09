@@ -46,44 +46,34 @@ export function finishNeighbourHouse(THREE, assets, plot, gltf) {
 
   const flat = (color, extra = {}) =>
     new THREE.MeshStandardMaterial({ color, roughness: 1, ...extra });
-  const meshes = [];
-  scene.traverse((o) => o.isMesh && meshes.push(o));
-  for (const mesh of meshes) {
-    switch (mesh.material?.name) {
-      case 'Brick': {
-        mesh.geometry.computeBoundingBox();
-        const s = mesh.geometry.boundingBox
-          .getSize(new THREE.Vector3())
-          .multiply(mesh.scale);
-        mesh.material = surface(THREE, assets, 'brick', plot.tint, {
-          repeat: [Math.max(s.x, s.z) / 2, s.y / 2],
-          tint: plot.tint,
-          gain: BRICK_GAIN,
-        });
-        break;
-      }
-      case 'Render':
-        mesh.material = flat(plot.tint);
-        break;
-      case 'Roof':
-        mesh.material = surface(THREE, assets, 'roof', '#b5543a', {
-          repeat: [HOUSE_SIZE.w / 1.5, HOUSE_SIZE.d / 1.5],
-          tint: ROOF_TINT,
-          gain: 2.8,
-        });
-        mesh.material.side = THREE.DoubleSide;
-        break;
-      case 'Window':
-        mesh.material = flat(WINDOW, { roughness: 0.3 });
-        break;
-      case 'Door':
-        mesh.material = surface(THREE, assets, 'wood', DOOR);
-        break;
-      case 'Trim':
-        mesh.material = flat(TRIM);
-        break;
-    }
-  }
+  // One material per material name per house. The model carries world-space UVs (brick 1 tile per 2 m, roof
+  // 1 tile per 1.5 m), so the textures keep their repeat of 1.
+  const made = {
+    Brick: () =>
+      surface(THREE, assets, 'brick', plot.tint, {
+        tint: plot.tint,
+        gain: BRICK_GAIN,
+      }),
+    Render: () => flat(plot.tint),
+    Roof: () => {
+      const m = surface(THREE, assets, 'roof', '#b5543a', {
+        tint: ROOF_TINT,
+        gain: 2.8,
+      });
+      m.side = THREE.DoubleSide;
+      return m;
+    },
+    Window: () => flat(WINDOW, { roughness: 0.3 }),
+    Door: () => surface(THREE, assets, 'wood', DOOR),
+    Trim: () => flat(TRIM),
+  };
+  const cache = new Map();
+  scene.traverse((o) => {
+    const name = o.isMesh && o.material?.name;
+    if (!made[name]) return;
+    if (!cache.has(name)) cache.set(name, made[name]());
+    o.material = cache.get(name);
+  });
   return g;
 }
 

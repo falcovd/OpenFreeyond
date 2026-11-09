@@ -13,6 +13,18 @@ import { disposeObject } from './dispose.js';
 // The late parts of the neighbourhood: houses, cars, lamps (and later the backdrop). Each part starts as a
 // stand-in (a plain block) at its final place and size, and is swapped for the finished node when the file
 // it uses arrives (FR-14). A file that fails leaves its stand-ins. Nothing here is solid or pickable.
+// Frees a loaded value this registry will not keep: a glTF result (scene), a texture or a video.
+function release(v) {
+  if (!v) return;
+  if (v.scene) disposeObject(v.scene);
+  else if (v.isTexture) v.dispose();
+  else if (typeof v.pause === 'function') {
+    v.pause();
+    v.removeAttribute?.('src');
+    v.load?.();
+  }
+}
+
 export function createNeighbourhood(
   THREE,
   assets,
@@ -63,14 +75,23 @@ export function createNeighbourhood(
     replace(id, value) {
       if (disposed) return;
       const mine = parts.filter((p) => p.id === id && p.node.userData.plain);
-      if (mine.length === 0) return;
-      const fresh = mine.map((p) => {
-        const node = p.build(value);
-        // A value that cannot make the finished node is a failure: the stand-ins stay.
-        if (node.userData.plain) throw new Error(`Unusable file for ${id}`);
-        node.userData.neighbour = p.neighbour;
-        return node;
-      });
+      if (mine.length === 0) {
+        release(value); // nothing uses it
+        return;
+      }
+      let fresh;
+      try {
+        fresh = mine.map((p) => {
+          const node = p.build(value);
+          // A value that cannot make the finished node is a failure: the stand-ins stay.
+          if (node.userData.plain) throw new Error(`Unusable file for ${id}`);
+          node.userData.neighbour = p.neighbour;
+          return node;
+        });
+      } catch (err) {
+        release(value);
+        throw err;
+      }
       late.push(value);
       mine.forEach((p, i) => {
         const old = p.node;
@@ -87,7 +108,7 @@ export function createNeighbourhood(
       if (disposed) return;
       disposed = true;
       disposeObject(group);
-      for (const v of late) if (v?.scene) disposeObject(v.scene);
+      for (const v of late) release(v);
       late.length = 0;
     },
   };

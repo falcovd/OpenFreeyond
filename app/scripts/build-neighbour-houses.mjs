@@ -4,6 +4,10 @@
 // Each model is 8 by 5 m with the origin at the centre of the footprint on y = 0. The street face is +z.
 // Materials: Brick or Render (by facade), Roof, Window (dark, opaque: nothing shows inside), Door, Trim.
 import * as THREE from 'three';
+import {
+  mergeGeometries,
+  mergeVertices,
+} from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { LOOKS, HOUSE_SIZE } from '../src/world/houseLooks.js';
@@ -222,11 +226,67 @@ function build(look) {
       ],
     ]);
   }
-  return root;
+  // Roof texture coordinates in metres / 1.5: u along the ridge, v up the slope (distance from the ridge line).
+  const ridgeY = H + (pitched ? 1.8 : 1.4);
+  const roofUv = pitched
+    ? (x, y, z) => [x / ROOF_M, Math.hypot(z, y - ridgeY) / ROOF_M]
+    : (x, y, z) => [z / ROOF_M, Math.hypot(x, y - ridgeY) / ROOF_M];
+  return { root, roofUv };
+}
+
+const FACADE_M = 2; // one brick texture tile per 2 m, on every face
+const ROOF_M = 1.5;
+
+// World-space texture coordinates for the facade: by the face's dominant axis, so the scale is equal everywhere.
+function facadeUv(g) {
+  const p = g.attributes.position;
+  const n = g.attributes.normal;
+  const uv = g.attributes.uv;
+  for (let i = 0; i < p.count; i++) {
+    const ax = Math.abs(n.getX(i));
+    const ay = Math.abs(n.getY(i));
+    const az = Math.abs(n.getZ(i));
+    const [x, y, z] = [p.getX(i), p.getY(i), p.getZ(i)];
+    if (ax >= ay && ax >= az) uv.setXY(i, z / FACADE_M, y / FACADE_M);
+    else if (az >= ay) uv.setXY(i, x / FACADE_M, y / FACADE_M);
+    else uv.setXY(i, x / FACADE_M, z / FACADE_M);
+  }
+}
+
+// One mesh per material: every node's transform is baked into its geometry, then the geometries are merged.
+function mergePerMaterial(root, roofUv) {
+  root.updateMatrixWorld(true);
+  const byMaterial = new Map();
+  root.traverse((o) => {
+    if (!o.isMesh) return;
+    const g = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone();
+    g.applyMatrix4(o.matrixWorld);
+    g.deleteAttribute('normal');
+    g.computeVertexNormals();
+    const name = o.material.name;
+    if (name === 'Brick' || name === 'Render') facadeUv(g);
+    else if (name === 'Roof') {
+      const p = g.attributes.position;
+      for (let i = 0; i < p.count; i++)
+        g.attributes.uv.setXY(i, ...roofUv(p.getX(i), p.getY(i), p.getZ(i)));
+    }
+    const entry = byMaterial.get(name) ?? { material: o.material, parts: [] };
+    entry.parts.push(g);
+    byMaterial.set(name, entry);
+  });
+  const out = new THREE.Group();
+  out.name = 'NeighbourHouse';
+  for (const [name, { material, parts }] of byMaterial) {
+    const m = new THREE.Mesh(mergeVertices(mergeGeometries(parts)), material);
+    m.name = name;
+    out.add(m);
+  }
+  return out;
 }
 
 for (const [id, look] of Object.entries(LOOKS)) {
-  const root = build(look);
+  const built = build(look);
+  const root = mergePerMaterial(built.root, built.roofUv);
   const glb = await new Promise((resolve, reject) =>
     new GLTFExporter().parse(root, resolve, reject, {
       binary: true,

@@ -173,6 +173,34 @@ describe('createNeighbourhood (FR-14)', () => {
     expect(plain(hood.group, 'lamp')).toHaveLength(LAMPS.length);
   });
 
+  it('releases a loaded value that cannot be used (build throws, or no part uses it)', () => {
+    const hood = createNeighbourhood(THREE, none());
+    const broken = stub();
+    let freed = 0;
+    broken.scene.children[0].geometry.addEventListener(
+      'dispose',
+      () => freed++,
+    );
+    // a model whose scene cannot be cloned: the build throws
+    broken.scene.clone = () => {
+      throw new Error('bad');
+    };
+    expect(() => hood.replace('house-brick-pitched', broken)).toThrow();
+    expect(freed).toBe(1);
+    const unused = stub();
+    unused.scene.children[0].geometry.addEventListener(
+      'dispose',
+      () => freed++,
+    );
+    hood.replace('nothing-here', unused);
+    expect(freed).toBe(2);
+    const tex = new THREE.Texture();
+    let texFreed = false;
+    tex.addEventListener('dispose', () => (texFreed = true));
+    hood.replace('nothing-here', tex);
+    expect(texFreed).toBe(true);
+  });
+
   it('accepts later parts through register (the backdrop of Task 9)', () => {
     const hood = createNeighbourhood(THREE, none(), {
       plots: [],

@@ -34,6 +34,57 @@ function meshes(gltf) {
   gltf.scenes[0].nodes.forEach((i) => walk(i, [0, 0, 0], [1, 1, 1]));
   return out;
 }
+// The positions and indices of one mesh, read from the binary chunk.
+function geometryOf(buf, gltf, meshIndex) {
+  const bin = 20 + buf.readUInt32LE(12) + 8;
+  const p = gltf.meshes[meshIndex].primitives[0];
+  const read = (acc, Type) => {
+    const a = gltf.accessors[acc];
+    const v = gltf.bufferViews[a.bufferView];
+    const off = bin + (v.byteOffset ?? 0) + (a.byteOffset ?? 0);
+    const comps = { SCALAR: 1, VEC3: 3 }[a.type];
+    const len = a.count * comps * Type.BYTES_PER_ELEMENT;
+    return new Type(
+      buf
+        .subarray(off, off + len)
+        .buffer.slice(buf.byteOffset + off, buf.byteOffset + off + len),
+    );
+  };
+  const pos = read(p.attributes.POSITION, Float32Array);
+  const idxType =
+    gltf.accessors[p.indices].componentType === 5125
+      ? Uint32Array
+      : Uint16Array;
+  return { pos, idx: read(p.indices, idxType) };
+}
+// The separate boxes of a merged mesh (connected triangle groups) as bounding boxes.
+function parts(buf, gltf, meshIndex) {
+  const { pos, idx } = geometryOf(buf, gltf, meshIndex);
+  // faces of a box are separate vertices: connect by position
+  const key = (v) => [0, 1, 2].map((k) => pos[v * 3 + k].toFixed(4)).join();
+  const parent = new Map();
+  const find = (a) => {
+    while ((parent.get(a) ?? a) !== a) a = parent.get(a);
+    return a;
+  };
+  for (let t = 0; t < idx.length; t += 3)
+    for (const k of [1, 2])
+      parent.set(find(key(idx[t + k])), find(key(idx[t])));
+  const boxes = new Map();
+  for (const v of new Set(idx)) {
+    const r = find(key(v));
+    const b = boxes.get(r) ?? {
+      min: [Infinity, Infinity, Infinity],
+      max: [-Infinity, -Infinity, -Infinity],
+    };
+    for (let k = 0; k < 3; k++) {
+      b.min[k] = Math.min(b.min[k], pos[v * 3 + k]);
+      b.max[k] = Math.max(b.max[k], pos[v * 3 + k]);
+    }
+    boxes.set(r, b);
+  }
+  return [...boxes.values()];
+}
 const centre = (m) => m.min.map((v, k) => (v + m.max[k]) / 2);
 
 describe.each(Object.entries(LOOKS))('%s', (id, look) => {
@@ -69,17 +120,42 @@ describe.each(Object.entries(LOOKS))('%s', (id, look) => {
     expect(names).toEqual([facade, 'Door', 'Roof', 'Trim', 'Window'].sort());
   });
 
+  it('is merged: one mesh per material, at most 8 meshes', () => {
+    const { gltf } = load(look);
+    const nodes = gltf.nodes.filter((n) => n.mesh !== undefined);
+    expect(nodes.length).toBeLessThanOrEqual(8);
+    const mats = nodes.map((n) => gltf.meshes[n.mesh].primitives[0].material);
+    expect(new Set(mats).size).toBe(mats.length);
+  });
+
   it('has at least 4 windows and the door on the street face', () => {
-    const all = meshes(load(look).gltf);
+    const { buf, gltf } = load(look);
+    const all = meshes(gltf);
+    const facade = look.facade === 'brick' ? 'Brick' : 'Render';
     const zf = Math.max(
-      ...all.filter((m) => m.name === 'wall').map((m) => m.max[2]),
+      ...all.filter((m) => m.mat === facade).map((m) => m.max[2]),
     );
+    const meshOf = (name) => gltf.nodes.find((n) => n.name === name).mesh;
+    // each pane is a separate box; the panes on the street face sit within 0.1 m of its plane
     const onFace = (m) => Math.abs(centre(m)[2] - zf) <= 0.1;
-    const windows = all.filter((m) => m.mat === 'Window' && onFace(m));
-    expect(windows.length).toBeGreaterThanOrEqual(4);
-    const doors = all.filter((m) => m.mat === 'Door' && onFace(m));
+    const panes = parts(buf, gltf, meshOf('Window'));
+    expect(panes.filter(onFace).length).toBeGreaterThanOrEqual(4);
+    const doors = parts(buf, gltf, meshOf('Door'));
     expect(doors).toHaveLength(1);
+    expect(onFace(doors[0])).toBe(true);
     expect(centre(doors[0])[0]).toBeCloseTo(look.doorOffset, 1);
+  });
+
+  it('carries world-space UVs on the walls (equal texture scale)', () => {
+    const { gltf } = load(look);
+    const facade = look.facade === 'brick' ? 'Brick' : 'Render';
+    const node = gltf.nodes.find((n) => n.name === facade);
+    const uv =
+      gltf.accessors[
+        gltf.meshes[node.mesh].primitives[0].attributes.TEXCOORD_0
+      ];
+    // the walls are 8 m wide: at 2 m per tile the u range is well over 1
+    expect(uv.max[0] - uv.min[0]).toBeGreaterThan(2);
   });
 
   it('has dark, opaque glass', () => {

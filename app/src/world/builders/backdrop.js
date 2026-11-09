@@ -11,7 +11,7 @@ export const BACKDROP = {
   // The picture is 4 : 1 and the cylinder is 2 * PI * 100 = 628 m around and 20 m high, so the picture repeats
   // this many times around (it is seamless: its ends are cross-faded). One repeat is 78.5 m by 20 m (3.9 : 1).
   repeat: 8,
-  renderOrder: 0, // just above the sky sphere (-1): drawn after it and before the scene
+  renderOrder: -0.5, // just above the sky sphere (-1): drawn after it and before the scene, including transparent objects
 };
 
 // The plain band, or the picture when `assets` already has the 'backdrop' texture.

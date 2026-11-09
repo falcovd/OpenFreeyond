@@ -45,7 +45,8 @@ describe('buildBackdrop (FR-9, AC-4.4, AC-4.7)', () => {
     expect(m.userData.update).toBeUndefined();
   });
   it('is drawn just above the sky sphere and before the scene', () => {
-    expect(make().renderOrder).toBe(0);
+    expect(make().renderOrder).toBe(BACKDROP.renderOrder);
+    expect(BACKDROP.renderOrder).toBe(-0.5);
   });
   it('is a plain band of the horizon colour until the picture arrives', () => {
     const m = make();
