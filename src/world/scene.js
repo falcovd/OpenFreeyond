@@ -5,8 +5,10 @@ import {
   CHARACTER_SPOT,
   resetCharacterSolid,
   resetHouse,
+  LIGHTS,
   useClosedHouse,
 } from './layout.js';
+import { lightsMarkup } from './lightsMarkup.js';
 import { releasePage } from './teardown.js';
 import { HAIR_COLOURS, CLOTHING_COLOURS } from '../logic/fields.js';
 import { MANIFEST, interiorManifest, itemsForFile } from './manifest.js';
@@ -135,6 +137,7 @@ export async function mountWorld(
       fog="type: linear; color: ${sky.horizon}; near: ${FOG.near}; far: ${FOG.far}">
       <a-light type="ambient" color="#ffd9b0" intensity="0.85"></a-light>
       <a-light type="point" color="#ffcf8a" intensity="0.8" distance="12" position="0 2.5 -3"></a-light>
+      ${houseLoaded ? lightsMarkup(LIGHTS) : ''}
       <a-entity id="world-root" world-motion></a-entity>
       <a-entity id="door-controller" house-door></a-entity>
       <a-entity id="character-model-entity"
