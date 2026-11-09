@@ -68,3 +68,21 @@ describe('the door and the TV store and send nothing (NFR-3, AC-8.1, AC-8.2)', (
     expect(src).not.toMatch(/getUserMedia|AudioContext|\.volume\s*=/);
   });
 });
+
+describe('the fence line and the street store and send nothing (NFR-3, AC-7.1, AC-7.2)', () => {
+  const NEW_FILES = [
+    'world/streetLayout.js',
+    'world/streetConfig.js',
+    'world/builders/street.js',
+    'world/builders/slabs.js',
+    'world/builders/props.js',
+    'world/builders/gate.js',
+    'logic/fenceLine.js',
+    'logic/slabs.js',
+  ];
+  const SRC = new URL('../src', import.meta.url).pathname;
+  it('keeps storage and the network out of the fence, slab and street files', () => {
+    for (const f of NEW_FILES)
+      expect(code(join(SRC, f)), f).not.toMatch(FORBIDDEN);
+  });
+});
