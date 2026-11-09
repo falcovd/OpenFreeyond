@@ -159,7 +159,9 @@ export const INTERIOR_ITEMS = [
     y: 0.45,
     rot: -Math.PI / 2,
     color: '#1d1d22',
-    screen: { w: 1.05, h: 0.6, y: 0.5, z: 0.04 },
+    // Measured on the model (Kenney televisionModern, native size 0.685 x 0.455 x 0.128 m, front +z):
+    // the screen is 0.668 x 0.368 m, its centre 0.262 m up, its face 0.021 m in front of the model centre.
+    screen: { w: 0.668, h: 0.368, y: 0.262, z: 0.024 },
   },
   {
     id: 'floor-lamp',

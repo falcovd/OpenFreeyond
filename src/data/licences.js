@@ -96,4 +96,33 @@ export const ASSET_RECORDS = [
     verified: false,
     note: 'The owner confirms the CC0 dedication of the generated house before going online. PLACEHOLDER: `source` is not the real repository URL (no git remote was set); replace it with the repository URL.',
   },
+  {
+    files: [
+      'interior/couch.glb',
+      'interior/tv.glb',
+      'interior/lamp-floor.glb',
+      'interior/lamp-pendant.glb',
+      'interior/dining-table.glb',
+      'interior/kitchen.glb',
+    ],
+    author: 'Kenney (Furniture Kit 2.0)',
+    source: 'https://kenney.nl/assets/furniture-kit',
+    licence: 'CC0-1.0',
+    licenceText:
+      'CC0 1.0 Universal (CC0 1.0) Public Domain Dedication, http://creativecommons.org/publicdomain/zero/1.0/. Quoted from License.txt in the pack: "License: (Creative Commons Zero, CC0)" and "This content is free to use in personal, educational and commercial projects. Support us by crediting Kenney or www.kenney.nl (this is not mandatory)". The pack page states "CC0 licensed". Models: loungeSofa (couch), televisionModern (tv), lampRoundFloor (lamp-floor), lampSquareCeiling (lamp-pendant), table (dining-table). kitchen.glb is one row of five pieces (kitchenCabinetDrawer, kitchenSink, kitchenCabinet, kitchenStove, kitchenCabinet) joined by scripts/build-kitchen.mjs.',
+    credit: null,
+    checked: '2026-11-09',
+    verified: true,
+  },
+  {
+    files: ['interior/tv-clip.mp4', 'interior/tv-still.jpg'],
+    author: 'Psypherium (Wikimedia Commons)',
+    source: 'https://commons.wikimedia.org/wiki/File:Delaneys_Falls.webm',
+    licence: 'CC0-1.0',
+    licenceText:
+      'CC0 1.0 Universal (CC0 1.0) Public Domain Dedication, http://creativecommons.org/publicdomain/zero/1.0/. The Commons file page for "Delaneys Falls.webm" (own work of Psypherium, Delaneys Falls, Preston, Tasmania, recorded 2020-02-04) gives the licence as "CC0 - Creative Commons Zero, Public Domain Dedication". tv-clip.mp4 is the first 40 seconds of that video, scaled to 1280 wide, 24 fps, sound removed (ffmpeg). tv-still.jpg is one frame cut from tv-clip.mp4 at 5 seconds.',
+    credit: null,
+    checked: '2026-11-09',
+    verified: true,
+  },
 ];

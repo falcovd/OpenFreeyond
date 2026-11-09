@@ -10,9 +10,9 @@ const total = (dir) =>
     return sum + (statSync(p).isDirectory() ? total(p) : statSync(p).size);
   }, 0);
 
-describe('download budget (NFR-2)', () => {
-  it('keeps shipped assets at or under 20 MB, so the page, scripts and assets stay under 30 MB', () => {
-    expect(total(ROOT)).toBeLessThanOrEqual(20 * 1024 * 1024);
+describe('download budget (NFR-2; the 100 MB limit replaces the 30 MB one)', () => {
+  it('keeps shipped assets at or under 90 MB, so the page, scripts and assets stay under the 100 MB limit', () => {
+    expect(total(ROOT)).toBeLessThanOrEqual(90 * 1024 * 1024);
   });
   it('keeps every texture at 1 MB or less, except the sky photo (3 MB)', () => {
     for (const f of readdirSync(join(ROOT, 'textures'))) {
