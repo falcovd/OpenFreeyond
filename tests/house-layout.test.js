@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import { resolveMove } from '../src/logic/collision.js';
 import { walkableArea, reachesWithin } from '../src/logic/walkable.js';
 import {
@@ -17,6 +17,7 @@ import {
   SWING_SPACE,
   FLOWER_BEDS,
   outsideSolids,
+  resetHouse,
 } from '../src/world/layout.js';
 import { GROUND_SIZE, FOG } from '../src/world/builders/ground.js';
 import { PHASE1_BOUNDS, PHASE1_SOLIDS } from './fixtures/phase1-layout.js';
@@ -26,6 +27,7 @@ const overlaps = (a, b) =>
   Math.abs(a.x - b.x) < (a.w + b.w) / 2 &&
   Math.abs(a.z - b.z) < (a.d + b.d) / 2;
 
+afterEach(() => resetHouse());
 describe('the house footprint and doorways (FR-12, AC-2.6)', () => {
   it('is at least 5.5 by 4.5 m, larger in one, and fits in 10 by 8 m either way', () => {
     const { w, d } = HOUSE;
