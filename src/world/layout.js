@@ -228,7 +228,7 @@ export const LIGHTS = [
     y: 2.0,
     z: -7.5,
     color: '#ffb866',
-    intensity: 0.7,
+    intensity: 1.3,
     distance: 6,
   },
   {
@@ -238,7 +238,7 @@ export const LIGHTS = [
     y: 1.5,
     z: -6,
     color: '#ffa94d',
-    intensity: 0.5,
+    intensity: 1,
     distance: 4,
   },
   {
@@ -248,7 +248,7 @@ export const LIGHTS = [
     y: 2.0,
     z: -7.5,
     color: '#ffc27a',
-    intensity: 0.7,
+    intensity: 1.3,
     distance: 6,
   },
   {
@@ -258,7 +258,7 @@ export const LIGHTS = [
     y: 1.6,
     z: -9,
     color: '#ffd29a',
-    intensity: 0.4,
+    intensity: 0.8,
     distance: 3.5,
   },
 ];

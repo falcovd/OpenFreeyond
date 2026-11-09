@@ -1,7 +1,7 @@
 import { INTERIOR_ITEMS } from '../layout.js';
 import { fitToBox } from './common.js';
 import { tvSource } from '../../logic/tv.js';
-import { TV_MODE } from '../interiorConfig.js';
+import { TV_MODE, INTERIOR_DIM } from '../interiorConfig.js';
 
 function block(THREE, item) {
   const g = new THREE.Group();
@@ -10,7 +10,9 @@ function block(THREE, item) {
   g.userData.plain = item.id;
   const m = new THREE.Mesh(
     new THREE.BoxGeometry(item.w, item.h, item.d),
-    new THREE.MeshStandardMaterial({ color: item.color }),
+    new THREE.MeshStandardMaterial({
+      color: new THREE.Color(item.color).multiplyScalar(INTERIOR_DIM),
+    }),
   );
   m.position.y = item.h / 2;
   g.add(m);
@@ -132,6 +134,16 @@ export function buildInterior(THREE, { tvMode = TV_MODE } = {}) {
     group.add(b);
   }
   const tv = attachTv(THREE, tvMode);
+  // Clones of one file share their materials, so each is dimmed once.
+  const dimmed = new Set();
+  const dim = (object) =>
+    object.traverse((o) => {
+      for (const m of [].concat(o.material ?? [])) {
+        if (!m.color || dimmed.has(m)) continue;
+        dimmed.add(m);
+        m.color.multiplyScalar(INTERIOR_DIM);
+      }
+    });
   return {
     group,
     slots,
@@ -140,6 +152,7 @@ export function buildInterior(THREE, { tvMode = TV_MODE } = {}) {
       const item = INTERIOR_ITEMS.find((i) => i.id === id);
       const old = slots.get(id);
       if (!item || !old) return null;
+      dim(scene);
       const fitted = fitToBox(THREE, scene, item, item.rot ?? 0);
       fitted.position.set(item.x, item.y ?? 0, item.z);
       fitted.userData.item = id;

@@ -1,5 +1,6 @@
 import { surface, plainBlock } from './common.js';
 import { HOUSE, HOUSE_BLOCK } from '../layout.js';
+import { INTERIOR_DIM } from '../interiorConfig.js';
 
 function tag(object, part) {
   object.userData.part = part;
@@ -61,13 +62,13 @@ export function buildHouse(THREE, assets) {
         break;
       case 'Plaster':
         mesh.material = new THREE.MeshStandardMaterial({
-          color: '#f1e4cf',
+          color: new THREE.Color('#f1e4cf').multiplyScalar(INTERIOR_DIM),
           roughness: 1,
         });
         break;
       case 'Ceiling':
         mesh.material = new THREE.MeshStandardMaterial({
-          color: '#f6efe3',
+          color: new THREE.Color('#f6efe3').multiplyScalar(INTERIOR_DIM),
           roughness: 1,
         });
         break;
