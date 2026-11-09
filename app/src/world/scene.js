@@ -142,7 +142,7 @@ export async function mountWorld(
   scene.innerHTML = `
     <a-scene ${stats ? 'stats' : ''} vr-mode-ui="enabled: false" background="color: ${sky.horizon}"
       fog="type: linear; color: ${sky.horizon}; near: ${FOG.near}; far: ${FOG.far}">
-      <a-light type="ambient" color="#ffd9b0" intensity="0.85"></a-light>
+      <a-light type="ambient" color="#ffd9b0" intensity="0.7"></a-light>
       <a-light type="point" color="#ffcf8a" intensity="0.8" distance="12" position="0 2.5 -3"></a-light>
       ${houseLoaded ? lightsMarkup(LIGHTS) : ''}
       <a-entity id="world-root" world-motion></a-entity>
