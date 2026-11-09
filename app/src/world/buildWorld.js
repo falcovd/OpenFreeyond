@@ -9,6 +9,7 @@ import {
 } from './builders/plants.js';
 import { buildHouse } from './builders/house.js';
 import { buildFence, buildFurniture } from './builders/furniture.js';
+import { buildStreet } from './builders/street.js';
 import { buildGate } from './builders/gate.js';
 import { buildFigure } from './builders/figure.js';
 import { buildInterior } from './builders/interior.js';
@@ -37,6 +38,7 @@ export function buildWorld(
     buildSky(THREE, assets, undefined, { shadows: SHADOWS === 'on' }),
     buildGround(THREE, assets),
     buildPath(THREE, assets),
+    buildStreet(THREE, assets),
     buildHouse(THREE, assets),
   );
   for (const solid of SOLIDS) {

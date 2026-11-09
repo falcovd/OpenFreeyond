@@ -15,6 +15,10 @@ export const SHADOW_RULES = {
   interior: { cast: false, receive: true },
   ground: { cast: false, receive: true },
   slab: { cast: true, receive: true },
+  'street-slab': { cast: true, receive: true },
+  curb: { cast: true, receive: true },
+  road: { cast: false, receive: true },
+  street: { cast: false, receive: true },
   sky: { cast: false, receive: false },
 };
 const NONE = { cast: false, receive: false };
