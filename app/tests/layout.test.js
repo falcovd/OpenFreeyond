@@ -9,6 +9,7 @@ import {
   HOUSE,
   DOOR,
   PATH,
+  FENCE,
   FLOWER_BEDS,
   resetCharacterSolid,
 } from '../src/world/layout.js';
@@ -69,7 +70,8 @@ describe('counts (FR-6, FR-7)', () => {
 describe('path and reachability (AC-2.2, AC-4.4)', () => {
   it('has a walkable path from the street to the door', () => {
     expect(Math.abs(PATH.x - DOOR.x)).toBeLessThan(PATH.w / 2);
-    for (let z = PATH.z1; z >= PATH.z0 + 0.4; z -= 0.2) {
+    // The path now ends at the closed gate: start 0.35 m inside its inner face (AC-5.6).
+    for (let z = PATH.z1 - FENCE.t - 0.35; z >= PATH.z0 + 0.4; z -= 0.2) {
       expect(hitsSolid(PATH.x, z, SOLIDS, 0.3), `z=${z}`).toBe(false);
     }
   });

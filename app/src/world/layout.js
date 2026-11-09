@@ -1,5 +1,8 @@
+import { fenceLine } from '../logic/fenceLine.js';
+
 export const BOUNDS = { minX: -12, maxX: 12, minZ: -11, maxZ: 11 };
-export const SPAWN = { x: 0, z: 6 };
+// The fence along the four edges: its outer face is on the edge of BOUNDS.
+export const FENCE = { t: 0.2, h: 1, color: '#f2e3c6' };
 export const CHARACTER_SPOT = { x: 3, z: -1 };
 
 export const WALL = 0.2; // thickness of every wall, in metres
@@ -55,8 +58,12 @@ export const ROOMS = [
   },
 ];
 
-// The path from the street to the door. Not a solid.
-export const PATH = { x: DOOR.x, z0: DOOR.z, z1: 9, w: 1.4 };
+// The path from the gate to the door, 16 m long. Not a solid.
+export const PATH = { x: DOOR.x, z0: DOOR.z, z1: BOUNDS.maxZ, w: 1.2 };
+// The closed gate in the front fence, centred on the path.
+export const GATE = { x: PATH.x, w: 1.2 };
+// The start spot: on the path, 2 m inside the gate.
+export const SPAWN = { x: PATH.x, z: BOUNDS.maxZ - FENCE.t - 2 };
 
 // Flower beds are drawn but never block walking.
 export const FLOWER_BEDS = [
@@ -325,29 +332,10 @@ export const LIGHTS = [
   },
 ];
 
-// kind: house | fence | furniture | tree | bush | hedge | character
+// kind: house | fence | gate | furniture | tree | bush | hedge | character
 // Collision uses w and d only. h and shape are for drawing.
 export const SOLIDS = [
-  {
-    id: 'fence-left',
-    kind: 'fence',
-    x: -8,
-    z: -2,
-    w: 0.2,
-    d: 10,
-    h: 1,
-    color: '#f2e3c6',
-  },
-  {
-    id: 'fence-right',
-    kind: 'fence',
-    x: 8,
-    z: -2,
-    w: 0.2,
-    d: 10,
-    h: 1,
-    color: '#f2e3c6',
-  },
+  ...fenceLine(BOUNDS, FENCE, GATE),
   {
     id: 'bench',
     kind: 'furniture',

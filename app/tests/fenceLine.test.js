@@ -54,13 +54,17 @@ describe('fenceLine (FR-1, FR-4, FR-5, AC-1.4)', () => {
 });
 
 describe('fencePosts (FR-2, FR-4)', () => {
-  it('puts posts about every metre, the first and last inset 6 cm from the ends', () => {
-    const posts = fencePosts(byId('fence-left'));
-    expect(posts[0]).toBeCloseTo(-11 + 0.06);
-    for (let i = 1; i < posts.length; i++) {
-      const gap = posts[i] - posts[i - 1];
-      expect(gap).toBeLessThanOrEqual(1.0 + 1e-9);
-      expect(gap).toBeGreaterThan(0.9);
+  it('puts posts about every metre, the first and last inset 6 cm from the ends, on every piece', () => {
+    for (const piece of solids) {
+      const posts = fencePosts(piece);
+      const half = Math.max(piece.w, piece.d) / 2;
+      expect(posts[0], piece.id).toBeCloseTo(-half + 0.06);
+      expect(posts.at(-1), piece.id).toBeCloseTo(half - 0.06);
+      for (let i = 1; i < posts.length; i++) {
+        const gap = posts[i] - posts[i - 1];
+        expect(gap, piece.id).toBeLessThanOrEqual(1.0 + 1e-9);
+        expect(gap, piece.id).toBeGreaterThan(0.5); // the 1.2 m gate gets 0.54 m gaps
+      }
     }
   });
   it('leaves exactly 1.2 m between the inner faces of the two gate-side end posts', () => {
