@@ -17,6 +17,9 @@ import { buildFigure } from './builders/figure.js';
 import { buildInterior } from './builders/interior.js';
 import { applyShadows } from './builders/shadows.js';
 import { SHADOWS } from './shadowConfig.js';
+import { visiblePlots } from './plots.js';
+import { buildPlotScenery } from './builders/plots.js';
+import { NEIGHBOUR_GARDENS } from './neighbourhoodConfig.js';
 
 const BUILDERS = {
   tree: buildTree,
@@ -46,6 +49,13 @@ export function buildWorld(
   for (const solid of SOLIDS) {
     const build = BUILDERS[solid.kind];
     if (build) group.add(build(THREE, assets, solid));
+  }
+  // The other plots: fences, gates, paths and gardens (scenery only, never in SOLIDS or pickables).
+  for (const plot of visiblePlots()) {
+    group.add(
+      buildPlotScenery(THREE, assets, plot, { gardens: NEIGHBOUR_GARDENS }),
+    );
+    // Task 6: the plot's house goes here.
   }
   for (const car of CARS) group.add(buildCar(THREE, assets, car));
   for (const lamp of LAMPS) group.add(buildLamp(THREE, assets, lamp));
