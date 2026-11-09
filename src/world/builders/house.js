@@ -1,15 +1,22 @@
 import { surface, plainBlock } from './common.js';
 import { HOUSE, HOUSE_BLOCK } from '../layout.js';
-import { INTERIOR_DIM } from '../interiorConfig.js';
+import { INTERIOR_DIM, CEILING_DIM } from '../interiorConfig.js';
+
+const PLASTER = '#f1e4cf';
+const WALLPAPER_TILE = 0.8; // metres of wall per texture repeat
+const WALLPAPER_GAIN = 1.6; // the fabric texture is mid grey, so it needs brightening
 
 function tag(object, part) {
   object.userData.part = part;
   return object;
 }
 
+// The size of a mesh. The generated model shares one unit cube and scales it per node.
 function size(THREE, mesh) {
   mesh.geometry.computeBoundingBox();
-  return mesh.geometry.boundingBox.getSize(new THREE.Vector3());
+  return mesh.geometry.boundingBox
+    .getSize(new THREE.Vector3())
+    .multiply(mesh.scale);
 }
 
 // The house is the generated model (scripts/build-house.mjs). Materials are swapped by name, as the
@@ -60,15 +67,32 @@ export function buildHouse(THREE, assets) {
           repeat: [3, 3],
         });
         break;
-      case 'Plaster':
+      case 'Plaster': {
+        // Wallpaper: a fabric-like texture, tiled by size so the weave has the same scale on every piece.
+        const s = size(THREE, mesh);
+        mesh.material = surface(
+          THREE,
+          assets,
+          'wallpaper',
+          new THREE.Color(PLASTER).multiplyScalar(INTERIOR_DIM),
+          {
+            repeat: [Math.max(s.x, s.z) / WALLPAPER_TILE, s.y / WALLPAPER_TILE],
+            tint: PLASTER,
+            gain: INTERIOR_DIM * WALLPAPER_GAIN,
+          },
+        );
+        break;
+      }
+      case 'Ceiling':
+        // White, and brighter than the walls, so that it reads as white under the warm lights.
         mesh.material = new THREE.MeshStandardMaterial({
-          color: new THREE.Color('#f1e4cf').multiplyScalar(INTERIOR_DIM),
+          color: new THREE.Color('#ffffff').multiplyScalar(CEILING_DIM),
           roughness: 1,
         });
         break;
-      case 'Ceiling':
+      case 'TrimIn':
         mesh.material = new THREE.MeshStandardMaterial({
-          color: new THREE.Color('#f6efe3').multiplyScalar(INTERIOR_DIM),
+          color: new THREE.Color(old.color).multiplyScalar(INTERIOR_DIM),
           roughness: 1,
         });
         break;

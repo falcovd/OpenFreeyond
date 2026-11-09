@@ -1888,3 +1888,21 @@ Every ID from the spec and the task that delivers it. "Judged: T15" means a pers
 | US-6 | T1, T5, T13, T14 |
 | US-7 | T6, T8, T9, T10, T12 |
 | US-8 | T7, T13 |
+
+## Addendum: PO review findings (2026-11-09)
+
+The builder (PO) reviewed the running house shell. This pass fixes findings 1, 2, 3, 5, 6 and 8. The furniture findings (4, 7 and later) come in a later pass. The spec is unchanged. Windows from inside supersede plan decision D-7 (windows on the outside only); no spec text said they had to stay outside.
+
+| Finding | Cause and fix |
+| --- | --- |
+| 1. Edges of ceiling and walls show outside | The 0.1 m ceiling slab ran the full footprint, so its edges sat in the same planes as the outer wall faces (a light line at 2.5 m). The side walls also overlapped the front and back walls at the corners (shared outer faces, vertical lines). The ceiling, floor and cornice now stay inside the walls, the side walls stop at the front and back walls, and the plaster linings are clipped to the rooms. `tests/house-glb.test.js` checks that no two wall boxes overlap and that nothing indoors reaches the outer faces. Collision solids and `layout.js` are untouched. |
+| 2. Door looks like planks | The leaf is now painted (new `Paint` material) with six raised panels and a paler moulding on both faces, a knob on each side, architraves outside and inside, and jamb boards in the opening. The `Door` node origin is still the hinge and the leaf is still 1.2 m wide and 2.1 m high at the top. The foot of the leaf is lifted 0.035 m so it clears the threshold and step. The swing logic is unchanged. |
+| 3. No threshold | A wooden threshold (0.03 m) in the front opening, a stone step (0.025 m) outside and a wooden threshold (0.025 m) in the inner doorway. All are 0.03 m or lower, so there is no collision change. |
+| 5. Indoor walls plain | New CC0 texture `textures/wallpaper.jpg` (ambientCG Fabric 036, 512 px, 31 KB, record in `src/data/licences.js`, checked 2026-11-09) in `MANIFEST` as `wallpaper`. `builders/house.js` applies it to the `Plaster` material by name, tiled at 0.8 m per repeat from the size of each piece. Without the texture the plain dimmed colour stays (FR-16). |
+| 6. Ceiling | The ceiling is white (`CEILING_DIM = 0.65`, set apart from `INTERIOR_DIM` so it reads white under the warm lights and not grey), with a stepped cornice round each room and a frame of shallow beams. It is plain geometry (about 25 boxes), inside the walls, so it is not seen from outside. |
+| 8. Windows not visible from inside | The ground-floor garden wall now has real openings (0.8 x 1.0 m at the GLB positions x = -3.3, 1.2, 3.0), with glass in the middle of the wall, mullions, frame and sill outside, and reveal, architrave and sill inside. Upper windows are unchanged (outside only). `WALLS` solids are unchanged, so the glass still blocks walking. |
+
+Other changes:
+
+- New materials `Trim`, `TrimIn` (indoor trim, dimmed by the builder like the plaster), `Paint`, `Metal` and `Stone`. The seven original names remain.
+- The model shares one unit cube and scales it per node, so `house.glb` stays small (about 46 KB). The builder reads sizes from the node scale.

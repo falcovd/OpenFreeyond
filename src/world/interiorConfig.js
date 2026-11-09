@@ -8,3 +8,6 @@ export const TV_MODE = 'clip';
 // blow out. Dimming the interior colours (not the light) keeps the garden as it is, and leaves the
 // warm lights in the rooms to make the glow. Nothing changes at run time.
 export const INTERIOR_DIM = 0.5;
+
+// The ceiling is white and should read as white, so it is dimmed much less than the walls.
+export const CEILING_DIM = 0.65;

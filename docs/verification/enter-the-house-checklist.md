@@ -103,6 +103,18 @@ Rows marked "Auto" are also covered by a unit test (file and test named in the r
 - [ ] AC-8.1 "Given the network tool is open during 5 minutes of use that includes opening and closing the door and walking through the house, when the builder inspects the requests, then no request carries a value about the door or about the person." (Auto: `tests/privacy.test.js` "never touches storage, cookies or the network from the world code", "keeps storage and the network out of door.js, click.js and tv.js"; the network check is a person check.)
 - [ ] AC-8.2 "Given the browser storage is inspected before and after a visit in which the door was opened and closed, when the builder compares them, then no entry about the door or the person has been added." (Auto: `tests/privacy.test.js` same tests; `tests/door.test.js` "starts closed on every visit and is not stored (FR-6, AC-1.9)"; the storage comparison is a person check.)
 
+## Review findings (PO review of the house shell, 2026-11-09)
+
+Windows from inside supersede plan decision D-7. Person checks in the browser unless marked Auto.
+
+- [ ] R-1 From the garden, at the front, both corners, the doorway and under the eave, no edge of the ceiling, a wall or a lining shows on the outside (no light line at 2.5 m, no vertical lines at the corners). (Auto: `tests/house-glb.test.js` "has no overlapping wall boxes", "keeps the ceiling, floor and linings inside the walls".)
+- [ ] R-2 The closed door looks like a door from outside and from inside: panels, a knob on each side, a frame round the opening. It still opens and closes as before. (Auto: `tests/house-glb.test.js` "has a door with a handle on both sides"; the look is a person check.)
+- [ ] R-3 There is a threshold in the front doorway and a low step outside, and a threshold in the inner doorway. Walking over them is not blocked or bumpy. (Auto: `tests/house-glb.test.js` checks they are 0.03 m or lower.)
+- [ ] R-5 The indoor walls show a wallpaper (fabric-like) texture. With `wallpaper.jpg` missing they are a plain colour. (Auto: `tests/builders-house.test.js` "puts the wallpaper on the indoor plaster", "uses plain colours when the textures failed".)
+- [ ] R-6 The indoor ceiling reads white (not grey), with a cornice and beams, and none of it is visible from outside. (Auto: `tests/house-glb.test.js` "has white ceiling structure"; the colour is a person check.)
+- [ ] R-8 The three ground-floor windows can be seen through from inside, with glass, a frame and a sill on both sides. They still block walking. (Auto: `tests/house-glb.test.js` "has real window openings".)
+- [ ] R-L The new texture `textures/wallpaper.jpg` has its licence record (ambientCG Fabric 036, CC0) and stays within the 1 MB texture budget. (Auto: `tests/manifest.test.js`, `tests/licences.test.js`, `tests/budget.test.js`.)
+
 ## Missing items
 
 none

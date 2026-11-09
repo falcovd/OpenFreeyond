@@ -2,6 +2,7 @@ import { describe, it, expect, afterEach } from 'vitest';
 import * as THREE from 'three';
 import { makeAssets } from '../src/world/builders/common.js';
 import { buildHouse } from '../src/world/builders/house.js';
+import { INTERIOR_DIM } from '../src/world/interiorConfig.js';
 import {
   HOUSE,
   HOUSE_BLOCK,
@@ -31,6 +32,9 @@ function fakeHouse() {
   scene.add(mesh('Floor', 'Floor', 8, 0.02, 5));
   scene.add(mesh('Ceiling', 'Ceiling', 8, 0.1, 5));
   scene.add(mesh('MidWall', 'Plaster', 0.2, 2.5, 2));
+  const trim = mesh('Arch', 'TrimIn');
+  trim.material.color.set('#ffffff');
+  scene.add(trim);
   const door = new THREE.Group();
   door.name = 'Door';
   door.position.set(HINGE.x - HOUSE.x, 0, HINGE.z - HOUSE.z);
@@ -54,6 +58,7 @@ const loadedAssets = () =>
       ['brick', texture()],
       ['wood', texture()],
       ['roof', texture()],
+      ['wallpaper', texture()],
     ]),
   );
 const parts = (root, part) => {
@@ -79,9 +84,53 @@ describe('buildHouse with the model', () => {
     expect(parts(g, 'walls')[0].material.map).toBeTruthy();
     expect(parts(g, 'roof')[0].material.map).toBeTruthy();
   });
+  it('puts the wallpaper on the indoor plaster, tiled by size, with a white ceiling (findings 5, 6)', () => {
+    const g = buildHouse(THREE, loadedAssets());
+    let plaster;
+    let ceiling;
+    let trim;
+    g.traverse((o) => {
+      if (o.name === 'MidWall') plaster = o;
+      if (o.name === 'Ceiling') ceiling = o;
+      if (o.name === 'Arch') trim = o;
+    });
+    expect(plaster.material.map).toBeTruthy();
+    // 2 m of wall at 0.8 m per repeat, 2.5 m high
+    expect(plaster.material.map.repeat.x).toBeCloseTo(2 / 0.8);
+    expect(plaster.material.map.repeat.y).toBeCloseTo(2.5 / 0.8);
+    expect(ceiling.material.map).toBeFalsy();
+    const c = ceiling.material.color;
+    expect(c.r).toBeCloseTo(c.g);
+    expect(c.g).toBeCloseTo(c.b);
+    expect(c.r).toBeGreaterThan(0.6 * 0.99);
+    expect(c.r).toBeLessThanOrEqual(1);
+    // indoor trim is dimmed like the plaster
+    expect(trim.material.color.r).toBeCloseTo(INTERIOR_DIM, 1);
+  });
+  it('scales the brick repeat by the node scale of the generated model', () => {
+    const scene = new THREE.Group();
+    const m = mesh('Wall1', 'Wall', 1, 1, 1);
+    m.scale.set(4, 5, 0.2);
+    scene.add(m);
+    const g = buildHouse(
+      THREE,
+      makeAssets(
+        new Map([
+          ['house', { scene }],
+          ['brick', texture()],
+        ]),
+      ),
+    );
+    expect(parts(g, 'walls')[0].material.map.repeat.x).toBeCloseTo(2);
+    expect(parts(g, 'walls')[0].material.map.repeat.y).toBeCloseTo(2.5);
+  });
   it('uses plain colours when the textures failed', () => {
     const g = buildHouse(THREE, makeAssets(new Map([['house', fakeHouse()]])));
     expect(parts(g, 'walls')[0].material.map).toBeFalsy();
+    let plaster;
+    g.traverse((o) => o.name === 'MidWall' && (plaster = o));
+    expect(plaster.material.map).toBeFalsy();
+    expect(plaster.material.color.r).toBeGreaterThan(0);
     expect(g.userData.door).toBeTruthy();
   });
 });
