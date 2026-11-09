@@ -98,6 +98,7 @@ export function buildSky(THREE, assets, params = skyParams(assets)) {
   mesh.renderOrder = -1;
   group.add(mesh);
   group.userData.noPick = true; // a click goes through the sky
+  group.userData.kind = 'sky';
   const sun = new THREE.DirectionalLight('#ffd9a0', 1.0);
   sun.position.set(...params.sun).multiplyScalar(100);
   group.add(sun);

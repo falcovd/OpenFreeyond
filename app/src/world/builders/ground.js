@@ -13,6 +13,7 @@ export function buildGround(THREE, assets) {
   );
   mesh.rotation.x = -Math.PI / 2;
   mesh.userData.noPick = true;
+  mesh.userData.kind = 'ground';
   return mesh;
 }
 
@@ -27,5 +28,6 @@ export function buildPath(THREE, assets) {
   mesh.rotation.x = -Math.PI / 2;
   mesh.position.set(PATH.x, 0.02, (PATH.z0 + PATH.z1) / 2);
   mesh.userData.noPick = true;
+  mesh.userData.kind = 'path';
   return mesh;
 }
