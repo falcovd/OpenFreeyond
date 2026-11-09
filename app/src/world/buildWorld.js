@@ -9,6 +9,10 @@ import {
 } from './builders/plants.js';
 import { buildHouse } from './builders/house.js';
 import { buildFence, buildFurniture } from './builders/furniture.js';
+import { buildStreet } from './builders/street.js';
+import { CARS, LAMPS } from './streetLayout.js';
+import { buildCar, buildLamp } from './builders/props.js';
+import { buildGate } from './builders/gate.js';
 import { buildFigure } from './builders/figure.js';
 import { buildInterior } from './builders/interior.js';
 import { applyShadows } from './builders/shadows.js';
@@ -19,6 +23,7 @@ const BUILDERS = {
   bush: buildBush,
   hedge: buildHedge,
   fence: buildFence,
+  gate: buildGate,
   furniture: buildFurniture,
 };
 
@@ -35,12 +40,15 @@ export function buildWorld(
     buildSky(THREE, assets, undefined, { shadows: SHADOWS === 'on' }),
     buildGround(THREE, assets),
     buildPath(THREE, assets),
+    buildStreet(THREE, assets),
     buildHouse(THREE, assets),
   );
   for (const solid of SOLIDS) {
     const build = BUILDERS[solid.kind];
     if (build) group.add(build(THREE, assets, solid));
   }
+  for (const car of CARS) group.add(buildCar(THREE, assets, car));
+  for (const lamp of LAMPS) group.add(buildLamp(THREE, assets, lamp));
   // The interior stands in the house, so without the house model there is none (FR-21).
   const interior = assets.gltf('house') ? buildInterior(THREE) : null;
   if (interior) group.add(interior.group);

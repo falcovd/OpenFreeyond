@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { shadowFrustum } from '../src/logic/shadowFrustum.js';
-import { BOUNDS } from '../src/world/layout.js';
+import { SHADOW_REGION } from '../src/world/streetLayout.js';
 import skyMeta from '../src/data/sky.json';
 import { SHADOW_MAX_HEIGHT, SUN_DISTANCE } from '../src/world/shadowConfig.js';
 
 const corners = () => {
   const out = [];
-  for (const x of [BOUNDS.minX, BOUNDS.maxX])
-    for (const z of [BOUNDS.minZ, BOUNDS.maxZ])
+  for (const x of [SHADOW_REGION.minX, SHADOW_REGION.maxX])
+    for (const z of [SHADOW_REGION.minZ, SHADOW_REGION.maxZ])
       for (const y of [0, SHADOW_MAX_HEIGHT]) out.push([x, y, z]);
   return out;
 };
@@ -21,7 +21,7 @@ const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 
 describe('shadowFrustum', () => {
   const f = shadowFrustum({
-    bounds: BOUNDS,
+    bounds: SHADOW_REGION,
     maxHeight: SHADOW_MAX_HEIGHT,
     distance: SUN_DISTANCE,
   });
@@ -59,6 +59,15 @@ describe('shadowFrustum', () => {
         expect(depth, `az ${deg}`).toBeLessThanOrEqual(f.far);
       }
     }
+  });
+
+  it('holds the street corners at x = +-12 for every azimuth', () => {
+    expect(SHADOW_REGION.minX).toBeLessThanOrEqual(-12);
+    expect(SHADOW_REGION.maxX).toBeGreaterThanOrEqual(12);
+    const hs = corners().filter(
+      ([x, , z]) => Math.abs(x) === 12 && z === SHADOW_REGION.maxZ,
+    );
+    expect(hs).toHaveLength(4);
   });
 
   it('keeps the texel size under 3 cm with a 2048 map', () => {

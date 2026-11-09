@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { makeAssets } from '../src/world/builders/common.js';
 import { buildWorld } from '../src/world/buildWorld.js';
 import { SOLIDS, FLOWER_BEDS } from '../src/world/layout.js';
+import { CARS, LAMPS } from '../src/world/streetLayout.js';
 
 const colours = { hair: 'brown', clothing: 'mustard' };
 const count = (root, kind) => {
@@ -19,6 +20,33 @@ const gltf = () => {
 };
 
 describe('buildWorld', () => {
+  it('with no assets still draws fences, gate, street, and the cars and lamps as plain blocks (AC-6.13)', () => {
+    const { group } = buildWorld(THREE, makeAssets(new Map()), colours, {
+      withCharacter: false,
+    });
+    expect(count(group, 'fence')).toBeGreaterThan(0);
+    expect(count(group, 'gate')).toBe(1);
+    expect(count(group, 'car')).toBe(CARS.length);
+    expect(count(group, 'lamp')).toBe(LAMPS.length);
+    expect(CARS.length).toBe(3);
+    expect(LAMPS.length).toBe(3);
+    const plain = [];
+    group.traverse((o) => {
+      if (o.userData.plain && ['car', 'lamp'].includes(o.userData.kind))
+        plain.push(o);
+    });
+    expect(plain.length).toBe(CARS.length + LAMPS.length);
+  });
+  it('draws a fence group per fence solid and one gate that clicks pass through', () => {
+    const world = buildWorld(THREE, makeAssets(new Map()), colours, {
+      withCharacter: false,
+    });
+    expect(count(world.group, 'fence')).toBe(
+      SOLIDS.filter((s) => s.kind === 'fence').length,
+    );
+    expect(count(world.group, 'gate')).toBe(1);
+    expect(world.pickables.some((o) => o.userData.kind === 'gate')).toBe(false);
+  });
   it('survives every asset failing (AC-8.4)', () => {
     const world = buildWorld(THREE, makeAssets(new Map()), colours, {
       withCharacter: false,

@@ -1,5 +1,6 @@
 import { surface } from './common.js';
 import { PATH } from '../layout.js';
+import { buildSlabs } from './slabs.js';
 
 export const GROUND_SIZE = 600; // far beyond the fog, so the ground never ends in view (FR-3)
 export const FOG = { near: 40, far: 220 };
@@ -17,17 +18,18 @@ export function buildGround(THREE, assets) {
   return mesh;
 }
 
+// Paving slabs from the gate (z = PATH.z1, whole slabs) back to the door (z = PATH.z0, the partial row).
 export function buildPath(THREE, assets) {
-  const length = PATH.z1 - PATH.z0;
-  const mesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(PATH.w, length),
-    surface(THREE, assets, 'path', '#bba88c', {
-      repeat: [PATH.w / 1.5, length / 1.5],
-    }),
-  );
-  mesh.rotation.x = -Math.PI / 2;
-  mesh.position.set(PATH.x, 0.02, (PATH.z0 + PATH.z1) / 2);
-  mesh.userData.noPick = true;
-  mesh.userData.kind = 'path';
-  return mesh;
+  const g = buildSlabs(THREE, assets, {
+    width: PATH.w,
+    length: PATH.z1 - PATH.z0,
+    texture: 'paving',
+    fallback: '#b9b3a8',
+    kind: 'slab',
+    top: 0.05,
+  });
+  g.rotation.y = Math.PI; // local +z (along the strip) points to world -z
+  g.position.set(PATH.x, 0, PATH.z1);
+  g.userData.noPick = true;
+  return g;
 }

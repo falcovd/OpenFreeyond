@@ -25,14 +25,24 @@ export const ASSET_RECORDS = [
     checked: '2026-11-08',
   },
   {
-    files: ['textures/path.jpg'],
-    author: 'ambientCG (Gravel 023)',
-    source: 'https://ambientcg.com/a/Gravel023',
+    files: ['textures/paving.jpg'],
+    author: 'ambientCG (Paving Stones 109)',
+    source: 'https://ambientcg.com/a/PavingStones109',
     licence: 'CC0-1.0',
     licenceText:
       'CC0 1.0 Universal (CC0 1.0) Public Domain Dedication, https://creativecommons.org/publicdomain/zero/1.0/. ambientCG: "All assets are released under the Creative Commons CC0 license, making them free to use without attribution - even in commercial circumstances." (https://docs.ambientcg.com/license/).',
     credit: null,
-    checked: '2026-11-08',
+    checked: '2026-11-09',
+  },
+  {
+    files: ['textures/asphalt.jpg'],
+    author: 'ambientCG (Asphalt 031)',
+    source: 'https://ambientcg.com/a/Asphalt031',
+    licence: 'CC0-1.0',
+    licenceText:
+      'CC0 1.0 Universal (CC0 1.0) Public Domain Dedication, https://creativecommons.org/publicdomain/zero/1.0/. ambientCG: "All assets are released under the Creative Commons CC0 license, making them free to use without attribution - even in commercial circumstances." (https://docs.ambientcg.com/license/).',
+    credit: null,
+    checked: '2026-11-09',
   },
   {
     files: ['textures/soil.jpg'],
@@ -153,6 +163,32 @@ export const ASSET_RECORDS = [
     licence: 'CC0-1.0',
     licenceText:
       'CC0 1.0 Universal (CC0 1.0) Public Domain Dedication, http://creativecommons.org/publicdomain/zero/1.0/. The Commons file page for "Delaneys Falls.webm" (own work of Psypherium, Delaneys Falls, Preston, Tasmania, recorded 2020-02-04) gives the licence as "CC0 - Creative Commons Zero, Public Domain Dedication". tv-clip.mp4 is the first 40 seconds of that video, scaled to 1280 wide, 24 fps, sound removed (ffmpeg). tv-still.jpg is one frame cut from tv-clip.mp4 at 5 seconds.',
+    credit: null,
+    checked: '2026-11-09',
+    verified: true,
+  },
+  {
+    files: [
+      'models/street/car-1.glb',
+      'models/street/car-2.glb',
+      'models/street/car-3.glb',
+    ],
+    author: 'Quaternius (Cars Bundle, via Poly Pizza)',
+    source: 'https://poly.pizza/bundle/Cars-Bundle-FE5IWe6OMk',
+    licence: 'CC0-1.0',
+    licenceText:
+      'CC0 1.0 Universal (CC0 1.0) Public Domain Dedication, http://creativecommons.org/publicdomain/zero/1.0/. The Poly Pizza page of each model (author Quaternius) states "Public Domain (CC0)" and links CC0 1.0. Models: Car (NormalCar1, https://poly.pizza/m/Cz6yDaUcM9, car-1), Car (NormalCar2, https://poly.pizza/m/unqqkULtRU, car-2, body colour changed to brick red) and SUV (https://poly.pizza/m/xsMtZhBkxL, car-3), rotated to face +x, scaled and stood on y=0 by scripts/build-street-props.mjs. The models have flat material colours and no texture: no logos or brand marks, and the two grey plates (front and back) are blank.',
+    credit: null,
+    checked: '2026-11-09',
+    verified: true,
+  },
+  {
+    files: ['models/street/lamp.glb'],
+    author: 'Quaternius (Street Light, via Poly Pizza)',
+    source: 'https://poly.pizza/m/nFwrlcLvM5',
+    licence: 'CC0-1.0',
+    licenceText:
+      'CC0 1.0 Universal (CC0 1.0) Public Domain Dedication, http://creativecommons.org/publicdomain/zero/1.0/. The Poly Pizza page (author Quaternius) states "Public Domain (CC0)" and links CC0 1.0. Model: Street Light (a pole with a curved arm and a lamp head, 324 triangles, no emissive material), scaled to 4.5 m by scripts/build-street-props.mjs; the arm already points to +z, over the road.',
     credit: null,
     checked: '2026-11-09',
     verified: true,

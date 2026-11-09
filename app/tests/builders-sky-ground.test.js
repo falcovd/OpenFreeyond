@@ -10,7 +10,13 @@ import {
 } from '../src/world/builders/sky.js';
 import { buildGround, buildPath } from '../src/world/builders/ground.js';
 import { PATH } from '../src/world/layout.js';
-import { SHADOW_MAP_SIZE } from '../src/world/shadowConfig.js';
+import {
+  SHADOW_MAP_SIZE,
+  SHADOW_MAX_HEIGHT,
+  SUN_DISTANCE,
+} from '../src/world/shadowConfig.js';
+import { shadowFrustum } from '../src/logic/shadowFrustum.js';
+import { SHADOW_REGION } from '../src/world/streetLayout.js';
 
 const none = makeAssets(new Map());
 
@@ -128,10 +134,25 @@ describe('ground (FR-3, FR-4, FR-5)', () => {
     expect(g.material.map).not.toBeNull();
     expect(g.material.map.repeat.x).toBeGreaterThan(1);
   });
-  it('draws a path from the street to the door', () => {
+  it('draws a slab path from the gate to the door, centred on the path', () => {
     const p = buildPath(THREE, none);
-    expect(p.geometry.parameters.width).toBeCloseTo(PATH.w);
-    expect(p.geometry.parameters.height).toBeCloseTo(PATH.z1 - PATH.z0);
+    expect(p.userData.kind).toBe('slab');
+    expect(p.userData.noPick).toBe(true);
+    expect(p.position.x).toBeCloseTo(PATH.x);
+    expect(p.position.z).toBeCloseTo(PATH.z1);
+    const box = new THREE.Box3().setFromObject(p);
+    expect(box.min.z).toBeCloseTo(PATH.z0, 1);
+    expect(box.max.z).toBeCloseTo(PATH.z1, 1);
+    expect(box.max.x - box.min.x).toBeCloseTo(PATH.w, 1);
+  });
+});
+
+describe('the path underlay', () => {
+  it('has a polygon offset so it does not fight the ground', () => {
+    const p = buildPath(THREE, none);
+    const under = p.children[0];
+    expect(under.material.polygonOffset).toBe(true);
+    expect(under.material.polygonOffsetFactor).toBeLessThan(0);
   });
 });
 
@@ -147,7 +168,13 @@ describe('the sun casts shadows (shadows on)', () => {
     const sun = sunOf(buildSky(THREE, none, undefined, { shadows: true }));
     expect(sun.castShadow).toBe(true);
     expect(sun.shadow.mapSize.x).toBe(SHADOW_MAP_SIZE);
-    expect(sun.shadow.camera.right).toBeGreaterThan(15);
+    const f = shadowFrustum({
+      bounds: SHADOW_REGION,
+      maxHeight: SHADOW_MAX_HEIGHT,
+      distance: SUN_DISTANCE,
+    });
+    expect(sun.shadow.camera.right).toBeCloseTo(f.right);
+    expect(f.right).toBeGreaterThan(25);
   });
   it('allocates no shadow map when shadows are off', () => {
     const sun = sunOf(buildSky(THREE, none, undefined, { shadows: false }));
