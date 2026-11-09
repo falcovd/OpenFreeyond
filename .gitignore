@@ -1,4 +1,4 @@
 node_modules/
 dist/
-/assets/
+/app/source-assets/
 .DS_Store

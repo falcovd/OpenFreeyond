@@ -1,6 +1,6 @@
 # OpenFreeyond
 
-A cozy 3D place in the desktop browser, with a character who lives there. You walk around with keyboard and mouse, and the character wanders through the garden. Phase 1 of the plan in `plans/project-plan.md`. Talking to the character by voice is planned for phase 2.
+A cozy 3D place in the desktop browser, with a character who lives there. You walk around with keyboard and mouse, and the character wanders through the garden. Phase 1 of the plan in `docs/plans/project-plan.md`. Talking to the character by voice is planned for phase 2.
 
 Built with [A-Frame](https://aframe.io) 1.6 (three.js), Vite and plain JavaScript modules. No framework.
 
@@ -14,7 +14,7 @@ Built with [A-Frame](https://aframe.io) 1.6 (three.js), Vite and plain JavaScrip
 
 ## Run
 
-Requires Node 22 or newer (see `.nvmrc`).
+Requires Node 22 or newer (see `app/.nvmrc`). The app lives in `app/`: run every command below from there (`cd app`).
 
 - Dev: `docker compose up`, then open http://localhost:5173. Without Docker: `npm ci` and `npm run dev`.
 - Tests: `npm test`. Lint: `npm run lint`. Format check: `npm run format:check`.
@@ -29,17 +29,20 @@ Requires Node 22 or newer (see `.nvmrc`).
 
 ## Project layout
 
-| Path                                      | Contents                                                                                                                |
-| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `src/logic/`                              | Pure logic: validation, storage, colours, collision, start screen options, browser checks. Covered by unit tests.       |
-| `src/world/`                              | The A-Frame scene, the world layout, asset loading and the custom components.                                           |
-| `src/ui/`                                 | The start, confirm and intake screens, and their styles.                                                                |
-| `public/assets/`                          | Models and textures that ship with the site, such as `character.glb`.                                                   |
-| `public/brand/`                           | Brand images (logo, favicons), made by `scripts/make-brand-assets.mjs`.                                                 |
-| `src/data/`                               | Asset licence data shown under "Credits".                                                                               |
-| `scripts/`                                | Asset tooling: `convert-character.mjs` (FBX to GLB), `prepare-texture.mjs`, `prepare-sky.mjs`, `make-brand-assets.mjs`. |
-| `tests/`                                  | Vitest tests.                                                                                                           |
-| `specs/`, `discovery/`, `plans/`, `docs/` | Specs, discovery notes, plans, the verification checklist and process notes.                                            |
+| Path                      | Contents                                                                                                   |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `app/`                    | The whole app: source, tests, tooling, configs, Dockerfile. Run all npm and Docker commands here.          |
+| `app/src/logic/`          | Pure logic: validation, storage, colours, collision, door, wandering. Covered by unit tests.               |
+| `app/src/world/`          | The A-Frame scene, the world layout, asset loading and the custom components.                              |
+| `app/src/ui/`             | The start, confirm and intake screens, and their styles.                                                   |
+| `app/src/data/`           | Asset licence data shown under "Credits".                                                                  |
+| `app/public/`             | What ships with the site: `assets/` (models, textures) and `brand/` (logo, favicons).                      |
+| `app/scripts/`            | Asset tooling: converters and generators for the character, house, kitchen, textures and brand images.     |
+| `app/tests/`              | Vitest tests.                                                                                              |
+| `app/source-assets/`      | Raw source models and images (git-ignored, not shipped).                                                   |
+| `specs/`, `discovery/`    | Product specs and discovery notes, one folder per feature.                                                 |
+| `docs/`                   | Plans (`docs/plans/`), verification checklists, process notes and the brand rules (`docs/BRAND.md`).       |
+| `.github/`, `.adlc-project/` | CI and deploy workflows; project context for agents.                                                    |
 
 To add or move something in the world, edit `src/world/layout.js`. Drawing and collision both read from it.
 
@@ -64,7 +67,7 @@ CI (`.github/workflows/ci.yml`) runs lint, format check, tests and build on ever
 - World visuals spec: `specs/world-visuals/spec.md`
 - World visuals plan: `docs/plans/2026-11-08-world-visuals.md`
 - World visuals checklist: `docs/verification/world-visuals-checklist.md`
-- Brand rules (colours, logo, wording): `BRAND.md`
+- Brand rules (colours, logo, wording): `docs/BRAND.md`
 - Asset licences: `src/data/licences.js` (shown on the start screen under the "Credits" link in the footer)
 - Brand refresh plan: `docs/plans/2026-11-08-brand-refresh.md`
 
