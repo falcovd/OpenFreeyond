@@ -75,36 +75,30 @@ describe('the fence stops the person at every point (AC-1.2, AC-1.3, AC-4.7)', (
         );
       return p;
     };
-    // every metre along the left, right, back and front edges, away from the gate
+    // The person stops at the inner face of the fence minus the radius (0.3), to within one step,
+    // so 0.2 m short of the bounds clamp (which would stop at 0.1 from the fence face).
+    const R = 0.3;
+    const near = (got, want, label) =>
+      expect(Math.abs(got - want), label).toBeLessThan(0.08);
     for (let t = -10; t <= 10; t += 1) {
       const l = into({ x: -10, z: t }, { x: -13, z: t });
-      expect(hitsSolid(l.x - 0.2, l.z, fences(), 0.3), `left z=${t}`).toBe(
-        true,
-      );
+      near(l.x, BOUNDS.minX + FENCE.t + R, `left z=${t}`);
       const r = into({ x: 10, z: t }, { x: 13, z: t });
-      expect(hitsSolid(r.x + 0.2, r.z, fences(), 0.3), `right z=${t}`).toBe(
-        true,
-      );
+      near(r.x, BOUNDS.maxX - FENCE.t - R, `right z=${t}`);
     }
     for (let x = -10; x <= 10; x += 1) {
       const b = into({ x, z: -9 }, { x, z: -13 });
-      expect(hitsSolid(b.x, b.z - 0.2, fences(), 0.3), `back x=${x}`).toBe(
-        true,
-      );
+      near(b.z, BOUNDS.minZ + FENCE.t + R, `back x=${x}`);
       const f = into({ x, z: 9 }, { x, z: 13 });
-      expect(hitsSolid(f.x, f.z + 0.2, fences(), 0.3), `front x=${x}`).toBe(
-        true,
-      );
+      near(f.z, BOUNDS.maxZ - FENCE.t - R, `front x=${x}`);
     }
   });
   it('stops a walk into the closed gate (AC-2.2)', () => {
-    const r = resolveMove(
-      { x: PATH.x, z: 9 },
-      { x: PATH.x, z: 13 },
-      SOLIDS,
-      BOUNDS,
-    );
-    expect(r.z).toBeLessThan(BOUNDS.maxZ - FENCE.t);
+    let p = { x: PATH.x, z: 9 };
+    for (let i = 1; i <= 40; i++)
+      p = resolveMove(p, { x: PATH.x, z: 9 + i * 0.1 }, SOLIDS, BOUNDS);
+    // The bounds clamp alone would stop at 10.7; the gate stops the person at 10.5.
+    expect(Math.abs(p.z - (BOUNDS.maxZ - FENCE.t - 0.3))).toBeLessThan(0.11);
   });
 });
 
@@ -158,11 +152,11 @@ describe('what stays as before (FR-3, FR-12, FR-13)', () => {
 });
 
 describe('the start spot (FR-13, AC-5.5)', () => {
-  it('is on the path 2 m inside the gate, free, reachable and faces the house', () => {
+  it('is on the path 2 m inside the gate, free, reachable and in front of the house (z above the house)', () => {
     expect(SPAWN.x).toBeCloseTo(PATH.x);
     expect(BOUNDS.maxZ - FENCE.t - SPAWN.z).toBeCloseTo(2);
     expect(hitsSolid(SPAWN.x, SPAWN.z, SOLIDS, 0.3)).toBe(false);
-    expect(SPAWN.z).toBeGreaterThan(-7.5); // the house is at -z; A-Frame's camera looks toward -z
+    expect(SPAWN.z).toBeGreaterThan(-7.5); // the house is at -z, so the start is on the street side of it; the camera needs no turn
     expect(reachesWithin(SPAWN, CHARACTER_SPOT, 1.2, SOLIDS, BOUNDS)).toBe(
       true,
     );
@@ -187,6 +181,7 @@ describe('the character stays inside the fence (AC-5.3)', () => {
     const far = { x: 100, z: 100 };
     let s = initialState(CHARACTER_SPOT.x, CHARACTER_SPOT.z, 0);
     const c = { solids, bounds: BOUNDS, player: far, rng: seeded(11) };
+    const cells = new Set();
     for (let t = 0; t < 300; t += 0.05) {
       s = stepWander(s, 0.05, c);
       expect(s.x, `t=${t.toFixed(1)}`).toBeGreaterThanOrEqual(
@@ -195,6 +190,12 @@ describe('the character stays inside the fence (AC-5.3)', () => {
       expect(s.x).toBeLessThanOrEqual(BOUNDS.maxX - FENCE.t);
       expect(s.z).toBeGreaterThanOrEqual(BOUNDS.minZ + FENCE.t);
       expect(s.z).toBeLessThanOrEqual(BOUNDS.maxZ - FENCE.t);
+      expect(
+        hitsSolid(s.x, s.z, fences(), 0.5),
+        `near fence t=${t.toFixed(1)}`,
+      ).toBe(false);
+      cells.add(`${Math.floor(s.x)},${Math.floor(s.z)}`);
     }
+    expect(cells.size).toBeGreaterThanOrEqual(5);
   });
 });
